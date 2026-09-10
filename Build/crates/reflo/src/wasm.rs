@@ -77,7 +77,7 @@ pub fn get_audio_file_info(audio_bytes: &[u8]) -> Result<JsValue, JsValue> {
     let mss = MediaSourceStream::new(Box::new(cursor), Default::default());
 
     // Use the default probe which should have all formats registered
-    let mut format = symphonia::default::get_probe()
+    let format = symphonia::default::get_probe()
         .probe(
             &Hint::default(),
             mss,
@@ -117,16 +117,17 @@ pub fn get_audio_file_info(audio_bytes: &[u8]) -> Result<JsValue, JsValue> {
 
     // Use a simple struct that will serialize to a plain JS object
     #[derive(serde::Serialize)]
+    #[serde(rename_all = "camelCase")]
     struct AudioInfo {
-        sampleRate: u32,
+        sample_rate: u32,
         channels: u8,
-        durationSecs: f64,
+        duration_secs: f64,
     }
 
     let info = AudioInfo {
-        sampleRate: sample_rate,
-        channels: channels,
-        durationSecs: duration_secs,
+        sample_rate,
+        channels,
+        duration_secs,
     };
 
     to_value(&info).map_err(|e| JsValue::from_str(&format!("Serialization error: {}", e)))
