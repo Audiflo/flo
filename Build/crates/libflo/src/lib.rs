@@ -6,6 +6,7 @@ use messagepack_serde::{from_slice, to_vec};
 use wasm_bindgen::prelude::*;
 
 pub mod core;
+pub mod dsp;
 pub mod lossless;
 pub mod lossy;
 pub mod streaming;

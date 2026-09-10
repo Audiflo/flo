@@ -7,7 +7,12 @@ license.workspace = true
 repository.workspace = true
 description = "Audio format converter for the flo audio format. Available as CLI and library with WebAssembly support"
 keywords = ["audio", "codec", "compression", "wasm", "converter"]
-categories = ["multimedia::audio", "multimedia::encoding", "command-line-utilities", "wasm"]
+categories = [
+	"multimedia::audio",
+	"multimedia::encoding",
+	"command-line-utilities",
+	"wasm",
+]
 readme = "README.md"
 homepage = "https://github.com/Audiflo/flo"
 
@@ -21,11 +26,15 @@ name = "reflo_tests"
 path = "../../../Tests/reflo/encode_decode_tests.rs"
 
 [features]
-default = ["std", "audio-io"]
+default = ["std", "audio-io", "fft-rustfft"]
 std = ["dep:chrono"]
 audio-io = ["std", "dep:symphonia"]
+fft-rustfft = ["libflo-audio/fft-rustfft"]
+fft-microfft = ["libflo-audio/fft-microfft"]
 wasm = [
 	"audio-io",
+	"fft-rustfft",
+	"libflo-audio/wasm",
 	"dep:wasm-bindgen",
 	"dep:js-sys",
 	"dep:console_error_panic_hook",

@@ -17,21 +17,31 @@ repository = "https://github.com/Audiflo/flo"
 [workspace.dependencies]
 
 # Internal crates
-libflo-audio = { path = "crates/libflo", version = "0.1.2" }
+libflo-audio = { path = "crates/libflo", version = "0.1.2", default-features = false }
 reflo = { path = "crates/reflo", version = "0.1.2" }
 
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-serde_bytes = "0.11"
-messagepack-serde = { version = "0.2.4", default-features = false, features = ["alloc"] }
+serde = { version = "1", default-features = false, features = [
+    "derive",
+    "alloc",
+] }
+serde_json = { version = "1", default-features = false, features = ["alloc"] }
+serde_bytes = { version = "0.11", default-features = false, features = ["alloc"] }
+messagepack-serde = { version = "0.2.4", default-features = false, features = [
+    "alloc",
+] }
 
 # Core and analysis
-rustfft = "6.2"
-blake3 = "1.5"
+rustfft = { version = "6.2", default-features = false }
+microfft = { version = "0.6", default-features = false, features = ["size-512"] }
+num-complex = { version = "0.4", default-features = false }
+blake3 = { version = "1.5", default-features = false }
 
 # CLI and audio I/O
 anyhow = { version = "1", default-features = false }
-chrono = { version = "0.4", default-features = false, features = ["std", "clock"] }
+chrono = { version = "0.4", default-features = false, features = [
+    "std",
+    "clock",
+] }
 clap = { version = "4", features = ["derive"] }
 symphonia = { version = "0.6", features = [
     "mp3",

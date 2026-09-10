@@ -1,8 +1,7 @@
 //! Audio analysis functions for flo codec
 
 use crate::core::metadata::WaveformData;
-use rustfft::num_complex::Complex;
-use rustfft::FftDirection;
+use crate::dsp::{Complex32, DefaultPlanner, FftDirection, FftPlanner};
 use serde::{Deserialize, Serialize};
 
 pub type FloSample = f32;
@@ -268,9 +267,9 @@ pub fn extract_spectral_fingerprint(
 
     // Compact spectral analysis using small FFT
     let fft_size = 256; // Much smaller than before
-    let mut planner = rustfft::FftPlanner::<f32>::new();
+    let mut planner = DefaultPlanner::new();
     let fft = planner.plan_fft(fft_size, FftDirection::Forward);
-    let mut fft_buffer = vec![Complex { re: 0.0, im: 0.0 }; fft_size];
+    let mut fft_buffer = vec![Complex32 { re: 0.0, im: 0.0 }; fft_size];
 
     // Take first and middle sections for analysis (quick sampling)
     let analysis_points = [
@@ -293,7 +292,7 @@ pub fn extract_spectral_fingerprint(
                     }
                 }
                 sample /= channels as f32;
-                fft_buffer[i] = Complex {
+                fft_buffer[i] = Complex32 {
                     re: sample,
                     im: 0.0,
                 };

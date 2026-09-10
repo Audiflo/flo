@@ -1,9 +1,9 @@
 // Full disclosure, this code is inspired by Symphonia's MDCT implementation,
 // and part's of ffmpeg's as well.
 
-use alloc::sync::Arc;
+use crate::dsp::{Complex32, DefaultPlanner, Fft, FftPlanner};
+use alloc::boxed::Box;
 use core::f32::consts::PI;
-use rustfft::{num_complex::Complex, FftPlanner};
 
 /// Window types for MDCT
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -55,9 +55,9 @@ struct MdctTransform {
     /// Window function
     window: Vec<f32>,
     /// Forward FFT
-    fft: Arc<dyn rustfft::Fft<f32>>,
+    fft: Box<dyn Fft>,
     /// Twiddle factors: e^(i*π/n2 * (k + 1/8))
-    twiddle: Vec<Complex<f32>>,
+    twiddle: Vec<Complex32>,
 }
 
 impl MdctTransform {
@@ -74,14 +74,14 @@ impl MdctTransform {
         };
 
         // Create FFT planner
-        let mut planner = FftPlanner::new();
+        let mut planner = DefaultPlanner::new();
         let fft = planner.plan_fft_forward(n4);
 
         // Pre-compute twiddle factors
-        let twiddle: Vec<Complex<f32>> = (0..n4)
+        let twiddle: Vec<Complex32> = (0..n4)
             .map(|k| {
                 let theta = PI / n2 as f32 * (k as f32 + 0.125);
-                Complex::new(theta.cos(), theta.sin())
+                Complex32::new(theta.cos(), theta.sin())
             })
             .collect();
 
@@ -178,7 +178,7 @@ impl MdctTransform {
             .collect();
 
         // Pre-rotation: fold N windowed samples into N/4 complex FFT inputs
-        let mut z: Vec<Complex<f32>> = vec![Complex::new(0.0, 0.0); n4];
+        let mut z: Vec<Complex32> = vec![Complex32::new(0.0, 0.0); n4];
 
         for i in 0..n8 {
             // First butterfly
@@ -186,14 +186,14 @@ impl MdctTransform {
             let im = -x[n4 + 2 * i] + x[n4 - 1 - 2 * i];
 
             let w = &self.twiddle[i];
-            z[i] = Complex::new(-re * w.re - im * w.im, re * w.im - im * w.re);
+            z[i] = Complex32::new(-re * w.re - im * w.im, re * w.im - im * w.re);
 
             // Second butterfly
             let re2 = x[2 * i] - x[n2 - 1 - 2 * i];
             let im2 = -x[n2 + 2 * i] - x[n - 1 - 2 * i];
 
             let w2 = &self.twiddle[n8 + i];
-            z[n8 + i] = Complex::new(-re2 * w2.re - im2 * w2.im, re2 * w2.im - im2 * w2.re);
+            z[n8 + i] = Complex32::new(-re2 * w2.re - im2 * w2.im, re2 * w2.im - im2 * w2.re);
         }
 
         // Forward FFT
@@ -235,14 +235,14 @@ impl MdctTransform {
         let n8 = n4 / 2;
 
         // Pre-FFT twiddling
-        let mut z: Vec<Complex<f32>> = Vec::with_capacity(n4);
+        let mut z: Vec<Complex32> = Vec::with_capacity(n4);
 
         for i in 0..n4 {
             let even = spec[i * 2];
             let odd = -spec[n2 - 1 - i * 2];
 
             let w = &self.twiddle[i];
-            z.push(Complex::new(
+            z.push(Complex32::new(
                 odd * w.im - even * w.re,
                 odd * w.re + even * w.im,
             ));

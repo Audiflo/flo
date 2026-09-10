@@ -15,6 +15,18 @@ exclude = ["pkg/"]
 [lib]
 crate-type = ["cdylib", "rlib"]
 
+[features]
+default = ["wasm", "fft-rustfft"]
+wasm = [
+    "dep:wasm-bindgen",
+    "dep:console_error_panic_hook",
+    "dep:js-sys",
+    "dep:serde-wasm-bindgen",
+    "dep:web-sys",
+]
+fft-rustfft = ["dep:rustfft"]
+fft-microfft = ["dep:microfft"]
+
 [[test]]
 name = "libflo_tests"
 path = "../../../Tests/libflo/mod.rs"
@@ -22,15 +34,17 @@ path = "../../../Tests/libflo/mod.rs"
 [dependencies]
 serde = { workspace = true }
 serde_json = { workspace = true }
-serde-wasm-bindgen = { workspace = true }
 serde_bytes = { workspace = true }
 
 messagepack-serde = { workspace = true }
-rustfft = { workspace = true }
+num-complex = { workspace = true }
+rustfft = { workspace = true, optional = true }
+microfft = { workspace = true, optional = true }
 blake3 = { workspace = true }
 
 # WASM
-wasm-bindgen = { workspace = true }
-console_error_panic_hook = { workspace = true }
-js-sys = { workspace = true }
-web-sys = { workspace = true }
+wasm-bindgen = { workspace = true, optional = true }
+console_error_panic_hook = { workspace = true, optional = true }
+js-sys = { workspace = true, optional = true }
+serde-wasm-bindgen = { workspace = true, optional = true }
+web-sys = { workspace = true, optional = true }
