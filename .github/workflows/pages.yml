@@ -43,6 +43,15 @@ jobs:
           mkdir -p gh-pages-root/demo
           cp -R Docs/site/. gh-pages-root/
           cp -R Demo/. gh-pages-root/demo/
+          rm -f gh-pages-root/demo/pkg-libflo/.gitignore gh-pages-root/demo/pkg-reflo/.gitignore
+          cat > gh-pages-root/.gitignore <<'EOF'
+          !demo/pkg-libflo/
+          !demo/pkg-libflo/**
+          !demo/pkg-reflo/
+          !demo/pkg-reflo/**
+          EOF
+          git check-ignore -v gh-pages-root/demo/pkg-libflo/libflo_audio.js && exit 1 || true
+          git check-ignore -v gh-pages-root/demo/pkg-reflo/reflo.js && exit 1 || true
 
       - name: Publish to gh-pages
         uses: peaceiris/actions-gh-pages@v4

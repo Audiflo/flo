@@ -91,7 +91,7 @@ export default {
                 { title: "No-std and WASM", path: "/no-std", icon: "cpu" },
             ],
         },
-        { title: "Live Demo", path: "/demo/", icon: "eye", external: true },
+        { title: "Live Demo", path: "/flo/demo/", icon: "eye", external: true },
         { title: "GitHub", path: "https://github.com/Audiflo/flo", icon: "github", external: true },
     ],
     footer: "Built with [docmd](https://docmd.io). [View on GitHub](https://github.com/Audiflo/flo).",
