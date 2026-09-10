@@ -21,8 +21,10 @@ fn main() -> Result<ExitCode> {
         args.next()
             .context("usage: flo-fixtures <EXAMPLES_DIR> <FIXTURES_DIR>")?,
     );
-    let fixtures =
-        PathBuf::from(args.next().ok_or_else(|| anyhow!("missing <FIXTURES_DIR>"))?);
+    let fixtures = PathBuf::from(
+        args.next()
+            .ok_or_else(|| anyhow!("missing <FIXTURES_DIR>"))?,
+    );
 
     regen(&examples, &fixtures)?;
     Ok(ExitCode::SUCCESS)
@@ -35,7 +37,12 @@ fn regen(examples: &Path, fixtures: &Path) -> Result<()> {
     let bases: &[(&str, Vec<f32>, u32, usize)] = &[
         ("silence_1sec.flo", make_silence(44100, 1.0), 44100, 1),
         ("white_noise.flo", make_noise(44100, 1.0), 44100, 1),
-        ("sine_440hz_mono.flo", make_sine(44100, 440.0, 2.0, 0.5), 44100, 1),
+        (
+            "sine_440hz_mono.flo",
+            make_sine(44100, 440.0, 2.0, 0.5),
+            44100,
+            1,
+        ),
         (
             "chord_cmajor_stereo.flo",
             interleave(&make_sines(44100, &[261.63, 329.63, 392.0], 2.0, 0.5), 2),
@@ -48,8 +55,18 @@ fn regen(examples: &Path, fixtures: &Path) -> Result<()> {
             44100,
             1,
         ),
-        ("hires_96khz.flo", make_sine(96_000, 1000.0, 1.0, 0.5), 96_000, 1),
-        ("telephone_8khz.flo", make_sine(8_000, 1000.0, 1.0, 0.5), 8_000, 1),
+        (
+            "hires_96khz.flo",
+            make_sine(96_000, 1000.0, 1.0, 0.5),
+            96_000,
+            1,
+        ),
+        (
+            "telephone_8khz.flo",
+            make_sine(8_000, 1000.0, 1.0, 0.5),
+            8_000,
+            1,
+        ),
         (
             "click_track_120bpm.flo",
             make_sine(44100, 1000.0, 0.05, 0.5),

@@ -5,8 +5,8 @@
 
 extern crate alloc;
 
-use serde::{Deserialize, Serialize};
 use alloc::collections::BTreeMap;
+use serde::{Deserialize, Serialize};
 
 // ============================================================================
 // Picture Types (ID3v2.4 APIC)
@@ -717,7 +717,8 @@ impl FloMetadata {
     /// Deserialize from MessagePack bytes
     pub fn from_msgpack(
         data: &[u8],
-    ) -> Result<Self, messagepack_serde::de::Error<messagepack_serde::messagepack_core::io::RError>> {
+    ) -> Result<Self, messagepack_serde::de::Error<messagepack_serde::messagepack_core::io::RError>>
+    {
         messagepack_serde::from_slice(data)
     }
 

@@ -1,9 +1,9 @@
 // Full disclosure, this code is inspired by Symphonia's MDCT implementation,
 // and part's of ffmpeg's as well.
 
-use rustfft::{num_complex::Complex, FftPlanner};
 use alloc::sync::Arc;
 use core::f32::consts::PI;
+use rustfft::{num_complex::Complex, FftPlanner};
 
 /// Window types for MDCT
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

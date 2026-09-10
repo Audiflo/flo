@@ -10,9 +10,9 @@ pub mod audio;
 #[cfg(all(target_arch = "wasm32", feature = "wasm"))]
 pub mod wasm;
 
-use anyhow::Result;
 #[cfg(feature = "audio-io")]
 use anyhow::Context;
+use anyhow::Result;
 
 /// Metadata collected from an input audio source.
 #[derive(Debug, Default)]
