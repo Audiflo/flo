@@ -1,0 +1,1701 @@
+<!--
+  ---------------------------------------------------------------
+  docmd : the zero-config documentation engine.
+  @website https://docmd.io
+  [docmd-source] - Please do not remove this header.
+  ---------------------------------------------------------------
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="generator" content="docmd v0.9.5">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <script>
+      var root = "../";
+      if (root && !root.endsWith('/')) root += '/';
+      if (root === '') root = './';
+      window.DOCMD_ROOT = root;
+
+      window.DOCMD_SITE_ROOT = "/flo/";
+
+      window.DOCMD_APPEARANCE = "system";
+      window.DOCMD_VERSION_ROOT = "/";
+      window.DOCMD_BASE = "/flo/";
+      window.DOCMD_LOCALE = "";
+      window.DOCMD_DEFAULT_LOCALE = "";
+    </script>
+    <script>/**
+ * --------------------------------------------------------------------
+ * docmd : the zero-config documentation engine.
+ *
+ * @package     @docmd/core (and ecosystem)
+ * @website     https://docmd.io
+ * @repository  https://github.com/docmd-io/docmd
+ * @license     MIT
+ * @copyright   Copyright (c) 2025-present docmd.io
+ *
+ * [docmd-source] - Please do not remove this header.
+ * --------------------------------------------------------------------
+ */
+
+(function () {
+  try {
+    // 1. Determine Theme
+    //
+    // Resolve from three sources, in priority order:
+    //   1. localStorage explicit user choice (light / dark)
+    //   2. window.DOCMD_APPEARANCE  (current canonical name, set by EJS templates)
+    //   3. window.DOCMD_DEFAULT_MODE (legacy alias kept for pre-0.8.7 outputs)
+    //   4. 'light' as the final fallback
+    //
+    // Note: localStorage is only honoured when it holds an explicit
+    // 'light' or 'dark' value. A stored 'system' value (from a prior
+    // session where the user picked "follow system") must NOT win over
+    // a freshly resolved config value — the resolved value will itself
+    // be 'system' in that case and the OS preference check below takes
+    // over, so this is a no-op for the in-session behaviour but keeps
+    // any future storage migration simple.
+    var localValue = localStorage.getItem('docmd-theme');
+    var configValue = window.DOCMD_APPEARANCE
+      || window.DOCMD_DEFAULT_MODE
+      || 'light';
+    var theme = (localValue === 'light' || localValue === 'dark')
+      ? localValue
+      : configValue;
+
+    if (theme === 'system') {
+      theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+
+    // 2. Apply to Root
+    document.documentElement.setAttribute('data-theme', theme);
+
+    // 3. Highlight.js Toggle Strategy
+    var lightLink = document.getElementById('hljs-light');
+    var darkLink = document.getElementById('hljs-dark');
+
+    if (lightLink && darkLink) {
+      if (theme === 'dark') {
+        lightLink.disabled = true;
+        darkLink.disabled = false;
+      } else {
+        lightLink.disabled = false;
+        darkLink.disabled = true;
+      }
+    }
+
+    document.documentElement.style.visibility = "visible";
+  } catch (e) {
+    document.documentElement.style.visibility = "visible";
+    console.error('Theme init failed', e);
+  }
+})();</script>
+    <style>
+      html {
+        visibility: hidden;
+      }
+    </style>
+    <title>
+      Rust API : flo
+    </title>
+    
+    
+
+    <link id="site-favicon" rel="icon" href="../assets/favicon.ico?v=mtvvpwwr">
+    <link rel="stylesheet" href="../assets/css/docmd-main.css?v=mtvvpwwr">
+    
+    <link rel="stylesheet" href="../assets/css/docmd-highlight-light.css?v=mtvvpwwr" id="hljs-light" >
+    <link rel="stylesheet" href="../assets/css/docmd-highlight-dark.css?v=mtvvpwwr" id="hljs-dark" disabled>
+    
+    
+<meta name="description" content="flo is a modern lossless and lossy audio codec with Rust and WebAssembly APIs.">
+<link rel="canonical" href="https://audiflo.github.io/flo/rust-api/">
+<meta property="og:title" content="Rust API - flo">
+<meta property="og:description" content="flo is a modern lossless and lossy audio codec with Rust and WebAssembly APIs.">
+<meta property="og:url" content="https://audiflo.github.io/flo/rust-api/">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Rust API - flo">
+<meta name="twitter:description" content="flo is a modern lossless and lossy audio codec with Rust and WebAssembly APIs.">
+
+
+
+
+<link rel="stylesheet" href="../assets/css/docmd-theme-ruby.css?v=mtvvpwwr" >
+<link rel="stylesheet" href="../assets/css/docmd-git.css?v=mtvvpwwr" >
+<link rel="stylesheet" href="../assets/css/docmd-openapi.css?v=mtvvpwwr" >
+<link rel="stylesheet" href="../assets/css/docmd-ai.css?v=mtvvpwwr" >
+
+    
+    
+  </head>
+  <body
+    class="sidebar-collapsible"
+    data-default-collapsed="false"
+    data-copy-code-enabled="true" data-spa-enabled="true" data-source-file="docs/rust-api.md">
+
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    
+    
+
+    
+    
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          
+<h1><a href="../">
+                flo
+              </a></h1>
+          
+          <span class="mobile-view sidebar-menu-button float-right">
+            
+<svg class="lucide-icon icon-menu " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-menu"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M4 5h16" />
+  <path d="M4 12h16" />
+  <path d="M4 19h16" />
+</svg>
+
+          </span>
+        </div>
+        <div class="sidebar-top-group">
+          
+          
+          
+          
+        </div>
+        
+
+<nav class="sidebar-nav" aria-label="Main Navigation">
+  <ul>
+    
+      <li class="" >
+      
+        <a href="../" class=" "
+          >
+           
+<svg class="lucide-icon icon-home " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-house"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" />
+  <path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            Home
+            </span>
+          
+          
+        </a>
+        
+
+        
+      </li>
+    
+      <li class="expanded nav-group" >
+      
+        <span class="nav-label nav-group">
+           
+<svg class="lucide-icon icon-rocket " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-rocket"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" />
+  <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09" />
+  <path d="M9 12a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.4 22.4 0 0 1-4 2z" />
+  <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 .05 5 .05" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            Getting Started
+          </span>
+          
+        </span>
+        
+
+        
+          <ul class="submenu">
+            
+      <li class="" >
+      
+        <a href="../getting-started/" class=" "
+          >
+           
+<svg class="lucide-icon icon-play " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-play"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            Getting Started
+            </span>
+          
+          
+        </a>
+        
+
+        
+      </li>
+    
+      <li class="" >
+      
+        <a href="../cli-reference/" class=" "
+          >
+           
+<svg class="lucide-icon icon-terminal " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-terminal"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12 19h8" />
+  <path d="m4 17 6-6-6-6" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            CLI Reference
+            </span>
+          
+          
+        </a>
+        
+
+        
+      </li>
+    
+          </ul>
+        
+      </li>
+    
+      <li class="active-parent expanded nav-group" >
+      
+        <span class="nav-label nav-group">
+           
+<svg class="lucide-icon icon-code " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-code"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m16 18 6-6-6-6" />
+  <path d="m8 6-6 6 6 6" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            API Reference
+          </span>
+          
+        </span>
+        
+
+        
+          <ul class="submenu">
+            
+      <li class="active" >
+      
+        <a href="../rust-api/" class="active "
+          >
+           
+<svg class="lucide-icon icon-box " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-box"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+  <path d="m3.3 7 8.7 5 8.7-5" />
+  <path d="M12 22V12" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            Rust API
+            </span>
+          
+          
+        </a>
+        
+
+        
+      </li>
+    
+      <li class="" >
+      
+        <a href="../javascript-api/" class=" "
+          >
+           
+<svg class="lucide-icon icon-cpu " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-cpu"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12 20v2" />
+  <path d="M12 2v2" />
+  <path d="M17 20v2" />
+  <path d="M17 2v2" />
+  <path d="M2 12h2" />
+  <path d="M2 17h2" />
+  <path d="M2 7h2" />
+  <path d="M20 12h2" />
+  <path d="M20 17h2" />
+  <path d="M20 7h2" />
+  <path d="M7 20v2" />
+  <path d="M7 2v2" />
+  <rect x="4" y="4" width="16" height="16" rx="2" />
+  <rect x="8" y="8" width="8" height="8" rx="1" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            JavaScript / WASM
+            </span>
+          
+          
+        </a>
+        
+
+        
+      </li>
+    
+          </ul>
+        
+      </li>
+    
+      <li class="expanded nav-group" >
+      
+        <span class="nav-label nav-group">
+           
+<svg class="lucide-icon icon-file-text " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-file-text"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" />
+  <path d="M14 2v5a1 1 0 0 0 1 1h5" />
+  <path d="M10 9H8" />
+  <path d="M16 13H8" />
+  <path d="M16 17H8" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            Format and Features
+          </span>
+          
+        </span>
+        
+
+        
+          <ul class="submenu">
+            
+      <li class="" >
+      
+        <a href="../file-format/" class=" "
+          >
+           
+<svg class="lucide-icon icon-binary " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-binary"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <rect x="14" y="14" width="4" height="6" rx="2" />
+  <rect x="6" y="4" width="4" height="6" rx="2" />
+  <path d="M6 20h4" />
+  <path d="M14 10h4" />
+  <path d="M6 14h2v6" />
+  <path d="M14 4h2v6" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            File Format
+            </span>
+          
+          
+        </a>
+        
+
+        
+      </li>
+    
+      <li class="" >
+      
+        <a href="../metadata-guide/" class=" "
+          >
+           
+<svg class="lucide-icon icon-tag " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-tag"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+  <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            Metadata
+            </span>
+          
+          
+        </a>
+        
+
+        
+      </li>
+    
+      <li class="" >
+      
+        <a href="../streaming/" class=" "
+          >
+           
+<svg class="lucide-icon icon-wind " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-wind"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12.8 19.6A2 2 0 1 0 14 16H2" />
+  <path d="M17.5 8a2.5 2.5 0 1 1 2 4H2" />
+  <path d="M9.8 4.4A2 2 0 1 1 11 8H2" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            Streaming
+            </span>
+          
+          
+        </a>
+        
+
+        
+      </li>
+    
+          </ul>
+        
+      </li>
+    
+      <li class="expanded nav-group" >
+      
+        <span class="nav-label nav-group">
+           
+<svg class="lucide-icon icon-layers " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-layers"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z" />
+  <path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12" />
+  <path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            Project
+          </span>
+          
+        </span>
+        
+
+        
+          <ul class="submenu">
+            
+      <li class="" >
+      
+        <a href="../architecture/" class=" "
+          >
+           
+<svg class="lucide-icon icon-git-branch " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-git-branch"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M15 6a9 9 0 0 0-9 9V3" />
+  <circle cx="18" cy="6" r="3" />
+  <circle cx="6" cy="18" r="3" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            Architecture
+            </span>
+          
+          
+        </a>
+        
+
+        
+      </li>
+    
+      <li class="" >
+      
+        <a href="../no-std/" class=" "
+          >
+           
+<svg class="lucide-icon icon-cpu " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-cpu"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12 20v2" />
+  <path d="M12 2v2" />
+  <path d="M17 20v2" />
+  <path d="M17 2v2" />
+  <path d="M2 12h2" />
+  <path d="M2 17h2" />
+  <path d="M2 7h2" />
+  <path d="M20 12h2" />
+  <path d="M20 17h2" />
+  <path d="M20 7h2" />
+  <path d="M7 20v2" />
+  <path d="M7 2v2" />
+  <rect x="4" y="4" width="16" height="16" rx="2" />
+  <rect x="8" y="8" width="8" height="8" rx="1" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            No-std and WASM
+            </span>
+          
+          
+        </a>
+        
+
+        
+      </li>
+    
+          </ul>
+        
+      </li>
+    
+      <li class="" >
+      
+        <a href="/demo/" class=" "
+          target=&quot;_blank&quot; rel=&quot;noopener&quot;>
+           
+<svg class="lucide-icon icon-eye " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-eye"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" />
+  <circle cx="12" cy="12" r="3" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            Live Demo
+            </span>
+          
+           
+<svg class="lucide-icon icon-external-link nav-external-icon" width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-external-link"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M15 3h6v6" />
+  <path d="M10 14 21 3" />
+  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+</svg>
+
+          
+        </a>
+        
+
+        
+      </li>
+    
+      <li class="" >
+      
+        <a href="https://github.com/Audiflo/flo" class=" "
+          target=&quot;_blank&quot; rel=&quot;noopener&quot;>
+           
+          
+          <span class="nav-item-title">
+            GitHub
+            </span>
+          
+           
+<svg class="lucide-icon icon-external-link nav-external-icon" width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-external-link"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M15 3h6v6" />
+  <path d="M10 14 21 3" />
+  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+</svg>
+
+          
+        </a>
+        
+
+        
+      </li>
+    
+  </ul>
+</nav>
+        <div class="sidebar-bottom-group mt-auto">
+          
+          
+          
+          
+        </div>
+      </aside>
+      
+      <div class="main-content-wrapper">
+        
+        
+        
+          <header class="page-header">
+            <div class="header-left">
+              
+                <button id="sidebar-toggle-button" class="sidebar-toggle-button"
+                  aria-label="Toggle Sidebar">
+                  
+<svg class="lucide-icon icon-chevron-left " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-chevron-left"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m15 18-6-6 6-6" />
+</svg>
+
+                </button>
+              
+              <div class="header-titles-wrapper">
+                <span class="header-title">
+                  Rust API
+                </span>
+              </div>
+            </div>
+            <div class="header-right">
+              
+                
+
+
+<div class="docmd-options-menu">
+    
+    <button class="docmd-search-trigger" aria-label="Search">
+        
+<svg class="lucide-icon icon-search " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-search"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m21 21-4.34-4.34" />
+  <circle cx="11" cy="11" r="8" />
+</svg>
+
+        <span class="search-label">Search</span>
+        <span class="search-keys"><kbd class="docmd-kbd">⌘</kbd><kbd class="docmd-kbd">K</kbd></span>
+    </button>
+    
+
+    
+
+    
+
+    
+    <button class="theme-toggle-button" aria-label="Toggle theme">
+        
+<svg class="lucide-icon icon-sun icon-sun" width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-sun"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="4" />
+  <path d="M12 2v2" />
+  <path d="M12 20v2" />
+  <path d="m4.93 4.93 1.41 1.41" />
+  <path d="m17.66 17.66 1.41 1.41" />
+  <path d="M2 12h2" />
+  <path d="M20 12h2" />
+  <path d="m6.34 17.66-1.41 1.41" />
+  <path d="m19.07 4.93-1.41 1.41" />
+</svg>
+ 
+<svg class="lucide-icon icon-moon icon-moon" width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-moon"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401" />
+</svg>
+
+    </button>
+    
+
+    
+</div>
+
+              
+            </div>
+          </header>
+        
+        <div class="content-theme-cover">
+          <main class="content-area" id="main-content">
+            <div class="content-layout">
+              <div class="main-content">
+                <div class="docmd-breadcrumbs-row">
+                  <div id="docmd-raw-markdown" data-content="%23%20Rust%20API%0A%0AThe%20%60libflo%60%20crate%20provides%20native%20Rust%20encoding%2C%20decoding%2C%20and%20metadata%20support.%0A%0A%23%23%20Installation%0A%0AAdd%20to%20your%20%60Cargo.toml%60%3A%0A%0A%60%60%60toml%0A%5Bdependencies%5D%0Alibflo-audio%20%3D%20%7B%20version%20%3D%20%220.1.2%22%20%7D%0A%60%60%60%0A%0A---%0A%0A%23%23%20Quick%20Start%0A%0A%60%60%60rust%0Ause%20libflo_audio%3A%3A%7BEncoder%2C%20decode%2C%20info%7D%3B%0A%0Afn%20main()%20-%3E%20Result%3C()%2C%20Box%3Cdyn%20std%3A%3Aerror%3A%3AError%3E%3E%20%7B%0A%20%20%20%20%2F%2F%20Create%201%20second%20of%20stereo%20silence%0A%20%20%20%20let%20samples%3A%20Vec%3Cf32%3E%20%3D%20vec!%5B0.0%3B%2044100%20*%202%5D%3B%0A%20%20%20%20%0A%20%20%20%20%2F%2F%20Encode%0A%20%20%20%20let%20encoder%20%3D%20Encoder%3A%3Anew(44100%2C%202%2C%2016)%3B%0A%20%20%20%20let%20flo_data%20%3D%20encoder.encode(%26samples%2C%20%26%5B%5D)%3F%3B%0A%20%20%20%20%0A%20%20%20%20%2F%2F%20Decode%0A%20%20%20%20let%20decoded%20%3D%20decode(%26flo_data)%3F%3B%0A%20%20%20%20%0A%20%20%20%20%2F%2F%20Info%0A%20%20%20%20let%20file_info%20%3D%20info(%26flo_data)%3F%3B%0A%20%20%20%20println!(%22Duration%3A%20%7B%7Ds%22%2C%20file_info.duration_secs)%3B%0A%20%20%20%20%0A%20%20%20%20Ok(())%0A%7D%0A%60%60%60%0A%0A---%0A%0A%23%23%20Lossless%20Encoding%0A%0A%23%23%23%20Encoder%0A%0A%60%60%60rust%0Ause%20libflo_audio%3A%3AEncoder%3B%0A%0Alet%20encoder%20%3D%20Encoder%3A%3Anew(%0A%20%20%20%20sample_rate%2C%20%20%2F%2F%20u32%3A%20e.g.%2C%2044100%0A%20%20%20%20channels%2C%20%20%20%20%20%2F%2F%20u8%3A%201%20(mono)%20or%202%20(stereo)%0A%20%20%20%20bit_depth%20%20%20%20%20%2F%2F%20u8%3A%2016%2C%2024%2C%20or%2032%0A)%3B%0A%0A%2F%2F%20Encode%20without%20metadata%0Alet%20flo_data%20%3D%20encoder.encode(%26samples%2C%20%26%5B%5D)%3F%3B%0A%0A%2F%2F%20Encode%20with%20metadata%0Alet%20metadata%20%3D%20create_metadata()%3B%0Alet%20flo_data%20%3D%20encoder.encode(%26samples%2C%20%26metadata)%3F%3B%0A%60%60%60%0A%0A%23%23%23%20Sample%20Format%0A%0ASamples%20must%20be%3A%0A%0A-%20%60Vec%3Cf32%3E%60%20or%20%60%26%5Bf32%5D%60%0A-%20Interleaved%3A%20%60%5BL%2C%20R%2C%20L%2C%20R%2C%20...%5D%60%20for%20stereo%0A-%20Normalized%3A%20%60-1.0%60%20to%20%601.0%60%0A%0A%60%60%60rust%0A%2F%2F%20Mono%3A%20%5Bs0%2C%20s1%2C%20s2%2C%20...%5D%0A%2F%2F%20Stereo%3A%20%5BL0%2C%20R0%2C%20L1%2C%20R1%2C%20L2%2C%20R2%2C%20...%5D%0A%60%60%60%0A%0A---%0A%0A%23%23%20Lossy%20Encoding%0A%0A%23%23%23%20LossyEncoder%0A%0A%60%60%60rust%0Ause%20libflo_audio%3A%3A%7BLossyEncoder%2C%20QualityPreset%7D%3B%0A%0A%2F%2F%20With%20quality%20preset%0Alet%20quality%20%3D%20QualityPreset%3A%3AHigh.as_f32()%3B%0Alet%20mut%20encoder%20%3D%20LossyEncoder%3A%3Anew(44100%2C%202%2C%20quality)%3B%0Alet%20flo_data%20%3D%20encoder.encode_to_flo(%26samples%2C%20%26%5B%5D)%3F%3B%0A%60%60%60%0A%0A%23%23%23%20Quality%20Presets%0A%0A%60%60%60rust%0Ause%20libflo_audio%3A%3AQualityPreset%3B%0A%0AQualityPreset%3A%3ALow%20%20%20%20%20%20%20%20%20%2F%2F%200.1%20%20-%20~48%20kbps%0AQualityPreset%3A%3AMedium%20%20%20%20%20%20%2F%2F%200.3%20%20-%20~128%20kbps%0AQualityPreset%3A%3AHigh%20%20%20%20%20%20%20%20%2F%2F%200.55%20-%20~192%20kbps%0AQualityPreset%3A%3AVeryHigh%20%20%20%20%2F%2F%200.75%20-%20~256%20kbps%0AQualityPreset%3A%3ATransparent%20%2F%2F%200.95%20-%20~320%20kbps%0A%0A%2F%2F%20Get%20f32%20value%0Alet%20quality%3A%20f32%20%3D%20QualityPreset%3A%3AHigh.as_f32()%3B%0A%60%60%60%0A%0A%23%23%23%20Target%20Bitrate%0A%0A%60%60%60rust%0Ause%20libflo_audio%3A%3A%7BLossyEncoder%2C%20QualityPreset%7D%3B%0A%0A%2F%2F%20Calculate%20quality%20from%20target%20bitrate%0Alet%20quality%20%3D%20QualityPreset%3A%3Afrom_bitrate(%0A%20%20%20%20192%2C%20%20%20%20%2F%2F%20target%20kbps%0A%20%20%20%2044100%2C%20%20%2F%2F%20sample%20rate%0A%20%20%20%202%20%20%20%20%20%20%20%2F%2F%20channels%0A).as_f32()%3B%0A%0Alet%20mut%20encoder%20%3D%20LossyEncoder%3A%3Anew(44100%2C%202%2C%20quality)%3B%0Alet%20flo_data%20%3D%20encoder.encode_to_flo(%26samples%2C%20%26%5B%5D)%3F%3B%0A%60%60%60%0A%0A---%0A%0A%23%23%20Decoding%0A%0A%23%23%23%20Auto-detect%20Mode%0A%0A%60%60%60rust%0Ause%20libflo_audio%3A%3Adecode%3B%0A%0A%2F%2F%20Automatically%20detects%20lossless%20vs%20lossy%0Alet%20samples%3A%20Vec%3Cf32%3E%20%3D%20decode(%26flo_data)%3F%3B%0A%60%60%60%0A%0A%23%23%23%20Decoder%20Struct%0A%0A%60%60%60rust%0Ause%20libflo_audio%3A%3ADecoder%3B%0A%0Alet%20decoder%20%3D%20Decoder%3A%3Anew()%3B%0Alet%20samples%20%3D%20decoder.decode(%26flo_data)%3F%3B%0A%60%60%60%0A%0A---%0A%0A%23%23%20File%20Information%0A%0A%60%60%60rust%0Ause%20libflo_audio%3A%3Ainfo%3B%0A%0Alet%20file_info%20%3D%20info(%26flo_data)%3F%3B%0A%0Aprintln!(%22Sample%20rate%3A%20%7B%7D%22%2C%20file_info.sample_rate)%3B%0Aprintln!(%22Channels%3A%20%7B%7D%22%2C%20file_info.channels)%3B%0Aprintln!(%22Bit%20depth%3A%20%7B%7D%22%2C%20file_info.bit_depth)%3B%0Aprintln!(%22Duration%3A%20%7B%7Ds%22%2C%20file_info.duration_secs)%3B%0Aprintln!(%22Lossy%3A%20%7B%7D%22%2C%20file_info.is_lossy)%3B%0Aprintln!(%22Compression%3A%20%7B%7Dx%22%2C%20file_info.compression_ratio)%3B%0A%60%60%60%0A%0A%23%23%23%20AudioInfo%20Struct%0A%0A%60%60%60rust%0Apub%20struct%20AudioInfo%20%7B%0A%20%20%20%20pub%20sample_rate%3A%20u32%2C%0A%20%20%20%20pub%20channels%3A%20u8%2C%0A%20%20%20%20pub%20bit_depth%3A%20u8%2C%0A%20%20%20%20pub%20total_samples%3A%20u64%2C%0A%20%20%20%20pub%20duration_secs%3A%20f64%2C%0A%20%20%20%20pub%20is_lossy%3A%20bool%2C%0A%20%20%20%20pub%20compression_ratio%3A%20f32%2C%0A%7D%0A%60%60%60%0A%0ANote%3A%20%60total_samples%60%20counts%20sample-frames%20(samples%20per%20channel).%20For%20UI%2Fdisplay%2C%20prefer%20using%20%60FloMetadata.length_ms%60%20(duration%20in%20ms)%20when%20available%3B%20otherwise%20compute%20duration%20from%20%60total_samples%20%2F%20sample_rate%60.%0A%0A---%0A%0A%23%23%20Validation%0A%0A%60%60%60rust%0Ause%20libflo_audio%3A%3Avalidate%3B%0A%0Amatch%20validate(%26flo_data)%20%7B%0A%20%20%20%20Ok(true)%20%3D%3E%20println!(%22File%20is%20valid%22)%2C%0A%20%20%20%20Ok(false)%20%3D%3E%20println!(%22CRC32%20mismatch%20-%20file%20corrupted%22)%2C%0A%20%20%20%20Err(e)%20%3D%3E%20println!(%22Invalid%20file%3A%20%7B%7D%22%2C%20e)%2C%0A%7D%0A%60%60%60%0A%0A---%0A%0A%23%23%20Metadata%0A%0A%23%23%23%20FloMetadata%20Struct%0A%0A%60%60%60rust%0Ause%20libflo_audio%3A%3A%7BFloMetadata%2C%20SectionType%2C%20PictureType%7D%3B%0A%0Alet%20mut%20meta%20%3D%20FloMetadata%3A%3Anew()%3B%0A%0A%2F%2F%20Basic%20fields%0Ameta.title%20%3D%20Some(%22Track%20Title%22.to_string())%3B%0Ameta.artist%20%3D%20Some(%22Artist%20Name%22.to_string())%3B%0Ameta.album%20%3D%20Some(%22Album%20Name%22.to_string())%3B%0Ameta.year%20%3D%20Some(2026)%3B%0Ameta.genre%20%3D%20Some(%22Electronic%22.to_string())%3B%0Ameta.bpm%20%3D%20Some(128)%3B%0A%0A%2F%2F%20Track%20numbering%0Ameta.track_number%20%3D%20Some(1)%3B%0Ameta.track_total%20%3D%20Some(12)%3B%0Ameta.disc_number%20%3D%20Some(1)%3B%0Ameta.disc_total%20%3D%20Some(2)%3B%0A%0A%2F%2F%20Serialize%20to%20MessagePack%0Alet%20metadata_bytes%20%3D%20meta.to_msgpack()%3F%3B%0A%0A%2F%2F%20Use%20in%20encoding%0Alet%20encoder%20%3D%20Encoder%3A%3Anew(44100%2C%202%2C%2016)%3B%0Alet%20flo_data%20%3D%20encoder.encode(%26samples%2C%20%26metadata_bytes)%3F%3B%0A%60%60%60%0A%0A%23%23%23%20Section%20Markers%0A%0A%60%60%60rust%0Ause%20libflo_audio%3A%3A%7BFloMetadata%2C%20SectionType%7D%3B%0A%0Alet%20mut%20meta%20%3D%20FloMetadata%3A%3Anew()%3B%0A%0Ameta.add_section(0%2C%20SectionType%3A%3AIntro%2C%20None)%3B%0Ameta.add_section(15000%2C%20SectionType%3A%3AVerse%2C%20Some(%22Verse%201%22))%3B%0Ameta.add_section(45000%2C%20SectionType%3A%3AChorus%2C%20None)%3B%0Ameta.add_section(75000%2C%20SectionType%3A%3AVerse%2C%20Some(%22Verse%202%22))%3B%0Ameta.add_section(105000%2C%20SectionType%3A%3AChorus%2C%20None)%3B%0Ameta.add_section(135000%2C%20SectionType%3A%3ABridge%2C%20None)%3B%0Ameta.add_section(165000%2C%20SectionType%3A%3AOutro%2C%20None)%3B%0A%60%60%60%0A%0A%23%23%23%20Section%20Types%0A%0A%60%60%60rust%0Apub%20enum%20SectionType%20%7B%0A%20%20%20%20Intro%2C%20Verse%2C%20PreChorus%2C%20Chorus%2C%20PostChorus%2C%0A%20%20%20%20Bridge%2C%20Breakdown%2C%20Drop%2C%20Buildup%2C%20Solo%2C%0A%20%20%20%20Instrumental%2C%20Outro%2C%20Silence%2C%20Other%0A%7D%0A%60%60%60%0A%0A%23%23%23%20Cover%20Art%0A%0A%60%60%60rust%0Ause%20libflo_audio%3A%3A%7BFloMetadata%2C%20Picture%2C%20PictureType%7D%3B%0Ause%20std%3A%3Afs%3B%0A%0Alet%20mut%20meta%20%3D%20FloMetadata%3A%3Anew()%3B%0A%0Alet%20image_data%20%3D%20fs%3A%3Aread(%22cover.jpg%22)%3F%3B%0Ameta.pictures%20%3D%20Some(vec!%5B%0A%20%20%20%20Picture%20%7B%0A%20%20%20%20%20%20%20%20mime_type%3A%20%22image%2Fjpeg%22.to_string()%2C%0A%20%20%20%20%20%20%20%20picture_type%3A%20PictureType%3A%3ACoverFront%2C%0A%20%20%20%20%20%20%20%20description%3A%20Some(%22Album%20Cover%22.to_string())%2C%0A%20%20%20%20%20%20%20%20data%3A%20image_data%2C%0A%20%20%20%20%7D%0A%5D)%3B%0A%60%60%60%0A%0A%23%23%23%20Synchronized%20Lyrics%0A%0A%60%60%60rust%0Ause%20libflo_audio%3A%3A%7BFloMetadata%2C%20SyncedLyrics%2C%20LyricLine%2C%20LyricContentType%7D%3B%0A%0Alet%20mut%20meta%20%3D%20FloMetadata%3A%3Anew()%3B%0A%0Ameta.synced_lyrics%20%3D%20Some(vec!%5B%0A%20%20%20%20SyncedLyrics%20%7B%0A%20%20%20%20%20%20%20%20language%3A%20Some(%22eng%22.to_string())%2C%0A%20%20%20%20%20%20%20%20content_type%3A%20LyricContentType%3A%3ALyrics%2C%0A%20%20%20%20%20%20%20%20description%3A%20None%2C%0A%20%20%20%20%20%20%20%20lines%3A%20vec!%5B%0A%20%20%20%20%20%20%20%20%20%20%20%20LyricLine%20%7B%20timestamp_ms%3A%200%2C%20text%3A%20%22First%20line%20of%20lyrics%22.to_string()%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20LyricLine%20%7B%20timestamp_ms%3A%205000%2C%20text%3A%20%22Second%20line%22.to_string()%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20LyricLine%20%7B%20timestamp_ms%3A%2010000%2C%20text%3A%20%22Third%20line%22.to_string()%20%7D%2C%0A%20%20%20%20%20%20%20%20%5D%2C%0A%20%20%20%20%7D%0A%5D)%3B%0A%60%60%60%0A%0A%23%23%23%20Reading%20Metadata%0A%0A%60%60%60rust%0Ause%20libflo_audio%3A%3Aget_metadata%3B%0A%0Alet%20meta%20%3D%20get_metadata(%26flo_data)%3F%3B%0A%0Aif%20let%20Some(title)%20%3D%20meta.title%20%7B%0A%20%20%20%20println!(%22Title%3A%20%7B%7D%22%2C%20title)%3B%0A%7D%0A%0Aif%20let%20Some(sections)%20%3D%20meta.section_markers%20%7B%0A%20%20%20%20for%20section%20in%20sections%20%7B%0A%20%20%20%20%20%20%20%20println!(%22%7B%3A%3F%7D%20at%20%7B%7Dms%22%2C%20section.section_type%2C%20section.timestamp_ms)%3B%0A%20%20%20%20%7D%0A%7D%0A%60%60%60%0A%0A---%0A%0A%23%23%20Low-Level%20API%0A%0A%23%23%23%20Reader%0A%0A%60%60%60rust%0Ause%20libflo_audio%3A%3AReader%3B%0A%0Alet%20reader%20%3D%20Reader%3A%3Anew()%3B%0Alet%20flo_file%20%3D%20reader.read(%26data)%3F%3B%0A%0A%2F%2F%20Access%20header%0Aprintln!(%22Version%3A%20%7B%7D.%7B%7D%22%2C%20flo_file.header.version_major%2C%20flo_file.header.version_minor)%3B%0Aprintln!(%22Sample%20rate%3A%20%7B%7D%22%2C%20flo_file.header.sample_rate)%3B%0A%0A%2F%2F%20Access%20frames%0Afor%20frame%20in%20%26flo_file.frames%20%7B%0A%20%20%20%20println!(%22Frame%20type%3A%20%7B%7D%2C%20samples%3A%20%7B%7D%22%2C%20frame.frame_type%2C%20frame.frame_samples)%3B%0A%7D%0A%60%60%60%0A%0A%23%23%23%20Writer%0A%0A%60%60%60rust%0Ause%20libflo_audio%3A%3A%7BWriter%2C%20FloFile%7D%3B%0A%0Alet%20writer%20%3D%20Writer%3A%3Anew()%3B%0Alet%20data%20%3D%20writer.write(%26flo_file)%3F%3B%0A%60%60%60%0A%0A---%0A%0A%23%23%20Error%20Handling%0A%0AAll%20functions%20return%20%60FloResult%3CT%3E%60%3A%0A%0A%60%60%60rust%0Ause%20libflo_audio%3A%3A%7Bdecode%2C%20FloError%7D%3B%0A%0Amatch%20decode(%26data)%20%7B%0A%20%20%20%20Ok(samples)%20%3D%3E%20println!(%22Decoded%20%7B%7D%20samples%22%2C%20samples.len())%2C%0A%20%20%20%20Err(FloError%3A%3AInvalidMagic)%20%3D%3E%20println!(%22Not%20a%20flo%20file%22)%2C%0A%20%20%20%20Err(FloError%3A%3AUnsupportedVersion(v))%20%3D%3E%20println!(%22Version%20%7B%7D%20not%20supported%22%2C%20v)%2C%0A%20%20%20%20Err(FloError%3A%3ACrcMismatch)%20%3D%3E%20println!(%22File%20is%20corrupted%22)%2C%0A%20%20%20%20Err(e)%20%3D%3E%20println!(%22Error%3A%20%7B%3A%3F%7D%22%2C%20e)%2C%0A%7D%0A%60%60%60%0A%0A%23%23%23%20Error%20Types%0A%0A%60%60%60rust%0Apub%20enum%20FloError%20%7B%0A%20%20%20%20InvalidMagic%2C%0A%20%20%20%20UnsupportedVersion(u8)%2C%0A%20%20%20%20InvalidFrameType(u8)%2C%0A%20%20%20%20CrcMismatch%2C%0A%20%20%20%20InsufficientData%2C%0A%20%20%20%20EncodingError(String)%2C%0A%20%20%20%20DecodingError(String)%2C%0A%20%20%20%20MetadataError(String)%2C%0A%20%20%20%20IoError(std%3A%3Aio%3A%3AError)%2C%0A%7D%0A%60%60%60%0A%0A---%0A%0A%23%23%20Thread%20Safety%0A%0A-%20%60Encoder%60%20and%20%60Decoder%60%20are%20%60Send%20%2B%20Sync%60%0A-%20Safe%20for%20concurrent%20encoding%2Fdecoding%0A-%20No%20global%20state%0A" style="display: none;"></div>
+                  
+                    <nav aria-label="breadcrumb" class="docmd-breadcrumbs">
+                      <ol>
+                        
+                        
+                          <li class="breadcrumb-item " >
+                            
+                              <span>API Reference</span>
+                            
+                            
+                              <span class="breadcrumb-separator">
+<svg class="lucide-icon icon-chevron-right " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-chevron-right"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m9 18 6-6-6-6" />
+</svg>
+</span>
+                            
+                          </li>
+                        
+                          <li class="breadcrumb-item active" aria-current=&quot;page&quot;>
+                            
+                              <span>Rust API</span>
+                            
+                            
+                          </li>
+                        
+                      </ol>
+                    </nav>
+                  
+
+                  
+                    <div class="docmd-copy-widgets">
+                      
+                        <button class="docmd-copy-btn docmd-copy-raw-btn" data-copied="Copied!" title="Copy Markdown" aria-label="Copy Markdown">
+                          <span class="docmd-btn-icon">
+<svg class="lucide-icon icon-copy " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-copy"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+  <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+</svg>
+</span>
+                        </button>
+                      
+                      
+                        <button class="docmd-copy-btn docmd-copy-context-btn" data-copied="Copied!" title="Copy Context">
+                          <span class="docmd-btn-icon">
+<svg class="lucide-icon icon-message-square " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-message-square"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z" />
+</svg>
+</span>
+                          <span class="docmd-btn-text">Copy Context</span>
+                        </button>
+                      
+                    </div>
+                  
+                </div>
+                
+                <h1 id="rust-api" class="docmd-heading"><a href="#rust-api" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Rust API</h1>
+<p>The <code>libflo</code> crate provides native Rust encoding, decoding, and metadata support.</p>
+<h2 id="rust-api-installation" class="docmd-heading"><a href="#rust-api-installation" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Installation</h2>
+<p>Add to your <code>Cargo.toml</code>:</p>
+<pre class="hljs"><code class="language-toml">[dependencies]
+libflo<span class="hljs-operator">-</span>audio <span class="hljs-operator">=</span> { version <span class="hljs-operator">=</span> <span class="hljs-string">&quot;0.1.2&quot;</span> }
+</code></pre>
+<hr>
+<h2 id="rust-api-quick-start" class="docmd-heading"><a href="#rust-api-quick-start" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Quick Start</h2>
+<pre class="hljs"><code class="language-rust"><span class="hljs-keyword">use</span> libflo_audio<span class="hljs-operator">::</span>{Encoder, decode, info};
+
+<span class="hljs-keyword">fn</span> <span class="hljs-title function_">main</span>() <span class="hljs-operator">-&gt;</span> Result<span class="hljs-operator">&lt;</span>(), Box<span class="hljs-operator">&lt;</span>dyn std<span class="hljs-operator">::</span>error<span class="hljs-operator">::</span>Error<span class="hljs-operator">&gt;&gt;</span> {
+    <span class="hljs-comment">// Create 1 second of stereo silence</span>
+    <span class="hljs-keyword">let</span> samples<span class="hljs-operator">:</span> Vec<span class="hljs-operator">&lt;</span>f32<span class="hljs-operator">&gt;</span> <span class="hljs-operator">=</span> vec<span class="hljs-operator">!</span>[<span class="hljs-number">0.0</span>; <span class="hljs-number">44100</span> <span class="hljs-operator">*</span> <span class="hljs-number">2</span>];
+    
+    <span class="hljs-comment">// Encode</span>
+    <span class="hljs-keyword">let</span> encoder <span class="hljs-operator">=</span> Encoder<span class="hljs-operator">::</span><span class="hljs-keyword">new</span>(<span class="hljs-number">44100</span>, <span class="hljs-number">2</span>, <span class="hljs-number">16</span>);
+    <span class="hljs-keyword">let</span> flo_data <span class="hljs-operator">=</span> encoder.<span class="hljs-title function_">encode</span>(<span class="hljs-operator">&amp;</span>samples, <span class="hljs-operator">&amp;</span>[])<span class="hljs-operator">?</span>;
+    
+    <span class="hljs-comment">// Decode</span>
+    <span class="hljs-keyword">let</span> decoded <span class="hljs-operator">=</span> <span class="hljs-title function_">decode</span>(<span class="hljs-operator">&amp;</span>flo_data)<span class="hljs-operator">?</span>;
+    
+    <span class="hljs-comment">// Info</span>
+    <span class="hljs-keyword">let</span> file_info <span class="hljs-operator">=</span> <span class="hljs-title function_">info</span>(<span class="hljs-operator">&amp;</span>flo_data)<span class="hljs-operator">?</span>;
+    println<span class="hljs-operator">!</span>(<span class="hljs-string">&quot;Duration: {}s&quot;</span>, file_info.<span class="hljs-attr">duration_secs</span>);
+    
+    <span class="hljs-title function_">Ok</span>(())
+}
+</code></pre>
+<hr>
+<h2 id="rust-api-lossless-encoding" class="docmd-heading"><a href="#rust-api-lossless-encoding" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Lossless Encoding</h2>
+<h3 id="rust-api-lossless-encoding-encoder" class="docmd-heading"><a href="#rust-api-lossless-encoding-encoder" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Encoder</h3>
+<pre class="hljs"><code class="language-rust"><span class="hljs-keyword">use</span> libflo_audio<span class="hljs-operator">::</span>Encoder;
+
+<span class="hljs-keyword">let</span> encoder <span class="hljs-operator">=</span> Encoder<span class="hljs-operator">::</span><span class="hljs-keyword">new</span>(
+    sample_rate,  <span class="hljs-comment">// u32: e.g., 44100</span>
+    channels,     <span class="hljs-comment">// u8: 1 (mono) or 2 (stereo)</span>
+    bit_depth     <span class="hljs-comment">// u8: 16, 24, or 32</span>
+);
+
+<span class="hljs-comment">// Encode without metadata</span>
+<span class="hljs-keyword">let</span> flo_data <span class="hljs-operator">=</span> encoder.<span class="hljs-title function_">encode</span>(<span class="hljs-operator">&amp;</span>samples, <span class="hljs-operator">&amp;</span>[])<span class="hljs-operator">?</span>;
+
+<span class="hljs-comment">// Encode with metadata</span>
+<span class="hljs-keyword">let</span> metadata <span class="hljs-operator">=</span> <span class="hljs-title function_">create_metadata</span>();
+<span class="hljs-keyword">let</span> flo_data <span class="hljs-operator">=</span> encoder.<span class="hljs-title function_">encode</span>(<span class="hljs-operator">&amp;</span>samples, <span class="hljs-operator">&amp;</span>metadata)<span class="hljs-operator">?</span>;
+</code></pre>
+<h3 id="rust-api-lossless-encoding-sample-format" class="docmd-heading"><a href="#rust-api-lossless-encoding-sample-format" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Sample Format</h3>
+<p>Samples must be:</p>
+<ul>
+<li><code>Vec&lt;f32&gt;</code> or <code>&amp;[f32]</code></li>
+<li>Interleaved: <code>[L, R, L, R, ...]</code> for stereo</li>
+<li>Normalized: <code>-1.0</code> to <code>1.0</code></li>
+</ul>
+<pre class="hljs"><code class="language-rust"><span class="hljs-comment">// Mono: [s0, s1, s2, ...]</span>
+<span class="hljs-comment">// Stereo: [L0, R0, L1, R1, L2, R2, ...]</span>
+</code></pre>
+<hr>
+<h2 id="rust-api-lossy-encoding" class="docmd-heading"><a href="#rust-api-lossy-encoding" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Lossy Encoding</h2>
+<h3 id="rust-api-lossy-encoding-lossyencoder" class="docmd-heading"><a href="#rust-api-lossy-encoding-lossyencoder" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>LossyEncoder</h3>
+<pre class="hljs"><code class="language-rust"><span class="hljs-keyword">use</span> libflo_audio<span class="hljs-operator">::</span>{LossyEncoder, QualityPreset};
+
+<span class="hljs-comment">// With quality preset</span>
+<span class="hljs-keyword">let</span> quality <span class="hljs-operator">=</span> QualityPreset<span class="hljs-operator">::</span>High.<span class="hljs-title function_">as_f32</span>();
+<span class="hljs-keyword">let</span> <span class="hljs-keyword">mut</span> encoder <span class="hljs-operator">=</span> LossyEncoder<span class="hljs-operator">::</span><span class="hljs-keyword">new</span>(<span class="hljs-number">44100</span>, <span class="hljs-number">2</span>, quality);
+<span class="hljs-keyword">let</span> flo_data <span class="hljs-operator">=</span> encoder.<span class="hljs-title function_">encode_to_flo</span>(<span class="hljs-operator">&amp;</span>samples, <span class="hljs-operator">&amp;</span>[])<span class="hljs-operator">?</span>;
+</code></pre>
+<h3 id="rust-api-lossy-encoding-quality-presets" class="docmd-heading"><a href="#rust-api-lossy-encoding-quality-presets" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Quality Presets</h3>
+<pre class="hljs"><code class="language-rust"><span class="hljs-keyword">use</span> libflo_audio<span class="hljs-operator">::</span>QualityPreset;
+
+QualityPreset<span class="hljs-operator">::</span>Low         <span class="hljs-comment">// 0.1  - ~48 kbps</span>
+QualityPreset<span class="hljs-operator">::</span>Medium      <span class="hljs-comment">// 0.3  - ~128 kbps</span>
+QualityPreset<span class="hljs-operator">::</span>High        <span class="hljs-comment">// 0.55 - ~192 kbps</span>
+QualityPreset<span class="hljs-operator">::</span>VeryHigh    <span class="hljs-comment">// 0.75 - ~256 kbps</span>
+QualityPreset<span class="hljs-operator">::</span>Transparent <span class="hljs-comment">// 0.95 - ~320 kbps</span>
+
+<span class="hljs-comment">// Get f32 value</span>
+<span class="hljs-keyword">let</span> quality<span class="hljs-operator">:</span> f32 <span class="hljs-operator">=</span> QualityPreset<span class="hljs-operator">::</span>High.<span class="hljs-title function_">as_f32</span>();
+</code></pre>
+<h3 id="rust-api-lossy-encoding-target-bitrate" class="docmd-heading"><a href="#rust-api-lossy-encoding-target-bitrate" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Target Bitrate</h3>
+<pre class="hljs"><code class="language-rust"><span class="hljs-keyword">use</span> libflo_audio<span class="hljs-operator">::</span>{LossyEncoder, QualityPreset};
+
+<span class="hljs-comment">// Calculate quality from target bitrate</span>
+<span class="hljs-keyword">let</span> quality <span class="hljs-operator">=</span> QualityPreset<span class="hljs-operator">::</span><span class="hljs-title function_">from_bitrate</span>(
+    <span class="hljs-number">192</span>,    <span class="hljs-comment">// target kbps</span>
+    <span class="hljs-number">44100</span>,  <span class="hljs-comment">// sample rate</span>
+    <span class="hljs-number">2</span>       <span class="hljs-comment">// channels</span>
+).<span class="hljs-title function_">as_f32</span>();
+
+<span class="hljs-keyword">let</span> <span class="hljs-keyword">mut</span> encoder <span class="hljs-operator">=</span> LossyEncoder<span class="hljs-operator">::</span><span class="hljs-keyword">new</span>(<span class="hljs-number">44100</span>, <span class="hljs-number">2</span>, quality);
+<span class="hljs-keyword">let</span> flo_data <span class="hljs-operator">=</span> encoder.<span class="hljs-title function_">encode_to_flo</span>(<span class="hljs-operator">&amp;</span>samples, <span class="hljs-operator">&amp;</span>[])<span class="hljs-operator">?</span>;
+</code></pre>
+<hr>
+<h2 id="rust-api-decoding" class="docmd-heading"><a href="#rust-api-decoding" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Decoding</h2>
+<h3 id="rust-api-decoding-auto-detect-mode" class="docmd-heading"><a href="#rust-api-decoding-auto-detect-mode" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Auto-detect Mode</h3>
+<pre class="hljs"><code class="language-rust"><span class="hljs-keyword">use</span> libflo_audio<span class="hljs-operator">::</span>decode;
+
+<span class="hljs-comment">// Automatically detects lossless vs lossy</span>
+<span class="hljs-keyword">let</span> samples<span class="hljs-operator">:</span> Vec<span class="hljs-operator">&lt;</span>f32<span class="hljs-operator">&gt;</span> <span class="hljs-operator">=</span> <span class="hljs-title function_">decode</span>(<span class="hljs-operator">&amp;</span>flo_data)<span class="hljs-operator">?</span>;
+</code></pre>
+<h3 id="rust-api-decoding-decoder-struct" class="docmd-heading"><a href="#rust-api-decoding-decoder-struct" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Decoder Struct</h3>
+<pre class="hljs"><code class="language-rust"><span class="hljs-keyword">use</span> libflo_audio<span class="hljs-operator">::</span>Decoder;
+
+<span class="hljs-keyword">let</span> decoder <span class="hljs-operator">=</span> Decoder<span class="hljs-operator">::</span><span class="hljs-keyword">new</span>();
+<span class="hljs-keyword">let</span> samples <span class="hljs-operator">=</span> decoder.<span class="hljs-title function_">decode</span>(<span class="hljs-operator">&amp;</span>flo_data)<span class="hljs-operator">?</span>;
+</code></pre>
+<hr>
+<h2 id="rust-api-file-information" class="docmd-heading"><a href="#rust-api-file-information" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>File Information</h2>
+<pre class="hljs"><code class="language-rust"><span class="hljs-keyword">use</span> libflo_audio<span class="hljs-operator">::</span>info;
+
+<span class="hljs-keyword">let</span> file_info <span class="hljs-operator">=</span> <span class="hljs-title function_">info</span>(<span class="hljs-operator">&amp;</span>flo_data)<span class="hljs-operator">?</span>;
+
+println<span class="hljs-operator">!</span>(<span class="hljs-string">&quot;Sample rate: {}&quot;</span>, file_info.<span class="hljs-attr">sample_rate</span>);
+println<span class="hljs-operator">!</span>(<span class="hljs-string">&quot;Channels: {}&quot;</span>, file_info.<span class="hljs-attr">channels</span>);
+println<span class="hljs-operator">!</span>(<span class="hljs-string">&quot;Bit depth: {}&quot;</span>, file_info.<span class="hljs-attr">bit_depth</span>);
+println<span class="hljs-operator">!</span>(<span class="hljs-string">&quot;Duration: {}s&quot;</span>, file_info.<span class="hljs-attr">duration_secs</span>);
+println<span class="hljs-operator">!</span>(<span class="hljs-string">&quot;Lossy: {}&quot;</span>, file_info.<span class="hljs-attr">is_lossy</span>);
+println<span class="hljs-operator">!</span>(<span class="hljs-string">&quot;Compression: {}x&quot;</span>, file_info.<span class="hljs-attr">compression_ratio</span>);
+</code></pre>
+<h3 id="rust-api-file-information-audioinfo-struct" class="docmd-heading"><a href="#rust-api-file-information-audioinfo-struct" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>AudioInfo Struct</h3>
+<pre class="hljs"><code class="language-rust"><span class="hljs-keyword">pub</span> <span class="hljs-keyword">struct</span> AudioInfo {
+    <span class="hljs-keyword">pub</span> sample_rate<span class="hljs-operator">:</span> u32,
+    <span class="hljs-keyword">pub</span> channels<span class="hljs-operator">:</span> u8,
+    <span class="hljs-keyword">pub</span> bit_depth<span class="hljs-operator">:</span> u8,
+    <span class="hljs-keyword">pub</span> total_samples<span class="hljs-operator">:</span> u64,
+    <span class="hljs-keyword">pub</span> duration_secs<span class="hljs-operator">:</span> f64,
+    <span class="hljs-keyword">pub</span> is_lossy<span class="hljs-operator">:</span> <span class="hljs-keyword">bool</span>,
+    <span class="hljs-keyword">pub</span> compression_ratio<span class="hljs-operator">:</span> f32,
+}
+</code></pre>
+<p>Note: <code>total_samples</code> counts sample-frames (samples per channel). For UI/display, prefer using <code>FloMetadata.length_ms</code> (duration in ms) when available; otherwise compute duration from <code>total_samples / sample_rate</code>.</p>
+<hr>
+<h2 id="rust-api-validation" class="docmd-heading"><a href="#rust-api-validation" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Validation</h2>
+<pre class="hljs"><code class="language-rust"><span class="hljs-keyword">use</span> libflo_audio<span class="hljs-operator">::</span>validate;
+
+<span class="hljs-keyword">match</span> <span class="hljs-title function_">validate</span>(<span class="hljs-operator">&amp;</span>flo_data) {
+    <span class="hljs-title function_">Ok</span>(<span class="hljs-literal">true</span>) <span class="hljs-operator">=&gt;</span> println<span class="hljs-operator">!</span>(<span class="hljs-string">&quot;File is valid&quot;</span>),
+    <span class="hljs-title function_">Ok</span>(<span class="hljs-literal">false</span>) <span class="hljs-operator">=&gt;</span> println<span class="hljs-operator">!</span>(<span class="hljs-string">&quot;CRC32 mismatch - file corrupted&quot;</span>),
+    <span class="hljs-title function_">Err</span>(e) <span class="hljs-operator">=&gt;</span> println<span class="hljs-operator">!</span>(<span class="hljs-string">&quot;Invalid file: {}&quot;</span>, e),
+}
+</code></pre>
+<hr>
+<h2 id="rust-api-metadata" class="docmd-heading"><a href="#rust-api-metadata" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Metadata</h2>
+<h3 id="rust-api-metadata-flometadata-struct" class="docmd-heading"><a href="#rust-api-metadata-flometadata-struct" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>FloMetadata Struct</h3>
+<pre class="hljs"><code class="language-rust"><span class="hljs-keyword">use</span> libflo_audio<span class="hljs-operator">::</span>{FloMetadata, SectionType, PictureType};
+
+<span class="hljs-keyword">let</span> <span class="hljs-keyword">mut</span> meta <span class="hljs-operator">=</span> FloMetadata<span class="hljs-operator">::</span><span class="hljs-keyword">new</span>();
+
+<span class="hljs-comment">// Basic fields</span>
+meta.<span class="hljs-attr">title</span> <span class="hljs-operator">=</span> <span class="hljs-title function_">Some</span>(<span class="hljs-string">&quot;Track Title&quot;</span>.<span class="hljs-title function_">to_string</span>());
+meta.<span class="hljs-attr">artist</span> <span class="hljs-operator">=</span> <span class="hljs-title function_">Some</span>(<span class="hljs-string">&quot;Artist Name&quot;</span>.<span class="hljs-title function_">to_string</span>());
+meta.<span class="hljs-attr">album</span> <span class="hljs-operator">=</span> <span class="hljs-title function_">Some</span>(<span class="hljs-string">&quot;Album Name&quot;</span>.<span class="hljs-title function_">to_string</span>());
+meta.<span class="hljs-attr">year</span> <span class="hljs-operator">=</span> <span class="hljs-title function_">Some</span>(<span class="hljs-number">2026</span>);
+meta.<span class="hljs-attr">genre</span> <span class="hljs-operator">=</span> <span class="hljs-title function_">Some</span>(<span class="hljs-string">&quot;Electronic&quot;</span>.<span class="hljs-title function_">to_string</span>());
+meta.<span class="hljs-attr">bpm</span> <span class="hljs-operator">=</span> <span class="hljs-title function_">Some</span>(<span class="hljs-number">128</span>);
+
+<span class="hljs-comment">// Track numbering</span>
+meta.<span class="hljs-attr">track_number</span> <span class="hljs-operator">=</span> <span class="hljs-title function_">Some</span>(<span class="hljs-number">1</span>);
+meta.<span class="hljs-attr">track_total</span> <span class="hljs-operator">=</span> <span class="hljs-title function_">Some</span>(<span class="hljs-number">12</span>);
+meta.<span class="hljs-attr">disc_number</span> <span class="hljs-operator">=</span> <span class="hljs-title function_">Some</span>(<span class="hljs-number">1</span>);
+meta.<span class="hljs-attr">disc_total</span> <span class="hljs-operator">=</span> <span class="hljs-title function_">Some</span>(<span class="hljs-number">2</span>);
+
+<span class="hljs-comment">// Serialize to MessagePack</span>
+<span class="hljs-keyword">let</span> metadata_bytes <span class="hljs-operator">=</span> meta.<span class="hljs-title function_">to_msgpack</span>()<span class="hljs-operator">?</span>;
+
+<span class="hljs-comment">// Use in encoding</span>
+<span class="hljs-keyword">let</span> encoder <span class="hljs-operator">=</span> Encoder<span class="hljs-operator">::</span><span class="hljs-keyword">new</span>(<span class="hljs-number">44100</span>, <span class="hljs-number">2</span>, <span class="hljs-number">16</span>);
+<span class="hljs-keyword">let</span> flo_data <span class="hljs-operator">=</span> encoder.<span class="hljs-title function_">encode</span>(<span class="hljs-operator">&amp;</span>samples, <span class="hljs-operator">&amp;</span>metadata_bytes)<span class="hljs-operator">?</span>;
+</code></pre>
+<h3 id="rust-api-metadata-section-markers" class="docmd-heading"><a href="#rust-api-metadata-section-markers" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Section Markers</h3>
+<pre class="hljs"><code class="language-rust"><span class="hljs-keyword">use</span> libflo_audio<span class="hljs-operator">::</span>{FloMetadata, SectionType};
+
+<span class="hljs-keyword">let</span> <span class="hljs-keyword">mut</span> meta <span class="hljs-operator">=</span> FloMetadata<span class="hljs-operator">::</span><span class="hljs-keyword">new</span>();
+
+meta.<span class="hljs-title function_">add_section</span>(<span class="hljs-number">0</span>, SectionType<span class="hljs-operator">::</span>Intro, <span class="hljs-literal">None</span>);
+meta.<span class="hljs-title function_">add_section</span>(<span class="hljs-number">15000</span>, SectionType<span class="hljs-operator">::</span>Verse, <span class="hljs-title function_">Some</span>(<span class="hljs-string">&quot;Verse 1&quot;</span>));
+meta.<span class="hljs-title function_">add_section</span>(<span class="hljs-number">45000</span>, SectionType<span class="hljs-operator">::</span>Chorus, <span class="hljs-literal">None</span>);
+meta.<span class="hljs-title function_">add_section</span>(<span class="hljs-number">75000</span>, SectionType<span class="hljs-operator">::</span>Verse, <span class="hljs-title function_">Some</span>(<span class="hljs-string">&quot;Verse 2&quot;</span>));
+meta.<span class="hljs-title function_">add_section</span>(<span class="hljs-number">105000</span>, SectionType<span class="hljs-operator">::</span>Chorus, <span class="hljs-literal">None</span>);
+meta.<span class="hljs-title function_">add_section</span>(<span class="hljs-number">135000</span>, SectionType<span class="hljs-operator">::</span>Bridge, <span class="hljs-literal">None</span>);
+meta.<span class="hljs-title function_">add_section</span>(<span class="hljs-number">165000</span>, SectionType<span class="hljs-operator">::</span>Outro, <span class="hljs-literal">None</span>);
+</code></pre>
+<h3 id="rust-api-metadata-section-types" class="docmd-heading"><a href="#rust-api-metadata-section-types" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Section Types</h3>
+<pre class="hljs"><code class="language-rust"><span class="hljs-keyword">pub</span> <span class="hljs-keyword">enum</span> SectionType {
+    Intro, Verse, PreChorus, Chorus, PostChorus,
+    Bridge, Breakdown, Drop, Buildup, Solo,
+    Instrumental, Outro, Silence, Other
+}
+</code></pre>
+<h3 id="rust-api-metadata-cover-art" class="docmd-heading"><a href="#rust-api-metadata-cover-art" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Cover Art</h3>
+<pre class="hljs"><code class="language-rust"><span class="hljs-keyword">use</span> libflo_audio<span class="hljs-operator">::</span>{FloMetadata, Picture, PictureType};
+<span class="hljs-keyword">use</span> std<span class="hljs-operator">::</span>fs;
+
+<span class="hljs-keyword">let</span> <span class="hljs-keyword">mut</span> meta <span class="hljs-operator">=</span> FloMetadata<span class="hljs-operator">::</span><span class="hljs-keyword">new</span>();
+
+<span class="hljs-keyword">let</span> image_data <span class="hljs-operator">=</span> fs<span class="hljs-operator">::</span><span class="hljs-keyword">read</span>(<span class="hljs-string">&quot;cover.jpg&quot;</span>)<span class="hljs-operator">?</span>;
+meta.<span class="hljs-attr">pictures</span> <span class="hljs-operator">=</span> <span class="hljs-title function_">Some</span>(vec<span class="hljs-operator">!</span>[
+    Picture {
+        mime_type<span class="hljs-operator">:</span> <span class="hljs-string">&quot;image/jpeg&quot;</span>.<span class="hljs-title function_">to_string</span>(),
+        picture_type<span class="hljs-operator">:</span> PictureType<span class="hljs-operator">::</span>CoverFront,
+        description<span class="hljs-operator">:</span> <span class="hljs-title function_">Some</span>(<span class="hljs-string">&quot;Album Cover&quot;</span>.<span class="hljs-title function_">to_string</span>()),
+        data<span class="hljs-operator">:</span> image_data,
+    }
+]);
+</code></pre>
+<h3 id="rust-api-metadata-synchronized-lyrics" class="docmd-heading"><a href="#rust-api-metadata-synchronized-lyrics" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Synchronized Lyrics</h3>
+<pre class="hljs"><code class="language-rust"><span class="hljs-keyword">use</span> libflo_audio<span class="hljs-operator">::</span>{FloMetadata, SyncedLyrics, LyricLine, LyricContentType};
+
+<span class="hljs-keyword">let</span> <span class="hljs-keyword">mut</span> meta <span class="hljs-operator">=</span> FloMetadata<span class="hljs-operator">::</span><span class="hljs-keyword">new</span>();
+
+meta.<span class="hljs-attr">synced_lyrics</span> <span class="hljs-operator">=</span> <span class="hljs-title function_">Some</span>(vec<span class="hljs-operator">!</span>[
+    SyncedLyrics {
+        language<span class="hljs-operator">:</span> <span class="hljs-title function_">Some</span>(<span class="hljs-string">&quot;eng&quot;</span>.<span class="hljs-title function_">to_string</span>()),
+        content_type<span class="hljs-operator">:</span> LyricContentType<span class="hljs-operator">::</span>Lyrics,
+        description<span class="hljs-operator">:</span> <span class="hljs-literal">None</span>,
+        lines<span class="hljs-operator">:</span> vec<span class="hljs-operator">!</span>[
+            LyricLine { timestamp_ms<span class="hljs-operator">:</span> <span class="hljs-number">0</span>, text<span class="hljs-operator">:</span> <span class="hljs-string">&quot;First line of lyrics&quot;</span>.<span class="hljs-title function_">to_string</span>() },
+            LyricLine { timestamp_ms<span class="hljs-operator">:</span> <span class="hljs-number">5000</span>, text<span class="hljs-operator">:</span> <span class="hljs-string">&quot;Second line&quot;</span>.<span class="hljs-title function_">to_string</span>() },
+            LyricLine { timestamp_ms<span class="hljs-operator">:</span> <span class="hljs-number">10000</span>, text<span class="hljs-operator">:</span> <span class="hljs-string">&quot;Third line&quot;</span>.<span class="hljs-title function_">to_string</span>() },
+        ],
+    }
+]);
+</code></pre>
+<h3 id="rust-api-metadata-reading-metadata" class="docmd-heading"><a href="#rust-api-metadata-reading-metadata" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Reading Metadata</h3>
+<pre class="hljs"><code class="language-rust"><span class="hljs-keyword">use</span> libflo_audio<span class="hljs-operator">::</span>get_metadata;
+
+<span class="hljs-keyword">let</span> meta <span class="hljs-operator">=</span> <span class="hljs-title function_">get_metadata</span>(<span class="hljs-operator">&amp;</span>flo_data)<span class="hljs-operator">?</span>;
+
+<span class="hljs-keyword">if</span> <span class="hljs-keyword">let</span> <span class="hljs-title function_">Some</span>(title) <span class="hljs-operator">=</span> meta.<span class="hljs-attr">title</span> {
+    println<span class="hljs-operator">!</span>(<span class="hljs-string">&quot;Title: {}&quot;</span>, title);
+}
+
+<span class="hljs-keyword">if</span> <span class="hljs-keyword">let</span> <span class="hljs-title function_">Some</span>(sections) <span class="hljs-operator">=</span> meta.<span class="hljs-attr">section_markers</span> {
+    <span class="hljs-keyword">for</span> section <span class="hljs-keyword">in</span> sections {
+        println<span class="hljs-operator">!</span>(<span class="hljs-string">&quot;{:?} at {}ms&quot;</span>, section.<span class="hljs-attr">section_type</span>, section.<span class="hljs-attr">timestamp_ms</span>);
+    }
+}
+</code></pre>
+<hr>
+<h2 id="rust-api-low-level-api" class="docmd-heading"><a href="#rust-api-low-level-api" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Low-Level API</h2>
+<h3 id="rust-api-low-level-api-reader" class="docmd-heading"><a href="#rust-api-low-level-api-reader" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Reader</h3>
+<pre class="hljs"><code class="language-rust"><span class="hljs-keyword">use</span> libflo_audio<span class="hljs-operator">::</span>Reader;
+
+<span class="hljs-keyword">let</span> reader <span class="hljs-operator">=</span> Reader<span class="hljs-operator">::</span><span class="hljs-keyword">new</span>();
+<span class="hljs-keyword">let</span> flo_file <span class="hljs-operator">=</span> reader.<span class="hljs-keyword">read</span>(<span class="hljs-operator">&amp;</span>data)<span class="hljs-operator">?</span>;
+
+<span class="hljs-comment">// Access header</span>
+println<span class="hljs-operator">!</span>(<span class="hljs-string">&quot;Version: {}.{}&quot;</span>, flo_file.<span class="hljs-attr">header</span>.<span class="hljs-attr">version_major</span>, flo_file.<span class="hljs-attr">header</span>.<span class="hljs-attr">version_minor</span>);
+println<span class="hljs-operator">!</span>(<span class="hljs-string">&quot;Sample rate: {}&quot;</span>, flo_file.<span class="hljs-attr">header</span>.<span class="hljs-attr">sample_rate</span>);
+
+<span class="hljs-comment">// Access frames</span>
+<span class="hljs-keyword">for</span> frame <span class="hljs-keyword">in</span> <span class="hljs-operator">&amp;</span>flo_file.<span class="hljs-attr">frames</span> {
+    println<span class="hljs-operator">!</span>(<span class="hljs-string">&quot;Frame type: {}, samples: {}&quot;</span>, frame.<span class="hljs-attr">frame_type</span>, frame.<span class="hljs-attr">frame_samples</span>);
+}
+</code></pre>
+<h3 id="rust-api-low-level-api-writer" class="docmd-heading"><a href="#rust-api-low-level-api-writer" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Writer</h3>
+<pre class="hljs"><code class="language-rust"><span class="hljs-keyword">use</span> libflo_audio<span class="hljs-operator">::</span>{Writer, FloFile};
+
+<span class="hljs-keyword">let</span> writer <span class="hljs-operator">=</span> Writer<span class="hljs-operator">::</span><span class="hljs-keyword">new</span>();
+<span class="hljs-keyword">let</span> data <span class="hljs-operator">=</span> writer.<span class="hljs-title function_">write</span>(<span class="hljs-operator">&amp;</span>flo_file)<span class="hljs-operator">?</span>;
+</code></pre>
+<hr>
+<h2 id="rust-api-error-handling" class="docmd-heading"><a href="#rust-api-error-handling" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Error Handling</h2>
+<p>All functions return <code>FloResult&lt;T&gt;</code>:</p>
+<pre class="hljs"><code class="language-rust"><span class="hljs-keyword">use</span> libflo_audio<span class="hljs-operator">::</span>{decode, FloError};
+
+<span class="hljs-keyword">match</span> <span class="hljs-title function_">decode</span>(<span class="hljs-operator">&amp;</span>data) {
+    <span class="hljs-title function_">Ok</span>(samples) <span class="hljs-operator">=&gt;</span> println<span class="hljs-operator">!</span>(<span class="hljs-string">&quot;Decoded {} samples&quot;</span>, samples.<span class="hljs-title function_">len</span>()),
+    <span class="hljs-title function_">Err</span>(FloError<span class="hljs-operator">::</span>InvalidMagic) <span class="hljs-operator">=&gt;</span> println<span class="hljs-operator">!</span>(<span class="hljs-string">&quot;Not a flo file&quot;</span>),
+    <span class="hljs-title function_">Err</span>(FloError<span class="hljs-operator">::</span><span class="hljs-title function_">UnsupportedVersion</span>(v)) <span class="hljs-operator">=&gt;</span> println<span class="hljs-operator">!</span>(<span class="hljs-string">&quot;Version {} not supported&quot;</span>, v),
+    <span class="hljs-title function_">Err</span>(FloError<span class="hljs-operator">::</span>CrcMismatch) <span class="hljs-operator">=&gt;</span> println<span class="hljs-operator">!</span>(<span class="hljs-string">&quot;File is corrupted&quot;</span>),
+    <span class="hljs-title function_">Err</span>(e) <span class="hljs-operator">=&gt;</span> println<span class="hljs-operator">!</span>(<span class="hljs-string">&quot;Error: {:?}&quot;</span>, e),
+}
+</code></pre>
+<h3 id="rust-api-error-handling-error-types" class="docmd-heading"><a href="#rust-api-error-handling-error-types" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Error Types</h3>
+<pre class="hljs"><code class="language-rust"><span class="hljs-keyword">pub</span> <span class="hljs-keyword">enum</span> FloError {
+    InvalidMagic,
+    <span class="hljs-title function_">UnsupportedVersion</span>(u8),
+    <span class="hljs-title function_">InvalidFrameType</span>(u8),
+    CrcMismatch,
+    InsufficientData,
+    <span class="hljs-title function_">EncodingError</span>(String),
+    <span class="hljs-title function_">DecodingError</span>(String),
+    <span class="hljs-title function_">MetadataError</span>(String),
+    <span class="hljs-title function_">IoError</span>(std<span class="hljs-operator">::</span>io<span class="hljs-operator">::</span>Error),
+}
+</code></pre>
+<hr>
+<h2 id="rust-api-thread-safety" class="docmd-heading"><a href="#rust-api-thread-safety" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Thread Safety</h2>
+<ul>
+<li><code>Encoder</code> and <code>Decoder</code> are <code>Send + Sync</code></li>
+<li>Safe for concurrent encoding/decoding</li>
+<li>No global state</li>
+</ul>
+
+                
+                  <div class="page-navigation">
+                    
+                      <a href="../cli-reference/" class="prev-page">
+                        
+<svg class="lucide-icon icon-arrow-left page-nav-icon" width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-arrow-left"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m12 19-7-7 7-7" />
+  <path d="M19 12H5" />
+</svg>
+
+                        <span><small>Previous</small><strong>
+                            CLI Reference
+                          </strong></span>
+                      </a>
+                    
+                    
+                      <a href="../javascript-api/" class="next-page">
+                        <span><small>Next</small>
+                          <strong>
+                            JavaScript / WASM
+                          </strong></span>
+                        
+<svg class="lucide-icon icon-arrow-right page-nav-icon" width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-arrow-right"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M5 12h14" />
+  <path d="m12 5 7 7-7 7" />
+</svg>
+
+                      </a>
+                    
+                  </div>
+                
+              </div>
+              
+              <div class="toc-sidebar">
+                
+
+
+  <div class="toc-container">
+    <h2 class="toc-title">On This Page<span class="mobile-view toc-menu-button float-right">
+<svg class="lucide-icon icon-chevron-down " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-chevron-down"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m6 9 6 6 6-6" />
+</svg>
+</span></h2>
+    <ul class="toc-list">
+      
+        <li class="toc-item toc-level-1">
+          <a href="#rust-api" class="toc-link">Rust API</a>
+        </li>
+      
+        <li class="toc-item toc-level-2">
+          <a href="#rust-api-installation" class="toc-link">Installation</a>
+        </li>
+      
+        <li class="toc-item toc-level-2">
+          <a href="#rust-api-quick-start" class="toc-link">Quick Start</a>
+        </li>
+      
+        <li class="toc-item toc-level-2">
+          <a href="#rust-api-lossless-encoding" class="toc-link">Lossless Encoding</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#rust-api-lossless-encoding-encoder" class="toc-link">Encoder</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#rust-api-lossless-encoding-sample-format" class="toc-link">Sample Format</a>
+        </li>
+      
+        <li class="toc-item toc-level-2">
+          <a href="#rust-api-lossy-encoding" class="toc-link">Lossy Encoding</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#rust-api-lossy-encoding-lossyencoder" class="toc-link">LossyEncoder</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#rust-api-lossy-encoding-quality-presets" class="toc-link">Quality Presets</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#rust-api-lossy-encoding-target-bitrate" class="toc-link">Target Bitrate</a>
+        </li>
+      
+        <li class="toc-item toc-level-2">
+          <a href="#rust-api-decoding" class="toc-link">Decoding</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#rust-api-decoding-auto-detect-mode" class="toc-link">Auto-detect Mode</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#rust-api-decoding-decoder-struct" class="toc-link">Decoder Struct</a>
+        </li>
+      
+        <li class="toc-item toc-level-2">
+          <a href="#rust-api-file-information" class="toc-link">File Information</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#rust-api-file-information-audioinfo-struct" class="toc-link">AudioInfo Struct</a>
+        </li>
+      
+        <li class="toc-item toc-level-2">
+          <a href="#rust-api-validation" class="toc-link">Validation</a>
+        </li>
+      
+        <li class="toc-item toc-level-2">
+          <a href="#rust-api-metadata" class="toc-link">Metadata</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#rust-api-metadata-flometadata-struct" class="toc-link">FloMetadata Struct</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#rust-api-metadata-section-markers" class="toc-link">Section Markers</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#rust-api-metadata-section-types" class="toc-link">Section Types</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#rust-api-metadata-cover-art" class="toc-link">Cover Art</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#rust-api-metadata-synchronized-lyrics" class="toc-link">Synchronized Lyrics</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#rust-api-metadata-reading-metadata" class="toc-link">Reading Metadata</a>
+        </li>
+      
+        <li class="toc-item toc-level-2">
+          <a href="#rust-api-low-level-api" class="toc-link">Low-Level API</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#rust-api-low-level-api-reader" class="toc-link">Reader</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#rust-api-low-level-api-writer" class="toc-link">Writer</a>
+        </li>
+      
+        <li class="toc-item toc-level-2">
+          <a href="#rust-api-error-handling" class="toc-link">Error Handling</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#rust-api-error-handling-error-types" class="toc-link">Error Types</a>
+        </li>
+      
+        <li class="toc-item toc-level-2">
+          <a href="#rust-api-thread-safety" class="toc-link">Thread Safety</a>
+        </li>
+      
+    </ul>
+  </div>
+
+              </div>
+              
+            </div>
+            <div class="page-footer-actions">
+              
+              
+                <span class="git-last-updated" data-timestamp="1789065744000">
+                  <svg class="git-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                  <span class="git-label">Last updated:</span>
+                  <span class="git-time" data-timestamp="1789065744000"></span>
+                  
+                  <div class="git-commit-tooltip" role="tooltip">
+                    <div class="git-tooltip-title">Recent commits</div>
+                    <ul class="git-commit-list">
+                      
+                        <li class="git-commit-item">
+                          <div class="git-commit-avatar" title="NellowTCS">
+                            
+                              <img src="https://www.gravatar.com/avatar/baecf29c7bedbb00a8d5bd5984799c55?d=mp&amp;s=64" alt="NellowTCS">
+                            
+                          </div>
+                          <div class="git-commit-details">
+                            <div class="git-commit-message" title="oop">oop</div>
+                            <div class="git-commit-meta">
+                              <span class="git-commit-author">NellowTCS</span>
+                              <span class="git-commit-date" data-timestamp="1789065744000"></span>
+                            </div>
+                          </div>
+                        </li>
+                      
+                    </ul>
+                  </div>
+                  
+                </span>
+              
+              <span class="git-spacer"></span>
+              
+                <a href="https://github.com/Audiflo/flo/edit/main/Docs/docs/rust-api.md" target="_blank" rel="noopener noreferrer" class="edit-link">
+                  
+<svg class="lucide-icon icon-pencil " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-pencil"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" />
+  <path d="m15 5 4 4" />
+</svg>
+
+                  Edit this page
+                </a>
+              
+            </div>
+          </main>
+          
+
+
+<footer class="footer-complete">
+  <div class="footer-complete-top">
+      <div class="footer-brand">
+          
+            <span class="footer-title">flo</span>
+          
+          
+            <p class="footer-desc">A modern lossless and lossy audio codec with native and WebAssembly APIs.</p>
+          
+        </div>
+        
+          <div class="footer-columns">
+            
+              <div class="footer-column">
+                <span class="footer-column-title">Resources</span>
+                <ul>
+                  
+                    <li><a href="getting-started/" >Getting Started</a></li>
+                  
+                    <li><a href="rust-api/" >Rust API</a></li>
+                  
+                    <li><a href="javascript-api/" >JavaScript API</a></li>
+                  
+                </ul>
+              </div>
+            
+              <div class="footer-column">
+                <span class="footer-column-title">Project</span>
+                <ul>
+                  
+                    <li><a href="./demo/" target=&quot;_blank&quot; rel=&quot;noopener&quot;>Live Demo</a></li>
+                  
+                    <li><a href="https://github.com/Audiflo/flo" >GitHub</a></li>
+                  
+                    <li><a href="https://github.com/Audiflo/flo/issues" >Issues</a></li>
+                  
+                </ul>
+              </div>
+            
+          </div>
+        
+      </div>
+      <div class="footer-complete-bottom">
+        <div class="user-footer">Built with <a href="https://docmd.io">docmd</a>. <a href="https://github.com/Audiflo/flo">View on GitHub</a>.</div>
+        
+          <div class="branding-footer">
+            Built with <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path><path d="M12 5 9.04 7.96a2.17 2.17 0 0 0 0 3.08c.82.82 2.13.85 3 .07l2.07-1.9a2.82 2.82 0 0 1 3.79 0l2.96 2.66"></path><path d="m18 15-2-2"></path><path d="m15 18-2-2"></path></svg> <a href="https://docmd.io" target="_blank" rel="noopener">docmd.</a>
+          </div>
+        
+      </div>
+  </footer>
+
+        </div>
+      </div>
+      
+      <script src="../assets/js/docmd-main.js?v=mtvvpwwr"></script>
+      
+      <script src="../assets/js/docmd-git.js?v=mtvvpwwr"></script>
+      <script src="../assets/js/docmd-image-lightbox.js?v=mtvvpwwr" ></script>
+<script src="../assets/js/vendor/minisearch.js?v=mtvvpwwr" ></script>
+<script src="../assets/js/docmd-search.js?v=mtvvpwwr" ></script>
+<script src="../assets/js/docmd-git.js?v=mtvvpwwr" ></script>
+<script src="../assets/js/docmd-ai.js?v=mtvvpwwr" ></script>
+
+  <!-- Search Modal (Injected by @docmd/plugin-search) -->
+  <div id="docmd-search-modal" class="docmd-search-modal" style="display: none;" data-show-confidence="false" data-show-filters="true"
+       data-search-placeholder="Search documentation..."
+       data-search-no-results="No results found."
+       data-search-error="Failed to load search index."
+       data-search-offline="Search requires a web server. Open this site via http://localhost instead of file:// to enable search."
+       data-search-offline-build="Search is disabled because these docs were built with the --offline flag. Rebuild the site without the flag to enable search."
+       data-search-initial="Type to start searching..."
+       data-search-navigate="to navigate"
+       data-search-escape="to close">
+      <div class="docmd-search-box">
+          <div class="docmd-search-header">
+              <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide-icon icon-search"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+              <input type="text" id="docmd-search-input" placeholder="Search documentation..." autocomplete="off" spellcheck="false">
+              <button onclick="window.closeDocmdSearch()" class="docmd-search-close" aria-label="Close search">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide-icon icon-x"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+              </button>
+          </div>
+          <div id="docmd-search-results" class="docmd-search-results"></div>
+          <div class="docmd-search-footer">
+              <span><kbd class="docmd-kbd">↑</kbd> <kbd class="docmd-kbd">↓</kbd> to navigate</span>
+              <span><kbd class="docmd-kbd">ESC</kbd> to close</span>
+          </div>
+      </div>
+  </div>
+
+    <script>
+      (function() {
+        var searchDebounceTimer;
+
+        document.addEventListener('click', function(e) {
+          var link = e.target.closest('a');
+          if (!link || !window.gtag) return;
+          
+          var url = link.href;
+          var hostname = window.location.hostname;
+          var isExternal = link.hostname && link.hostname !== hostname;
+          var isDownload = link.hasAttribute('download') || url.match(/\.(pdf|zip|tar|gz|exe|pkg)$/i);
+          
+          if (isExternal) {
+            gtag('event', 'click_external', { 'url': url, 'link_text': link.innerText.trim() });
+          } else if (isDownload) {
+            gtag('event', 'download', { 'file_name': url.split('/').pop(), 'url': url });
+          }
+
+          // TOC tracking
+          if (link.classList.contains('toc-link')) {
+            gtag('event', 'toc_click', { 'target_id': link.getAttribute('href'), 'title': link.innerText.trim() });
+          }
+
+          // Permalink tracking
+          if (link.classList.contains('heading-anchor')) {
+            gtag('event', 'permalink_click', { 'url': url });
+          }
+        });
+
+        
+        // Search Keyword Tracking
+        document.addEventListener('input', function(e) {
+          if (e.target.id === 'docmd-search-input' && window.gtag) {
+            var query = e.target.value.trim();
+            if (query.length < 3) return;
+            
+            clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(function() {
+              gtag('event', 'search', { 'search_term': query });
+            }, 1000);
+          }
+        });
+        
+      })();
+    </script>
+
+<script>window.__git_config={"repo":"https://github.com/Audiflo/flo/edit/main/","branch":"main","editLink":true,"lastUpdated":true,"commitHistory":true,"maxCommits":5,"dateFormat":"relative"};window.__git_i18n={"lastUpdated":"Last updated","recentCommits":"Recent commits","viewCommitHistory":"View commit history","editOnGitHub":"Edit on GitHub","editOnGitLab":"Edit on GitLab","editOnBitbucket":"Edit on Bitbucket","editThisPage":"Edit this page","justNow":"just now","minutesAgo":"{n}m ago","hoursAgo":"{n}h ago","daysAgo":"{n}d ago"}</script>
+<div id="docmd-ai-root"></div><script>window.__docmd_ai_config={"endpoint":"","cloud":{},"captcha":true,"position":"bottom-center","siteTitle":"flo","siteBase":"/flo/","siteUrl":"https://audiflo.github.io/flo/","versions":null,"i18n":null,"navigation":[{"title":"Home","path":"/","icon":"home"},{"title":"Getting Started","icon":"rocket","collapsible":false,"children":[{"title":"Getting Started","path":"/getting-started/","icon":"play"},{"title":"CLI Reference","path":"/cli-reference/","icon":"terminal"}]},{"title":"API Reference","icon":"code","collapsible":false,"children":[{"title":"Rust API","path":"/rust-api/","icon":"box"},{"title":"JavaScript / WASM","path":"/javascript-api/","icon":"cpu"}]},{"title":"Format and Features","icon":"file-text","collapsible":false,"children":[{"title":"File Format","path":"/file-format/","icon":"binary"},{"title":"Metadata","path":"/metadata-guide/","icon":"tag"},{"title":"Streaming","path":"/streaming/","icon":"wind"}]},{"title":"Project","icon":"layers","collapsible":false,"children":[{"title":"Architecture","path":"/architecture/","icon":"git-branch"},{"title":"No-std and WASM","path":"/no-std/","icon":"cpu"}]},{"title":"Live Demo","path":"/demo/","icon":"eye","external":true},{"title":"GitHub","path":"https://github.com/Audiflo/flo","icon":"github","external":true}],"searchCapabilities":{"keyword":true,"semantic":false},"isWorkspace":false,"workspaceProjects":[],"contextLimit":5};</script>
+      
+      
+      
+  </body>
+</html>

@@ -1,0 +1,1717 @@
+<!--
+  ---------------------------------------------------------------
+  docmd : the zero-config documentation engine.
+  @website https://docmd.io
+  [docmd-source] - Please do not remove this header.
+  ---------------------------------------------------------------
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="generator" content="docmd v0.9.5">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <script>
+      var root = "../";
+      if (root && !root.endsWith('/')) root += '/';
+      if (root === '') root = './';
+      window.DOCMD_ROOT = root;
+
+      window.DOCMD_SITE_ROOT = "/flo/";
+
+      window.DOCMD_APPEARANCE = "system";
+      window.DOCMD_VERSION_ROOT = "/";
+      window.DOCMD_BASE = "/flo/";
+      window.DOCMD_LOCALE = "";
+      window.DOCMD_DEFAULT_LOCALE = "";
+    </script>
+    <script>/**
+ * --------------------------------------------------------------------
+ * docmd : the zero-config documentation engine.
+ *
+ * @package     @docmd/core (and ecosystem)
+ * @website     https://docmd.io
+ * @repository  https://github.com/docmd-io/docmd
+ * @license     MIT
+ * @copyright   Copyright (c) 2025-present docmd.io
+ *
+ * [docmd-source] - Please do not remove this header.
+ * --------------------------------------------------------------------
+ */
+
+(function () {
+  try {
+    // 1. Determine Theme
+    //
+    // Resolve from three sources, in priority order:
+    //   1. localStorage explicit user choice (light / dark)
+    //   2. window.DOCMD_APPEARANCE  (current canonical name, set by EJS templates)
+    //   3. window.DOCMD_DEFAULT_MODE (legacy alias kept for pre-0.8.7 outputs)
+    //   4. 'light' as the final fallback
+    //
+    // Note: localStorage is only honoured when it holds an explicit
+    // 'light' or 'dark' value. A stored 'system' value (from a prior
+    // session where the user picked "follow system") must NOT win over
+    // a freshly resolved config value — the resolved value will itself
+    // be 'system' in that case and the OS preference check below takes
+    // over, so this is a no-op for the in-session behaviour but keeps
+    // any future storage migration simple.
+    var localValue = localStorage.getItem('docmd-theme');
+    var configValue = window.DOCMD_APPEARANCE
+      || window.DOCMD_DEFAULT_MODE
+      || 'light';
+    var theme = (localValue === 'light' || localValue === 'dark')
+      ? localValue
+      : configValue;
+
+    if (theme === 'system') {
+      theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+
+    // 2. Apply to Root
+    document.documentElement.setAttribute('data-theme', theme);
+
+    // 3. Highlight.js Toggle Strategy
+    var lightLink = document.getElementById('hljs-light');
+    var darkLink = document.getElementById('hljs-dark');
+
+    if (lightLink && darkLink) {
+      if (theme === 'dark') {
+        lightLink.disabled = true;
+        darkLink.disabled = false;
+      } else {
+        lightLink.disabled = false;
+        darkLink.disabled = true;
+      }
+    }
+
+    document.documentElement.style.visibility = "visible";
+  } catch (e) {
+    document.documentElement.style.visibility = "visible";
+    console.error('Theme init failed', e);
+  }
+})();</script>
+    <style>
+      html {
+        visibility: hidden;
+      }
+    </style>
+    <title>
+      JavaScript API : flo
+    </title>
+    
+    
+
+    <link id="site-favicon" rel="icon" href="../assets/favicon.ico?v=mtvvpwwr">
+    <link rel="stylesheet" href="../assets/css/docmd-main.css?v=mtvvpwwr">
+    
+    <link rel="stylesheet" href="../assets/css/docmd-highlight-light.css?v=mtvvpwwr" id="hljs-light" >
+    <link rel="stylesheet" href="../assets/css/docmd-highlight-dark.css?v=mtvvpwwr" id="hljs-dark" disabled>
+    
+    
+<meta name="description" content="flo is a modern lossless and lossy audio codec with Rust and WebAssembly APIs.">
+<link rel="canonical" href="https://audiflo.github.io/flo/javascript-api/">
+<meta property="og:title" content="JavaScript API - flo">
+<meta property="og:description" content="flo is a modern lossless and lossy audio codec with Rust and WebAssembly APIs.">
+<meta property="og:url" content="https://audiflo.github.io/flo/javascript-api/">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="JavaScript API - flo">
+<meta name="twitter:description" content="flo is a modern lossless and lossy audio codec with Rust and WebAssembly APIs.">
+
+
+
+
+<link rel="stylesheet" href="../assets/css/docmd-theme-ruby.css?v=mtvvpwwr" >
+<link rel="stylesheet" href="../assets/css/docmd-git.css?v=mtvvpwwr" >
+<link rel="stylesheet" href="../assets/css/docmd-openapi.css?v=mtvvpwwr" >
+<link rel="stylesheet" href="../assets/css/docmd-ai.css?v=mtvvpwwr" >
+
+    
+    
+  </head>
+  <body
+    class="sidebar-collapsible"
+    data-default-collapsed="false"
+    data-copy-code-enabled="true" data-spa-enabled="true" data-source-file="docs/javascript-api.md">
+
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    
+    
+
+    
+    
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          
+<h1><a href="../">
+                flo
+              </a></h1>
+          
+          <span class="mobile-view sidebar-menu-button float-right">
+            
+<svg class="lucide-icon icon-menu " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-menu"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M4 5h16" />
+  <path d="M4 12h16" />
+  <path d="M4 19h16" />
+</svg>
+
+          </span>
+        </div>
+        <div class="sidebar-top-group">
+          
+          
+          
+          
+        </div>
+        
+
+<nav class="sidebar-nav" aria-label="Main Navigation">
+  <ul>
+    
+      <li class="" >
+      
+        <a href="../" class=" "
+          >
+           
+<svg class="lucide-icon icon-home " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-house"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" />
+  <path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            Home
+            </span>
+          
+          
+        </a>
+        
+
+        
+      </li>
+    
+      <li class="expanded nav-group" >
+      
+        <span class="nav-label nav-group">
+           
+<svg class="lucide-icon icon-rocket " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-rocket"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" />
+  <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09" />
+  <path d="M9 12a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.4 22.4 0 0 1-4 2z" />
+  <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 .05 5 .05" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            Getting Started
+          </span>
+          
+        </span>
+        
+
+        
+          <ul class="submenu">
+            
+      <li class="" >
+      
+        <a href="../getting-started/" class=" "
+          >
+           
+<svg class="lucide-icon icon-play " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-play"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            Getting Started
+            </span>
+          
+          
+        </a>
+        
+
+        
+      </li>
+    
+      <li class="" >
+      
+        <a href="../cli-reference/" class=" "
+          >
+           
+<svg class="lucide-icon icon-terminal " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-terminal"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12 19h8" />
+  <path d="m4 17 6-6-6-6" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            CLI Reference
+            </span>
+          
+          
+        </a>
+        
+
+        
+      </li>
+    
+          </ul>
+        
+      </li>
+    
+      <li class="active-parent expanded nav-group" >
+      
+        <span class="nav-label nav-group">
+           
+<svg class="lucide-icon icon-code " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-code"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m16 18 6-6-6-6" />
+  <path d="m8 6-6 6 6 6" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            API Reference
+          </span>
+          
+        </span>
+        
+
+        
+          <ul class="submenu">
+            
+      <li class="" >
+      
+        <a href="../rust-api/" class=" "
+          >
+           
+<svg class="lucide-icon icon-box " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-box"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+  <path d="m3.3 7 8.7 5 8.7-5" />
+  <path d="M12 22V12" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            Rust API
+            </span>
+          
+          
+        </a>
+        
+
+        
+      </li>
+    
+      <li class="active" >
+      
+        <a href="../javascript-api/" class="active "
+          >
+           
+<svg class="lucide-icon icon-cpu " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-cpu"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12 20v2" />
+  <path d="M12 2v2" />
+  <path d="M17 20v2" />
+  <path d="M17 2v2" />
+  <path d="M2 12h2" />
+  <path d="M2 17h2" />
+  <path d="M2 7h2" />
+  <path d="M20 12h2" />
+  <path d="M20 17h2" />
+  <path d="M20 7h2" />
+  <path d="M7 20v2" />
+  <path d="M7 2v2" />
+  <rect x="4" y="4" width="16" height="16" rx="2" />
+  <rect x="8" y="8" width="8" height="8" rx="1" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            JavaScript / WASM
+            </span>
+          
+          
+        </a>
+        
+
+        
+      </li>
+    
+          </ul>
+        
+      </li>
+    
+      <li class="expanded nav-group" >
+      
+        <span class="nav-label nav-group">
+           
+<svg class="lucide-icon icon-file-text " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-file-text"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" />
+  <path d="M14 2v5a1 1 0 0 0 1 1h5" />
+  <path d="M10 9H8" />
+  <path d="M16 13H8" />
+  <path d="M16 17H8" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            Format and Features
+          </span>
+          
+        </span>
+        
+
+        
+          <ul class="submenu">
+            
+      <li class="" >
+      
+        <a href="../file-format/" class=" "
+          >
+           
+<svg class="lucide-icon icon-binary " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-binary"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <rect x="14" y="14" width="4" height="6" rx="2" />
+  <rect x="6" y="4" width="4" height="6" rx="2" />
+  <path d="M6 20h4" />
+  <path d="M14 10h4" />
+  <path d="M6 14h2v6" />
+  <path d="M14 4h2v6" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            File Format
+            </span>
+          
+          
+        </a>
+        
+
+        
+      </li>
+    
+      <li class="" >
+      
+        <a href="../metadata-guide/" class=" "
+          >
+           
+<svg class="lucide-icon icon-tag " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-tag"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+  <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            Metadata
+            </span>
+          
+          
+        </a>
+        
+
+        
+      </li>
+    
+      <li class="" >
+      
+        <a href="../streaming/" class=" "
+          >
+           
+<svg class="lucide-icon icon-wind " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-wind"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12.8 19.6A2 2 0 1 0 14 16H2" />
+  <path d="M17.5 8a2.5 2.5 0 1 1 2 4H2" />
+  <path d="M9.8 4.4A2 2 0 1 1 11 8H2" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            Streaming
+            </span>
+          
+          
+        </a>
+        
+
+        
+      </li>
+    
+          </ul>
+        
+      </li>
+    
+      <li class="expanded nav-group" >
+      
+        <span class="nav-label nav-group">
+           
+<svg class="lucide-icon icon-layers " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-layers"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z" />
+  <path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12" />
+  <path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            Project
+          </span>
+          
+        </span>
+        
+
+        
+          <ul class="submenu">
+            
+      <li class="" >
+      
+        <a href="../architecture/" class=" "
+          >
+           
+<svg class="lucide-icon icon-git-branch " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-git-branch"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M15 6a9 9 0 0 0-9 9V3" />
+  <circle cx="18" cy="6" r="3" />
+  <circle cx="6" cy="18" r="3" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            Architecture
+            </span>
+          
+          
+        </a>
+        
+
+        
+      </li>
+    
+      <li class="" >
+      
+        <a href="../no-std/" class=" "
+          >
+           
+<svg class="lucide-icon icon-cpu " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-cpu"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12 20v2" />
+  <path d="M12 2v2" />
+  <path d="M17 20v2" />
+  <path d="M17 2v2" />
+  <path d="M2 12h2" />
+  <path d="M2 17h2" />
+  <path d="M2 7h2" />
+  <path d="M20 12h2" />
+  <path d="M20 17h2" />
+  <path d="M20 7h2" />
+  <path d="M7 20v2" />
+  <path d="M7 2v2" />
+  <rect x="4" y="4" width="16" height="16" rx="2" />
+  <rect x="8" y="8" width="8" height="8" rx="1" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            No-std and WASM
+            </span>
+          
+          
+        </a>
+        
+
+        
+      </li>
+    
+          </ul>
+        
+      </li>
+    
+      <li class="" >
+      
+        <a href="/demo/" class=" "
+          target=&quot;_blank&quot; rel=&quot;noopener&quot;>
+           
+<svg class="lucide-icon icon-eye " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-eye"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" />
+  <circle cx="12" cy="12" r="3" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            Live Demo
+            </span>
+          
+           
+<svg class="lucide-icon icon-external-link nav-external-icon" width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-external-link"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M15 3h6v6" />
+  <path d="M10 14 21 3" />
+  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+</svg>
+
+          
+        </a>
+        
+
+        
+      </li>
+    
+      <li class="" >
+      
+        <a href="https://github.com/Audiflo/flo" class=" "
+          target=&quot;_blank&quot; rel=&quot;noopener&quot;>
+           
+          
+          <span class="nav-item-title">
+            GitHub
+            </span>
+          
+           
+<svg class="lucide-icon icon-external-link nav-external-icon" width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-external-link"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M15 3h6v6" />
+  <path d="M10 14 21 3" />
+  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+</svg>
+
+          
+        </a>
+        
+
+        
+      </li>
+    
+  </ul>
+</nav>
+        <div class="sidebar-bottom-group mt-auto">
+          
+          
+          
+          
+        </div>
+      </aside>
+      
+      <div class="main-content-wrapper">
+        
+        
+        
+          <header class="page-header">
+            <div class="header-left">
+              
+                <button id="sidebar-toggle-button" class="sidebar-toggle-button"
+                  aria-label="Toggle Sidebar">
+                  
+<svg class="lucide-icon icon-chevron-left " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-chevron-left"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m15 18-6-6 6-6" />
+</svg>
+
+                </button>
+              
+              <div class="header-titles-wrapper">
+                <span class="header-title">
+                  JavaScript API
+                </span>
+              </div>
+            </div>
+            <div class="header-right">
+              
+                
+
+
+<div class="docmd-options-menu">
+    
+    <button class="docmd-search-trigger" aria-label="Search">
+        
+<svg class="lucide-icon icon-search " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-search"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m21 21-4.34-4.34" />
+  <circle cx="11" cy="11" r="8" />
+</svg>
+
+        <span class="search-label">Search</span>
+        <span class="search-keys"><kbd class="docmd-kbd">⌘</kbd><kbd class="docmd-kbd">K</kbd></span>
+    </button>
+    
+
+    
+
+    
+
+    
+    <button class="theme-toggle-button" aria-label="Toggle theme">
+        
+<svg class="lucide-icon icon-sun icon-sun" width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-sun"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="4" />
+  <path d="M12 2v2" />
+  <path d="M12 20v2" />
+  <path d="m4.93 4.93 1.41 1.41" />
+  <path d="m17.66 17.66 1.41 1.41" />
+  <path d="M2 12h2" />
+  <path d="M20 12h2" />
+  <path d="m6.34 17.66-1.41 1.41" />
+  <path d="m19.07 4.93-1.41 1.41" />
+</svg>
+ 
+<svg class="lucide-icon icon-moon icon-moon" width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-moon"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401" />
+</svg>
+
+    </button>
+    
+
+    
+</div>
+
+              
+            </div>
+          </header>
+        
+        <div class="content-theme-cover">
+          <main class="content-area" id="main-content">
+            <div class="content-layout">
+              <div class="main-content">
+                <div class="docmd-breadcrumbs-row">
+                  <div id="docmd-raw-markdown" data-content="%23%20JavaScript%20API%0A%0AThe%20libflo%20WASM%20module%20provides%20full%20encoding%2C%20decoding%2C%20and%20metadata%20support%20for%20browsers.%0A%0A%23%23%20Installation%0A%0A%23%23%23%20npm%0A%0A%60%60%60bash%0Anpm%20install%20%40flo-audio%2Flibflo%0A%60%60%60%0A%0A%23%23%23%20CDN%20%2F%20Direct%0A%0A%60%60%60html%0A%3Cscript%20type%3D%22module%22%3E%0A%20%20import%20init%2C%20*%20as%20libflo%20from%20&#039;.%2Fpkg-libflo%2Flibflo_audio.js&#039;%3B%0A%20%20await%20init()%3B%0A%3C%2Fscript%3E%0A%60%60%60%0A%0A---%0A%0A%23%23%20Initialization%0A%0AAlways%20call%20%60init()%60%20before%20using%20any%20functions%3A%0A%0A%60%60%60javascript%0Aimport%20init%2C%20%7B%20encode%2C%20decode%20%7D%20from%20&#039;%40flo-audio%2Flibflo&#039;%3B%0A%0Aawait%20init()%3B%0A%2F%2F%20Now%20you%20can%20use%20the%20API%0A%60%60%60%0A%0A---%0A%0A%23%23%20Core%20Functions%0A%0A%23%23%23%20encode()%0A%0AEncode%20audio%20samples%20to%20lossless%20flo%20format.%0A%0A%60%60%60javascript%0Aencode(samples%2C%20sampleRate%2C%20channels%2C%20bitDepth%2C%20metadata)%20%E2%86%92%20Uint8Array%0A%60%60%60%0A%0A%7C%20Parameter%20%7C%20Type%20%7C%20Description%20%7C%0A%7C%20-----------%20%7C%20------%20%7C%20-------------%20%7C%0A%7C%20%60samples%60%20%7C%20%60Float32Array%60%20%7C%20Interleaved%20audio%20samples%20(-1.0%20to%201.0)%20%7C%0A%7C%20%60sampleRate%60%20%7C%20%60number%60%20%7C%20Sample%20rate%20(e.g.%2C%2044100%2C%2048000)%20%7C%0A%7C%20%60channels%60%20%7C%20%60number%60%20%7C%20Number%20of%20channels%20(1%20or%202)%20%7C%0A%7C%20%60bitDepth%60%20%7C%20%60number%60%20%7C%20Bit%20depth%20(16%2C%2024%2C%20or%2032)%20%7C%0A%7C%20%60metadata%60%20%7C%20%60Uint8Array%20%5C%7C%20null%60%20%7C%20Optional%20MessagePack%20metadata%20%7C%0A%0A**Returns%3A**%20%60Uint8Array%60%20-%20Encoded%20flo%20data%0A%0A%60%60%60javascript%0Aconst%20samples%20%3D%20new%20Float32Array(44100%20*%202)%3B%20%2F%2F%201%20sec%20stereo%0Aconst%20floData%20%3D%20encode(samples%2C%2044100%2C%202%2C%2016%2C%20null)%3B%0A%60%60%60%0A%0A---%0A%0A%23%23%23%20encode_lossy()%0A%0AEncode%20audio%20with%20lossy%20compression%20using%20quality%20presets.%0A%0A%60%60%60javascript%0Aencode_lossy(samples%2C%20sampleRate%2C%20channels%2C%20bitDepth%2C%20quality%2C%20metadata)%20%E2%86%92%20Uint8Array%0A%60%60%60%0A%0A%7C%20Parameter%20%7C%20Type%20%7C%20Description%20%7C%0A%7C-----------%7C------%7C-------------%7C%0A%7C%20%60quality%60%20%7C%20%60number%60%20%7C%20Quality%20level%3A%200%3DLow%2C%201%3DMedium%2C%202%3DHigh%2C%203%3DVeryHigh%2C%204%3DTransparent%20%7C%0A%0A%60%60%60javascript%0A%2F%2F%20High%20quality%20lossy%20encoding%0Aconst%20floData%20%3D%20encode_lossy(samples%2C%2044100%2C%202%2C%2016%2C%202%2C%20null)%3B%0A%60%60%60%0A%0A---%0A%0A%23%23%23%20encode_transform()%0A%0AEncode%20with%20continuous%20quality%20control%20(0.0%20to%201.0).%0A%0A%60%60%60javascript%0Aencode_transform(samples%2C%20sampleRate%2C%20channels%2C%20bitDepth%2C%20quality%2C%20metadata)%20%E2%86%92%20Uint8Array%0A%60%60%60%0A%0A%7C%20Parameter%20%7C%20Type%20%7C%20Description%20%7C%0A%7C-----------%7C------%7C-------------%7C%0A%7C%20%60quality%60%20%7C%20%60number%60%20%7C%20Quality%20from%200.0%20(lowest)%20to%201.0%20(highest)%20%7C%0A%0A%60%60%60javascript%0A%2F%2F%2055%25%20quality%20(roughly%20%22high%22)%0Aconst%20floData%20%3D%20encode_transform(samples%2C%2044100%2C%202%2C%2016%2C%200.55%2C%20null)%3B%0A%60%60%60%0A%0A---%0A%0A%23%23%23%20encode_with_bitrate()%0A%0AEncode%20targeting%20a%20specific%20bitrate.%0A%0A%60%60%60javascript%0Aencode_with_bitrate(samples%2C%20sampleRate%2C%20channels%2C%20bitDepth%2C%20bitrateKbps%2C%20metadata)%20%E2%86%92%20Uint8Array%0A%60%60%60%0A%0A%7C%20Parameter%20%7C%20Type%20%7C%20Description%20%7C%0A%7C-----------%7C------%7C-------------%7C%0A%7C%20%60bitrateKbps%60%20%7C%20%60number%60%20%7C%20Target%20bitrate%20in%20kbps%20(e.g.%2C%20128%2C%20192%2C%20320)%20%7C%0A%0A%60%60%60javascript%0A%2F%2F%20Target%20192%20kbps%0Aconst%20floData%20%3D%20encode_with_bitrate(samples%2C%2044100%2C%202%2C%2016%2C%20192%2C%20null)%3B%0A%60%60%60%0A%0A---%0A%0A%23%23%23%20decode()%0A%0ADecode%20flo%20data%20to%20audio%20samples.%20Auto-detects%20lossless%20vs%20lossy.%0A%0A%60%60%60javascript%0Adecode(data)%20%E2%86%92%20Float32Array%0A%60%60%60%0A%0A%7C%20Parameter%20%7C%20Type%20%7C%20Description%20%7C%0A%7C-----------%7C------%7C-------------%7C%0A%7C%20%60data%60%20%7C%20%60Uint8Array%60%20%7C%20flo%20file%20data%20%7C%0A%0A**Returns%3A**%20%60Float32Array%60%20-%20Interleaved%20audio%20samples%0A%0A%60%60%60javascript%0Aconst%20samples%20%3D%20decode(floData)%3B%0A%2F%2F%20samples.length%20%3D%20totalSamples%20*%20channels%0A%60%60%60%0A%0A---%0A%0A%23%23%23%20info()%0A%0AGet%20file%20information%20without%20decoding.%0A%0A%60%60%60javascript%0Ainfo(data)%20%E2%86%92%20Object%0A%60%60%60%0A%0A**Returns%3A**%0A%0A%60%60%60javascript%0A%7B%0A%20%20sample_rate%3A%20number%2C%20%20%20%20%20%20%2F%2F%20e.g.%2C%2044100%0A%20%20channels%3A%20number%2C%20%20%20%20%20%20%20%20%20%2F%2F%201%20or%202%0A%20%20bit_depth%3A%20number%2C%20%20%20%20%20%20%20%20%2F%2F%2016%2C%2024%2C%20or%2032%0A%20%20total_samples%3A%20number%2C%20%20%20%20%2F%2F%20Total%20sample-frames%20(samples%20per%20channel)%0A%20%20duration_secs%3A%20number%2C%20%20%20%20%2F%2F%20Duration%20in%20seconds%0A%20%20is_lossy%3A%20boolean%2C%20%20%20%20%20%20%20%20%2F%2F%20true%20if%20lossy%20mode%0A%20%20compression_ratio%3A%20number%20%2F%2F%20e.g.%2C%202.5%20for%202.5x%20compression%0A%7D%0A%60%60%60%0A%0A%60%60%60javascript%0Aconst%20fileInfo%20%3D%20info(floData)%3B%0Aconsole.log(%60%24%7BfileInfo.duration_secs%7Ds%2C%20%24%7BfileInfo.is_lossy%20%3F%20&#039;lossy&#039;%20%3A%20&#039;lossless&#039;%7D%60)%3B%0A%60%60%60%0A%0A---%0A%0A%23%23%23%20validate()%0A%0AVerify%20file%20integrity%20using%20CRC32.%0A%0A%60%60%60javascript%0Avalidate(data)%20%E2%86%92%20boolean%0A%60%60%60%0A%0A%60%60%60javascript%0Aif%20(validate(floData))%20%7B%0A%20%20console.log(&#039;File%20is%20valid&#039;)%3B%0A%7D%20else%20%7B%0A%20%20console.log(&#039;File%20is%20corrupted&#039;)%3B%0A%7D%0A%60%60%60%0A%0A---%0A%0A%23%23%20Metadata%20Functions%0A%0A%23%23%23%20get_metadata()%0A%0AExtract%20metadata%20as%20a%20JavaScript%20object.%0A%0A%60%60%60javascript%0Aget_metadata(data)%20%E2%86%92%20Object%20%7C%20null%0A%60%60%60%0A%0A%60%60%60javascript%0Aconst%20meta%20%3D%20get_metadata(floData)%3B%0Aif%20(meta)%20%7B%0A%20%20console.log(meta.title%2C%20meta.artist)%3B%0A%7D%0A%60%60%60%0A%0A---%0A%0A%23%23%23%20get_cover_art()%0A%0AExtract%20cover%20art%20image.%0A%0A%60%60%60javascript%0Aget_cover_art(data)%20%E2%86%92%20Object%20%7C%20null%0A%60%60%60%0A%0A**Returns%3A**%0A%0A%60%60%60javascript%0A%7B%0A%20%20mime_type%3A%20string%2C%20%20%2F%2F%20e.g.%2C%20%22image%2Fjpeg%22%0A%20%20data%3A%20Uint8Array%20%20%20%20%2F%2F%20Image%20bytes%0A%7D%0A%60%60%60%0A%0A%60%60%60javascript%0Aconst%20cover%20%3D%20get_cover_art(floData)%3B%0Aif%20(cover)%20%7B%0A%20%20const%20blob%20%3D%20new%20Blob(%5Bcover.data%5D%2C%20%7B%20type%3A%20cover.mime_type%20%7D)%3B%0A%20%20const%20url%20%3D%20URL.createObjectURL(blob)%3B%0A%20%20document.getElementById(&#039;cover&#039;).src%20%3D%20url%3B%0A%7D%0A%60%60%60%0A%0A---%0A%0A%23%23%23%20get_synced_lyrics()%0A%0AExtract%20synchronized%20lyrics.%0A%0A%60%60%60javascript%0Aget_synced_lyrics(data)%20%E2%86%92%20Array%20%7C%20null%0A%60%60%60%0A%0A**Returns%3A**%0A%0A%60%60%60javascript%0A%5B%0A%20%20%7B%20timestamp_ms%3A%200%2C%20text%3A%20%22First%20line...%22%20%7D%2C%0A%20%20%7B%20timestamp_ms%3A%205000%2C%20text%3A%20%22Second%20line...%22%20%7D%2C%0A%20%20%2F%2F%20...%0A%5D%0A%60%60%60%0A%0A---%0A%0A%23%23%23%20create_metadata_from_object()%0A%0ACreate%20metadata%20bytes%20from%20a%20JavaScript%20object.%0A%0A%60%60%60javascript%0Acreate_metadata_from_object(obj)%20%E2%86%92%20Uint8Array%0A%60%60%60%0A%0A%60%60%60javascript%0Aconst%20metadata%20%3D%20create_metadata_from_object(%7B%0A%20%20title%3A%20%22My%20Song%22%2C%0A%20%20artist%3A%20%22Artist%20Name%22%2C%0A%20%20album%3A%20%22Album%20Name%22%2C%0A%20%20year%3A%202026%2C%0A%20%20genre%3A%20%22Electronic%22%2C%0A%20%20bpm%3A%20128%2C%0A%20%20section_markers%3A%20%5B%0A%20%20%20%20%7B%20timestamp_ms%3A%200%2C%20section_type%3A%20%22intro%22%20%7D%2C%0A%20%20%20%20%7B%20timestamp_ms%3A%2030000%2C%20section_type%3A%20%22verse%22%20%7D%2C%0A%20%20%20%20%7B%20timestamp_ms%3A%2060000%2C%20section_type%3A%20%22chorus%22%20%7D%0A%20%20%5D%0A%7D)%3B%0A%0Aconst%20floData%20%3D%20encode(samples%2C%2044100%2C%202%2C%2016%2C%20metadata)%3B%0A%60%60%60%0A%0A---%0A%0A%23%23%20Streaming%20Decoder%0A%0AFor%20real-time%20playback%20and%20progressive%20loading.%20See%20%5BStreaming%20Guide%5D(streaming.md)%20for%20details.%0A%0A%60%60%60javascript%0Aimport%20%7B%20WasmStreamingDecoder%20%7D%20from%20&#039;%40flo-audio%2Flibflo&#039;%3B%0A%0Aconst%20decoder%20%3D%20new%20WasmStreamingDecoder()%3B%0A%0A%2F%2F%20Feed%20data%20incrementally%0Adecoder.feed(chunk1)%3B%0Adecoder.feed(chunk2)%3B%0A%0A%2F%2F%20Get%20info%20once%20header%20is%20parsed%0Aconst%20info%20%3D%20decoder.get_info()%3B%0A%0A%2F%2F%20Decode%20frame-by-frame%0Awhile%20(true)%20%7B%0A%20%20const%20samples%20%3D%20decoder.next_frame()%3B%0A%20%20if%20(samples%20%3D%3D%3D%20null)%20break%3B%0A%20%20playAudio(samples)%3B%0A%7D%0A%0Adecoder.free()%3B%0A%60%60%60%0A%0A---%0A%0A%23%23%20Working%20with%20Web%20Audio%20API%0A%0A%23%23%23%20From%20AudioBuffer%20to%20flo%0A%0A%60%60%60javascript%0Aasync%20function%20encodeAudioBuffer(audioBuffer)%20%7B%0A%20%20const%20channels%20%3D%20audioBuffer.numberOfChannels%3B%0A%20%20const%20length%20%3D%20audioBuffer.length%3B%0A%20%20%0A%20%20%2F%2F%20Interleave%20channels%0A%20%20const%20samples%20%3D%20new%20Float32Array(length%20*%20channels)%3B%0A%20%20for%20(let%20i%20%3D%200%3B%20i%20%3C%20length%3B%20i%2B%2B)%20%7B%0A%20%20%20%20for%20(let%20ch%20%3D%200%3B%20ch%20%3C%20channels%3B%20ch%2B%2B)%20%7B%0A%20%20%20%20%20%20samples%5Bi%20*%20channels%20%2B%20ch%5D%20%3D%20audioBuffer.getChannelData(ch)%5Bi%5D%3B%0A%20%20%20%20%7D%0A%20%20%7D%0A%20%20%0A%20%20return%20encode(samples%2C%20audioBuffer.sampleRate%2C%20channels%2C%2016%2C%20null)%3B%0A%7D%0A%60%60%60%0A%0A%23%23%23%20From%20flo%20to%20AudioBuffer%0A%0A%60%60%60javascript%0Aasync%20function%20decodeToAudioBuffer(floData%2C%20audioContext)%20%7B%0A%20%20const%20samples%20%3D%20decode(floData)%3B%0A%20%20const%20fileInfo%20%3D%20info(floData)%3B%0A%20%20%0A%20%20const%20audioBuffer%20%3D%20audioContext.createBuffer(%0A%20%20%20%20fileInfo.channels%2C%0A%20%20%20%20samples.length%20%2F%20fileInfo.channels%2C%0A%20%20%20%20fileInfo.sample_rate%0A%20%20)%3B%0A%20%20%0A%20%20%2F%2F%20Deinterleave%20channels%0A%20%20for%20(let%20ch%20%3D%200%3B%20ch%20%3C%20fileInfo.channels%3B%20ch%2B%2B)%20%7B%0A%20%20%20%20const%20channelData%20%3D%20audioBuffer.getChannelData(ch)%3B%0A%20%20%20%20for%20(let%20i%20%3D%200%3B%20i%20%3C%20channelData.length%3B%20i%2B%2B)%20%7B%0A%20%20%20%20%20%20channelData%5Bi%5D%20%3D%20samples%5Bi%20*%20fileInfo.channels%20%2B%20ch%5D%3B%0A%20%20%20%20%7D%0A%20%20%7D%0A%20%20%0A%20%20return%20audioBuffer%3B%0A%7D%0A%60%60%60%0A%0A---%0A%0A%23%23%20Error%20Handling%0A%0AAll%20functions%20throw%20on%20error%3A%0A%0A%60%60%60javascript%0Atry%20%7B%0A%20%20const%20samples%20%3D%20decode(floData)%3B%0A%7D%20catch%20(error)%20%7B%0A%20%20console.error(&#039;Decode%20failed%3A&#039;%2C%20error.message)%3B%0A%7D%0A%60%60%60%0A%0ACommon%20errors%3A%0A%0A-%20%60%22Invalid%20magic%20bytes%22%60%20-%20Not%20a%20flo%20file%0A-%20%60%22Unsupported%20version%22%60%20-%20File%20version%20too%20new%0A-%20%60%22CRC32%20mismatch%22%60%20-%20File%20is%20corrupted%0A-%20%60%22Invalid%20frame%20type%22%60%20-%20Malformed%20audio%20data%0A" style="display: none;"></div>
+                  
+                    <nav aria-label="breadcrumb" class="docmd-breadcrumbs">
+                      <ol>
+                        
+                        
+                          <li class="breadcrumb-item " >
+                            
+                              <span>API Reference</span>
+                            
+                            
+                              <span class="breadcrumb-separator">
+<svg class="lucide-icon icon-chevron-right " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-chevron-right"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m9 18 6-6-6-6" />
+</svg>
+</span>
+                            
+                          </li>
+                        
+                          <li class="breadcrumb-item active" aria-current=&quot;page&quot;>
+                            
+                              <span>JavaScript / WASM</span>
+                            
+                            
+                          </li>
+                        
+                      </ol>
+                    </nav>
+                  
+
+                  
+                    <div class="docmd-copy-widgets">
+                      
+                        <button class="docmd-copy-btn docmd-copy-raw-btn" data-copied="Copied!" title="Copy Markdown" aria-label="Copy Markdown">
+                          <span class="docmd-btn-icon">
+<svg class="lucide-icon icon-copy " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-copy"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+  <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+</svg>
+</span>
+                        </button>
+                      
+                      
+                        <button class="docmd-copy-btn docmd-copy-context-btn" data-copied="Copied!" title="Copy Context">
+                          <span class="docmd-btn-icon">
+<svg class="lucide-icon icon-message-square " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-message-square"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z" />
+</svg>
+</span>
+                          <span class="docmd-btn-text">Copy Context</span>
+                        </button>
+                      
+                    </div>
+                  
+                </div>
+                
+                <h1 id="javascript-api" class="docmd-heading"><a href="#javascript-api" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>JavaScript API</h1>
+<p>The libflo WASM module provides full encoding, decoding, and metadata support for browsers.</p>
+<h2 id="javascript-api-installation" class="docmd-heading"><a href="#javascript-api-installation" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Installation</h2>
+<h3 id="javascript-api-installation-npm" class="docmd-heading"><a href="#javascript-api-installation-npm" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>npm</h3>
+<pre class="hljs"><code class="language-bash"><span class="hljs-keyword">npm</span> install @flo<span class="hljs-operator">-</span>audio<span class="hljs-operator">/</span>libflo
+</code></pre>
+<h3 id="javascript-api-installation-cdn-direct" class="docmd-heading"><a href="#javascript-api-installation-cdn-direct" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>CDN / Direct</h3>
+<pre class="hljs"><code class="language-html"><span class="hljs-operator">&lt;</span>script <span class="hljs-keyword">type</span><span class="hljs-operator">=</span><span class="hljs-string">&quot;module&quot;</span><span class="hljs-operator">&gt;</span>
+  <span class="hljs-keyword">import</span> init, <span class="hljs-operator">*</span> <span class="hljs-keyword">as</span> libflo <span class="hljs-keyword">from</span> <span class="hljs-string">&#039;./pkg-libflo/libflo_audio.js&#039;</span>;
+  <span class="hljs-keyword">await</span> <span class="hljs-title function_">init</span>();
+<span class="hljs-operator">&lt;/</span>script<span class="hljs-operator">&gt;</span>
+</code></pre>
+<hr>
+<h2 id="javascript-api-initialization" class="docmd-heading"><a href="#javascript-api-initialization" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Initialization</h2>
+<p>Always call <code>init()</code> before using any functions:</p>
+<pre class="hljs"><code class="language-javascript"><span class="hljs-keyword">import</span> init, { encode, decode } <span class="hljs-keyword">from</span> <span class="hljs-string">&#039;@flo-audio/libflo&#039;</span>;
+
+<span class="hljs-keyword">await</span> <span class="hljs-title function_">init</span>();
+<span class="hljs-comment">// Now you can use the API</span>
+</code></pre>
+<hr>
+<h2 id="javascript-api-core-functions" class="docmd-heading"><a href="#javascript-api-core-functions" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Core Functions</h2>
+<h3 id="javascript-api-core-functions-encode" class="docmd-heading"><a href="#javascript-api-core-functions-encode" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>encode()</h3>
+<p>Encode audio samples to lossless flo format.</p>
+<pre class="hljs"><code class="language-javascript"><span class="hljs-title function_">encode</span>(samples, sampleRate, channels, bitDepth, metadata) → Uint8Array
+</code></pre>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>samples</code></td>
+<td><code>Float32Array</code></td>
+<td>Interleaved audio samples (-1.0 to 1.0)</td>
+</tr>
+<tr>
+<td><code>sampleRate</code></td>
+<td><code>number</code></td>
+<td>Sample rate (e.g., 44100, 48000)</td>
+</tr>
+<tr>
+<td><code>channels</code></td>
+<td><code>number</code></td>
+<td>Number of channels (1 or 2)</td>
+</tr>
+<tr>
+<td><code>bitDepth</code></td>
+<td><code>number</code></td>
+<td>Bit depth (16, 24, or 32)</td>
+</tr>
+<tr>
+<td><code>metadata</code></td>
+<td><code>Uint8Array | null</code></td>
+<td>Optional MessagePack metadata</td>
+</tr>
+</tbody>
+</table>
+</div><p><strong>Returns:</strong> <code>Uint8Array</code> - Encoded flo data</p>
+<pre class="hljs"><code class="language-javascript"><span class="hljs-keyword">const</span> samples <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title function_">Float32Array</span>(<span class="hljs-number">44100</span> <span class="hljs-operator">*</span> <span class="hljs-number">2</span>); <span class="hljs-comment">// 1 sec stereo</span>
+<span class="hljs-keyword">const</span> floData <span class="hljs-operator">=</span> <span class="hljs-title function_">encode</span>(samples, <span class="hljs-number">44100</span>, <span class="hljs-number">2</span>, <span class="hljs-number">16</span>, <span class="hljs-literal">null</span>);
+</code></pre>
+<hr>
+<h3 id="javascript-api-core-functions-encodelossy" class="docmd-heading"><a href="#javascript-api-core-functions-encodelossy" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>encode_lossy()</h3>
+<p>Encode audio with lossy compression using quality presets.</p>
+<pre class="hljs"><code class="language-javascript"><span class="hljs-title function_">encode_lossy</span>(samples, sampleRate, channels, bitDepth, quality, metadata) → Uint8Array
+</code></pre>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>quality</code></td>
+<td><code>number</code></td>
+<td>Quality level: 0=Low, 1=Medium, 2=High, 3=VeryHigh, 4=Transparent</td>
+</tr>
+</tbody>
+</table>
+</div><pre class="hljs"><code class="language-javascript"><span class="hljs-comment">// High quality lossy encoding</span>
+<span class="hljs-keyword">const</span> floData <span class="hljs-operator">=</span> <span class="hljs-title function_">encode_lossy</span>(samples, <span class="hljs-number">44100</span>, <span class="hljs-number">2</span>, <span class="hljs-number">16</span>, <span class="hljs-number">2</span>, <span class="hljs-literal">null</span>);
+</code></pre>
+<hr>
+<h3 id="javascript-api-core-functions-encodetransform" class="docmd-heading"><a href="#javascript-api-core-functions-encodetransform" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>encode_transform()</h3>
+<p>Encode with continuous quality control (0.0 to 1.0).</p>
+<pre class="hljs"><code class="language-javascript"><span class="hljs-title function_">encode_transform</span>(samples, sampleRate, channels, bitDepth, quality, metadata) → Uint8Array
+</code></pre>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>quality</code></td>
+<td><code>number</code></td>
+<td>Quality from 0.0 (lowest) to 1.0 (highest)</td>
+</tr>
+</tbody>
+</table>
+</div><pre class="hljs"><code class="language-javascript"><span class="hljs-comment">// 55% quality (roughly &quot;high&quot;)</span>
+<span class="hljs-keyword">const</span> floData <span class="hljs-operator">=</span> <span class="hljs-title function_">encode_transform</span>(samples, <span class="hljs-number">44100</span>, <span class="hljs-number">2</span>, <span class="hljs-number">16</span>, <span class="hljs-number">0.55</span>, <span class="hljs-literal">null</span>);
+</code></pre>
+<hr>
+<h3 id="javascript-api-core-functions-encodewithbitrate" class="docmd-heading"><a href="#javascript-api-core-functions-encodewithbitrate" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>encode_with_bitrate()</h3>
+<p>Encode targeting a specific bitrate.</p>
+<pre class="hljs"><code class="language-javascript"><span class="hljs-title function_">encode_with_bitrate</span>(samples, sampleRate, channels, bitDepth, bitrateKbps, metadata) → Uint8Array
+</code></pre>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>bitrateKbps</code></td>
+<td><code>number</code></td>
+<td>Target bitrate in kbps (e.g., 128, 192, 320)</td>
+</tr>
+</tbody>
+</table>
+</div><pre class="hljs"><code class="language-javascript"><span class="hljs-comment">// Target 192 kbps</span>
+<span class="hljs-keyword">const</span> floData <span class="hljs-operator">=</span> <span class="hljs-title function_">encode_with_bitrate</span>(samples, <span class="hljs-number">44100</span>, <span class="hljs-number">2</span>, <span class="hljs-number">16</span>, <span class="hljs-number">192</span>, <span class="hljs-literal">null</span>);
+</code></pre>
+<hr>
+<h3 id="javascript-api-core-functions-decode" class="docmd-heading"><a href="#javascript-api-core-functions-decode" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>decode()</h3>
+<p>Decode flo data to audio samples. Auto-detects lossless vs lossy.</p>
+<pre class="hljs"><code class="language-javascript"><span class="hljs-title function_">decode</span>(data) → Float32Array
+</code></pre>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>data</code></td>
+<td><code>Uint8Array</code></td>
+<td>flo file data</td>
+</tr>
+</tbody>
+</table>
+</div><p><strong>Returns:</strong> <code>Float32Array</code> - Interleaved audio samples</p>
+<pre class="hljs"><code class="language-javascript"><span class="hljs-keyword">const</span> samples <span class="hljs-operator">=</span> <span class="hljs-title function_">decode</span>(floData);
+<span class="hljs-comment">// samples.length = totalSamples * channels</span>
+</code></pre>
+<hr>
+<h3 id="javascript-api-core-functions-info" class="docmd-heading"><a href="#javascript-api-core-functions-info" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>info()</h3>
+<p>Get file information without decoding.</p>
+<pre class="hljs"><code class="language-javascript"><span class="hljs-title function_">info</span>(data) → Object
+</code></pre>
+<p><strong>Returns:</strong></p>
+<pre class="hljs"><code class="language-javascript">{
+  sample_rate<span class="hljs-operator">:</span> number,      <span class="hljs-comment">// e.g., 44100</span>
+  channels<span class="hljs-operator">:</span> number,         <span class="hljs-comment">// 1 or 2</span>
+  bit_depth<span class="hljs-operator">:</span> number,        <span class="hljs-comment">// 16, 24, or 32</span>
+  total_samples<span class="hljs-operator">:</span> number,    <span class="hljs-comment">// Total sample-frames (samples per channel)</span>
+  duration_secs<span class="hljs-operator">:</span> number,    <span class="hljs-comment">// Duration in seconds</span>
+  is_lossy<span class="hljs-operator">:</span> boolean,        <span class="hljs-comment">// true if lossy mode</span>
+  compression_ratio<span class="hljs-operator">:</span> number <span class="hljs-comment">// e.g., 2.5 for 2.5x compression</span>
+}
+</code></pre>
+<pre class="hljs"><code class="language-javascript"><span class="hljs-keyword">const</span> fileInfo <span class="hljs-operator">=</span> <span class="hljs-title function_">info</span>(floData);
+console.<span class="hljs-title function_">log</span>(<span class="hljs-string">`${fileInfo.duration_secs}s, ${fileInfo.is_lossy ? &#039;lossy&#039; : &#039;lossless&#039;}`</span>);
+</code></pre>
+<hr>
+<h3 id="javascript-api-core-functions-validate" class="docmd-heading"><a href="#javascript-api-core-functions-validate" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>validate()</h3>
+<p>Verify file integrity using CRC32.</p>
+<pre class="hljs"><code class="language-javascript"><span class="hljs-title function_">validate</span>(data) → boolean
+</code></pre>
+<pre class="hljs"><code class="language-javascript"><span class="hljs-keyword">if</span> (<span class="hljs-title function_">validate</span>(floData)) {
+  console.<span class="hljs-title function_">log</span>(<span class="hljs-string">&#039;File is valid&#039;</span>);
+} <span class="hljs-keyword">else</span> {
+  console.<span class="hljs-title function_">log</span>(<span class="hljs-string">&#039;File is corrupted&#039;</span>);
+}
+</code></pre>
+<hr>
+<h2 id="javascript-api-metadata-functions" class="docmd-heading"><a href="#javascript-api-metadata-functions" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Metadata Functions</h2>
+<h3 id="javascript-api-metadata-functions-getmetadata" class="docmd-heading"><a href="#javascript-api-metadata-functions-getmetadata" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>get_metadata()</h3>
+<p>Extract metadata as a JavaScript object.</p>
+<pre class="hljs"><code class="language-javascript"><span class="hljs-title function_">get_metadata</span>(data) → Object <span class="hljs-operator">|</span> <span class="hljs-literal">null</span>
+</code></pre>
+<pre class="hljs"><code class="language-javascript"><span class="hljs-keyword">const</span> meta <span class="hljs-operator">=</span> <span class="hljs-title function_">get_metadata</span>(floData);
+<span class="hljs-keyword">if</span> (meta) {
+  console.<span class="hljs-title function_">log</span>(meta.<span class="hljs-attr">title</span>, meta.<span class="hljs-attr">artist</span>);
+}
+</code></pre>
+<hr>
+<h3 id="javascript-api-metadata-functions-getcoverart" class="docmd-heading"><a href="#javascript-api-metadata-functions-getcoverart" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>get_cover_art()</h3>
+<p>Extract cover art image.</p>
+<pre class="hljs"><code class="language-javascript"><span class="hljs-title function_">get_cover_art</span>(data) → Object <span class="hljs-operator">|</span> <span class="hljs-literal">null</span>
+</code></pre>
+<p><strong>Returns:</strong></p>
+<pre class="hljs"><code class="language-javascript">{
+  mime_type<span class="hljs-operator">:</span> string,  <span class="hljs-comment">// e.g., &quot;image/jpeg&quot;</span>
+  data<span class="hljs-operator">:</span> Uint8Array    <span class="hljs-comment">// Image bytes</span>
+}
+</code></pre>
+<pre class="hljs"><code class="language-javascript"><span class="hljs-keyword">const</span> cover <span class="hljs-operator">=</span> <span class="hljs-title function_">get_cover_art</span>(floData);
+<span class="hljs-keyword">if</span> (cover) {
+  <span class="hljs-keyword">const</span> blob <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title function_">Blob</span>([cover.<span class="hljs-attr">data</span>], { <span class="hljs-keyword">type</span><span class="hljs-operator">:</span> cover.<span class="hljs-attr">mime_type</span> });
+  <span class="hljs-keyword">const</span> url <span class="hljs-operator">=</span> URL.<span class="hljs-title function_">createObjectURL</span>(blob);
+  document.<span class="hljs-title function_">getElementById</span>(<span class="hljs-string">&#039;cover&#039;</span>).<span class="hljs-attr">src</span> <span class="hljs-operator">=</span> url;
+}
+</code></pre>
+<hr>
+<h3 id="javascript-api-metadata-functions-getsyncedlyrics" class="docmd-heading"><a href="#javascript-api-metadata-functions-getsyncedlyrics" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>get_synced_lyrics()</h3>
+<p>Extract synchronized lyrics.</p>
+<pre class="hljs"><code class="language-javascript"><span class="hljs-title function_">get_synced_lyrics</span>(data) → Array <span class="hljs-operator">|</span> <span class="hljs-literal">null</span>
+</code></pre>
+<p><strong>Returns:</strong></p>
+<pre class="hljs"><code class="language-javascript">[
+  { timestamp_ms<span class="hljs-operator">:</span> <span class="hljs-number">0</span>, text<span class="hljs-operator">:</span> <span class="hljs-string">&quot;First line...&quot;</span> },
+  { timestamp_ms<span class="hljs-operator">:</span> <span class="hljs-number">5000</span>, text<span class="hljs-operator">:</span> <span class="hljs-string">&quot;Second line...&quot;</span> },
+  <span class="hljs-comment">// ...</span>
+]
+</code></pre>
+<hr>
+<h3 id="javascript-api-metadata-functions-createmetadatafromobject" class="docmd-heading"><a href="#javascript-api-metadata-functions-createmetadatafromobject" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>create_metadata_from_object()</h3>
+<p>Create metadata bytes from a JavaScript object.</p>
+<pre class="hljs"><code class="language-javascript"><span class="hljs-title function_">create_metadata_from_object</span>(obj) → Uint8Array
+</code></pre>
+<pre class="hljs"><code class="language-javascript"><span class="hljs-keyword">const</span> metadata <span class="hljs-operator">=</span> <span class="hljs-title function_">create_metadata_from_object</span>({
+  title<span class="hljs-operator">:</span> <span class="hljs-string">&quot;My Song&quot;</span>,
+  artist<span class="hljs-operator">:</span> <span class="hljs-string">&quot;Artist Name&quot;</span>,
+  album<span class="hljs-operator">:</span> <span class="hljs-string">&quot;Album Name&quot;</span>,
+  year<span class="hljs-operator">:</span> <span class="hljs-number">2026</span>,
+  genre<span class="hljs-operator">:</span> <span class="hljs-string">&quot;Electronic&quot;</span>,
+  bpm<span class="hljs-operator">:</span> <span class="hljs-number">128</span>,
+  section_markers<span class="hljs-operator">:</span> [
+    { timestamp_ms<span class="hljs-operator">:</span> <span class="hljs-number">0</span>, section_type<span class="hljs-operator">:</span> <span class="hljs-string">&quot;intro&quot;</span> },
+    { timestamp_ms<span class="hljs-operator">:</span> <span class="hljs-number">30000</span>, section_type<span class="hljs-operator">:</span> <span class="hljs-string">&quot;verse&quot;</span> },
+    { timestamp_ms<span class="hljs-operator">:</span> <span class="hljs-number">60000</span>, section_type<span class="hljs-operator">:</span> <span class="hljs-string">&quot;chorus&quot;</span> }
+  ]
+});
+
+<span class="hljs-keyword">const</span> floData <span class="hljs-operator">=</span> <span class="hljs-title function_">encode</span>(samples, <span class="hljs-number">44100</span>, <span class="hljs-number">2</span>, <span class="hljs-number">16</span>, metadata);
+</code></pre>
+<hr>
+<h2 id="javascript-api-streaming-decoder" class="docmd-heading"><a href="#javascript-api-streaming-decoder" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Streaming Decoder</h2>
+<p>For real-time playback and progressive loading. See <a href="../streaming/">Streaming Guide</a> for details.</p>
+<pre class="hljs"><code class="language-javascript"><span class="hljs-keyword">import</span> { WasmStreamingDecoder } <span class="hljs-keyword">from</span> <span class="hljs-string">&#039;@flo-audio/libflo&#039;</span>;
+
+<span class="hljs-keyword">const</span> decoder <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title function_">WasmStreamingDecoder</span>();
+
+<span class="hljs-comment">// Feed data incrementally</span>
+decoder.<span class="hljs-title function_">feed</span>(chunk1);
+decoder.<span class="hljs-title function_">feed</span>(chunk2);
+
+<span class="hljs-comment">// Get info once header is parsed</span>
+<span class="hljs-keyword">const</span> info <span class="hljs-operator">=</span> decoder.<span class="hljs-title function_">get_info</span>();
+
+<span class="hljs-comment">// Decode frame-by-frame</span>
+<span class="hljs-keyword">while</span> (<span class="hljs-literal">true</span>) {
+  <span class="hljs-keyword">const</span> samples <span class="hljs-operator">=</span> decoder.<span class="hljs-title function_">next_frame</span>();
+  <span class="hljs-keyword">if</span> (samples <span class="hljs-operator">===</span> <span class="hljs-literal">null</span>) <span class="hljs-keyword">break</span>;
+  <span class="hljs-title function_">playAudio</span>(samples);
+}
+
+decoder.<span class="hljs-keyword">free</span>();
+</code></pre>
+<hr>
+<h2 id="javascript-api-working-with-web-audio-api" class="docmd-heading"><a href="#javascript-api-working-with-web-audio-api" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Working with Web Audio API</h2>
+<h3 id="javascript-api-working-with-web-audio-api-from-audiobuffer-to-flo" class="docmd-heading"><a href="#javascript-api-working-with-web-audio-api-from-audiobuffer-to-flo" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>From AudioBuffer to flo</h3>
+<pre class="hljs"><code class="language-javascript"><span class="hljs-keyword">async</span> <span class="hljs-keyword">function</span> <span class="hljs-title function_">encodeAudioBuffer</span>(audioBuffer) {
+  <span class="hljs-keyword">const</span> channels <span class="hljs-operator">=</span> audioBuffer.<span class="hljs-attr">numberOfChannels</span>;
+  <span class="hljs-keyword">const</span> length <span class="hljs-operator">=</span> audioBuffer.<span class="hljs-attr">length</span>;
+  
+  <span class="hljs-comment">// Interleave channels</span>
+  <span class="hljs-keyword">const</span> samples <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title function_">Float32Array</span>(length <span class="hljs-operator">*</span> channels);
+  <span class="hljs-keyword">for</span> (<span class="hljs-keyword">let</span> i <span class="hljs-operator">=</span> <span class="hljs-number">0</span>; i <span class="hljs-operator">&lt;</span> length; i<span class="hljs-operator">++</span>) {
+    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">let</span> ch <span class="hljs-operator">=</span> <span class="hljs-number">0</span>; ch <span class="hljs-operator">&lt;</span> channels; ch<span class="hljs-operator">++</span>) {
+      samples[i <span class="hljs-operator">*</span> channels <span class="hljs-operator">+</span> ch] <span class="hljs-operator">=</span> audioBuffer.<span class="hljs-title function_">getChannelData</span>(ch)[i];
+    }
+  }
+  
+  <span class="hljs-keyword">return</span> <span class="hljs-title function_">encode</span>(samples, audioBuffer.<span class="hljs-attr">sampleRate</span>, channels, <span class="hljs-number">16</span>, <span class="hljs-literal">null</span>);
+}
+</code></pre>
+<h3 id="javascript-api-working-with-web-audio-api-from-flo-to-audiobuffer" class="docmd-heading"><a href="#javascript-api-working-with-web-audio-api-from-flo-to-audiobuffer" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>From flo to AudioBuffer</h3>
+<pre class="hljs"><code class="language-javascript"><span class="hljs-keyword">async</span> <span class="hljs-keyword">function</span> <span class="hljs-title function_">decodeToAudioBuffer</span>(floData, audioContext) {
+  <span class="hljs-keyword">const</span> samples <span class="hljs-operator">=</span> <span class="hljs-title function_">decode</span>(floData);
+  <span class="hljs-keyword">const</span> fileInfo <span class="hljs-operator">=</span> <span class="hljs-title function_">info</span>(floData);
+  
+  <span class="hljs-keyword">const</span> audioBuffer <span class="hljs-operator">=</span> audioContext.<span class="hljs-title function_">createBuffer</span>(
+    fileInfo.<span class="hljs-attr">channels</span>,
+    samples.<span class="hljs-attr">length</span> <span class="hljs-operator">/</span> fileInfo.<span class="hljs-attr">channels</span>,
+    fileInfo.<span class="hljs-attr">sample_rate</span>
+  );
+  
+  <span class="hljs-comment">// Deinterleave channels</span>
+  <span class="hljs-keyword">for</span> (<span class="hljs-keyword">let</span> ch <span class="hljs-operator">=</span> <span class="hljs-number">0</span>; ch <span class="hljs-operator">&lt;</span> fileInfo.<span class="hljs-attr">channels</span>; ch<span class="hljs-operator">++</span>) {
+    <span class="hljs-keyword">const</span> channelData <span class="hljs-operator">=</span> audioBuffer.<span class="hljs-title function_">getChannelData</span>(ch);
+    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">let</span> i <span class="hljs-operator">=</span> <span class="hljs-number">0</span>; i <span class="hljs-operator">&lt;</span> channelData.<span class="hljs-attr">length</span>; i<span class="hljs-operator">++</span>) {
+      channelData[i] <span class="hljs-operator">=</span> samples[i <span class="hljs-operator">*</span> fileInfo.<span class="hljs-attr">channels</span> <span class="hljs-operator">+</span> ch];
+    }
+  }
+  
+  <span class="hljs-keyword">return</span> audioBuffer;
+}
+</code></pre>
+<hr>
+<h2 id="javascript-api-error-handling" class="docmd-heading"><a href="#javascript-api-error-handling" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Error Handling</h2>
+<p>All functions throw on error:</p>
+<pre class="hljs"><code class="language-javascript"><span class="hljs-keyword">try</span> {
+  <span class="hljs-keyword">const</span> samples <span class="hljs-operator">=</span> <span class="hljs-title function_">decode</span>(floData);
+} <span class="hljs-keyword">catch</span> (error) {
+  console.<span class="hljs-title function_">error</span>(<span class="hljs-string">&#039;Decode failed:&#039;</span>, error.<span class="hljs-attr">message</span>);
+}
+</code></pre>
+<p>Common errors:</p>
+<ul>
+<li><code>&quot;Invalid magic bytes&quot;</code> - Not a flo file</li>
+<li><code>&quot;Unsupported version&quot;</code> - File version too new</li>
+<li><code>&quot;CRC32 mismatch&quot;</code> - File is corrupted</li>
+<li><code>&quot;Invalid frame type&quot;</code> - Malformed audio data</li>
+</ul>
+
+                
+                  <div class="page-navigation">
+                    
+                      <a href="../rust-api/" class="prev-page">
+                        
+<svg class="lucide-icon icon-arrow-left page-nav-icon" width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-arrow-left"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m12 19-7-7 7-7" />
+  <path d="M19 12H5" />
+</svg>
+
+                        <span><small>Previous</small><strong>
+                            Rust API
+                          </strong></span>
+                      </a>
+                    
+                    
+                      <a href="../file-format/" class="next-page">
+                        <span><small>Next</small>
+                          <strong>
+                            File Format
+                          </strong></span>
+                        
+<svg class="lucide-icon icon-arrow-right page-nav-icon" width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-arrow-right"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M5 12h14" />
+  <path d="m12 5 7 7-7 7" />
+</svg>
+
+                      </a>
+                    
+                  </div>
+                
+              </div>
+              
+              <div class="toc-sidebar">
+                
+
+
+  <div class="toc-container">
+    <h2 class="toc-title">On This Page<span class="mobile-view toc-menu-button float-right">
+<svg class="lucide-icon icon-chevron-down " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-chevron-down"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m6 9 6 6 6-6" />
+</svg>
+</span></h2>
+    <ul class="toc-list">
+      
+        <li class="toc-item toc-level-1">
+          <a href="#javascript-api" class="toc-link">JavaScript API</a>
+        </li>
+      
+        <li class="toc-item toc-level-2">
+          <a href="#javascript-api-installation" class="toc-link">Installation</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#javascript-api-installation-npm" class="toc-link">npm</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#javascript-api-installation-cdn-direct" class="toc-link">CDN / Direct</a>
+        </li>
+      
+        <li class="toc-item toc-level-2">
+          <a href="#javascript-api-initialization" class="toc-link">Initialization</a>
+        </li>
+      
+        <li class="toc-item toc-level-2">
+          <a href="#javascript-api-core-functions" class="toc-link">Core Functions</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#javascript-api-core-functions-encode" class="toc-link">encode()</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#javascript-api-core-functions-encodelossy" class="toc-link">encode_lossy()</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#javascript-api-core-functions-encodetransform" class="toc-link">encode_transform()</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#javascript-api-core-functions-encodewithbitrate" class="toc-link">encode_with_bitrate()</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#javascript-api-core-functions-decode" class="toc-link">decode()</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#javascript-api-core-functions-info" class="toc-link">info()</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#javascript-api-core-functions-validate" class="toc-link">validate()</a>
+        </li>
+      
+        <li class="toc-item toc-level-2">
+          <a href="#javascript-api-metadata-functions" class="toc-link">Metadata Functions</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#javascript-api-metadata-functions-getmetadata" class="toc-link">get_metadata()</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#javascript-api-metadata-functions-getcoverart" class="toc-link">get_cover_art()</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#javascript-api-metadata-functions-getsyncedlyrics" class="toc-link">get_synced_lyrics()</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#javascript-api-metadata-functions-createmetadatafromobject" class="toc-link">create_metadata_from_object()</a>
+        </li>
+      
+        <li class="toc-item toc-level-2">
+          <a href="#javascript-api-streaming-decoder" class="toc-link">Streaming Decoder</a>
+        </li>
+      
+        <li class="toc-item toc-level-2">
+          <a href="#javascript-api-working-with-web-audio-api" class="toc-link">Working with Web Audio API</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#javascript-api-working-with-web-audio-api-from-audiobuffer-to-flo" class="toc-link">From AudioBuffer to flo</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#javascript-api-working-with-web-audio-api-from-flo-to-audiobuffer" class="toc-link">From flo to AudioBuffer</a>
+        </li>
+      
+        <li class="toc-item toc-level-2">
+          <a href="#javascript-api-error-handling" class="toc-link">Error Handling</a>
+        </li>
+      
+    </ul>
+  </div>
+
+              </div>
+              
+            </div>
+            <div class="page-footer-actions">
+              
+              
+                <span class="git-last-updated" data-timestamp="1789065744000">
+                  <svg class="git-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                  <span class="git-label">Last updated:</span>
+                  <span class="git-time" data-timestamp="1789065744000"></span>
+                  
+                  <div class="git-commit-tooltip" role="tooltip">
+                    <div class="git-tooltip-title">Recent commits</div>
+                    <ul class="git-commit-list">
+                      
+                        <li class="git-commit-item">
+                          <div class="git-commit-avatar" title="NellowTCS">
+                            
+                              <img src="https://www.gravatar.com/avatar/baecf29c7bedbb00a8d5bd5984799c55?d=mp&amp;s=64" alt="NellowTCS">
+                            
+                          </div>
+                          <div class="git-commit-details">
+                            <div class="git-commit-message" title="oop">oop</div>
+                            <div class="git-commit-meta">
+                              <span class="git-commit-author">NellowTCS</span>
+                              <span class="git-commit-date" data-timestamp="1789065744000"></span>
+                            </div>
+                          </div>
+                        </li>
+                      
+                    </ul>
+                  </div>
+                  
+                </span>
+              
+              <span class="git-spacer"></span>
+              
+                <a href="https://github.com/Audiflo/flo/edit/main/Docs/docs/javascript-api.md" target="_blank" rel="noopener noreferrer" class="edit-link">
+                  
+<svg class="lucide-icon icon-pencil " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-pencil"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" />
+  <path d="m15 5 4 4" />
+</svg>
+
+                  Edit this page
+                </a>
+              
+            </div>
+          </main>
+          
+
+
+<footer class="footer-complete">
+  <div class="footer-complete-top">
+      <div class="footer-brand">
+          
+            <span class="footer-title">flo</span>
+          
+          
+            <p class="footer-desc">A modern lossless and lossy audio codec with native and WebAssembly APIs.</p>
+          
+        </div>
+        
+          <div class="footer-columns">
+            
+              <div class="footer-column">
+                <span class="footer-column-title">Resources</span>
+                <ul>
+                  
+                    <li><a href="getting-started/" >Getting Started</a></li>
+                  
+                    <li><a href="rust-api/" >Rust API</a></li>
+                  
+                    <li><a href="javascript-api/" >JavaScript API</a></li>
+                  
+                </ul>
+              </div>
+            
+              <div class="footer-column">
+                <span class="footer-column-title">Project</span>
+                <ul>
+                  
+                    <li><a href="./demo/" target=&quot;_blank&quot; rel=&quot;noopener&quot;>Live Demo</a></li>
+                  
+                    <li><a href="https://github.com/Audiflo/flo" >GitHub</a></li>
+                  
+                    <li><a href="https://github.com/Audiflo/flo/issues" >Issues</a></li>
+                  
+                </ul>
+              </div>
+            
+          </div>
+        
+      </div>
+      <div class="footer-complete-bottom">
+        <div class="user-footer">Built with <a href="https://docmd.io">docmd</a>. <a href="https://github.com/Audiflo/flo">View on GitHub</a>.</div>
+        
+          <div class="branding-footer">
+            Built with <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path><path d="M12 5 9.04 7.96a2.17 2.17 0 0 0 0 3.08c.82.82 2.13.85 3 .07l2.07-1.9a2.82 2.82 0 0 1 3.79 0l2.96 2.66"></path><path d="m18 15-2-2"></path><path d="m15 18-2-2"></path></svg> <a href="https://docmd.io" target="_blank" rel="noopener">docmd.</a>
+          </div>
+        
+      </div>
+  </footer>
+
+        </div>
+      </div>
+      
+      <script src="../assets/js/docmd-main.js?v=mtvvpwwr"></script>
+      
+      <script src="../assets/js/docmd-git.js?v=mtvvpwwr"></script>
+      <script src="../assets/js/docmd-image-lightbox.js?v=mtvvpwwr" ></script>
+<script src="../assets/js/vendor/minisearch.js?v=mtvvpwwr" ></script>
+<script src="../assets/js/docmd-search.js?v=mtvvpwwr" ></script>
+<script src="../assets/js/docmd-git.js?v=mtvvpwwr" ></script>
+<script src="../assets/js/docmd-ai.js?v=mtvvpwwr" ></script>
+
+  <!-- Search Modal (Injected by @docmd/plugin-search) -->
+  <div id="docmd-search-modal" class="docmd-search-modal" style="display: none;" data-show-confidence="false" data-show-filters="true"
+       data-search-placeholder="Search documentation..."
+       data-search-no-results="No results found."
+       data-search-error="Failed to load search index."
+       data-search-offline="Search requires a web server. Open this site via http://localhost instead of file:// to enable search."
+       data-search-offline-build="Search is disabled because these docs were built with the --offline flag. Rebuild the site without the flag to enable search."
+       data-search-initial="Type to start searching..."
+       data-search-navigate="to navigate"
+       data-search-escape="to close">
+      <div class="docmd-search-box">
+          <div class="docmd-search-header">
+              <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide-icon icon-search"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+              <input type="text" id="docmd-search-input" placeholder="Search documentation..." autocomplete="off" spellcheck="false">
+              <button onclick="window.closeDocmdSearch()" class="docmd-search-close" aria-label="Close search">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide-icon icon-x"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+              </button>
+          </div>
+          <div id="docmd-search-results" class="docmd-search-results"></div>
+          <div class="docmd-search-footer">
+              <span><kbd class="docmd-kbd">↑</kbd> <kbd class="docmd-kbd">↓</kbd> to navigate</span>
+              <span><kbd class="docmd-kbd">ESC</kbd> to close</span>
+          </div>
+      </div>
+  </div>
+
+    <script>
+      (function() {
+        var searchDebounceTimer;
+
+        document.addEventListener('click', function(e) {
+          var link = e.target.closest('a');
+          if (!link || !window.gtag) return;
+          
+          var url = link.href;
+          var hostname = window.location.hostname;
+          var isExternal = link.hostname && link.hostname !== hostname;
+          var isDownload = link.hasAttribute('download') || url.match(/\.(pdf|zip|tar|gz|exe|pkg)$/i);
+          
+          if (isExternal) {
+            gtag('event', 'click_external', { 'url': url, 'link_text': link.innerText.trim() });
+          } else if (isDownload) {
+            gtag('event', 'download', { 'file_name': url.split('/').pop(), 'url': url });
+          }
+
+          // TOC tracking
+          if (link.classList.contains('toc-link')) {
+            gtag('event', 'toc_click', { 'target_id': link.getAttribute('href'), 'title': link.innerText.trim() });
+          }
+
+          // Permalink tracking
+          if (link.classList.contains('heading-anchor')) {
+            gtag('event', 'permalink_click', { 'url': url });
+          }
+        });
+
+        
+        // Search Keyword Tracking
+        document.addEventListener('input', function(e) {
+          if (e.target.id === 'docmd-search-input' && window.gtag) {
+            var query = e.target.value.trim();
+            if (query.length < 3) return;
+            
+            clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(function() {
+              gtag('event', 'search', { 'search_term': query });
+            }, 1000);
+          }
+        });
+        
+      })();
+    </script>
+
+<script>window.__git_config={"repo":"https://github.com/Audiflo/flo/edit/main/","branch":"main","editLink":true,"lastUpdated":true,"commitHistory":true,"maxCommits":5,"dateFormat":"relative"};window.__git_i18n={"lastUpdated":"Last updated","recentCommits":"Recent commits","viewCommitHistory":"View commit history","editOnGitHub":"Edit on GitHub","editOnGitLab":"Edit on GitLab","editOnBitbucket":"Edit on Bitbucket","editThisPage":"Edit this page","justNow":"just now","minutesAgo":"{n}m ago","hoursAgo":"{n}h ago","daysAgo":"{n}d ago"}</script>
+<div id="docmd-ai-root"></div><script>window.__docmd_ai_config={"endpoint":"","cloud":{},"captcha":true,"position":"bottom-center","siteTitle":"flo","siteBase":"/flo/","siteUrl":"https://audiflo.github.io/flo/","versions":null,"i18n":null,"navigation":[{"title":"Home","path":"/","icon":"home"},{"title":"Getting Started","icon":"rocket","collapsible":false,"children":[{"title":"Getting Started","path":"/getting-started/","icon":"play"},{"title":"CLI Reference","path":"/cli-reference/","icon":"terminal"}]},{"title":"API Reference","icon":"code","collapsible":false,"children":[{"title":"Rust API","path":"/rust-api/","icon":"box"},{"title":"JavaScript / WASM","path":"/javascript-api/","icon":"cpu"}]},{"title":"Format and Features","icon":"file-text","collapsible":false,"children":[{"title":"File Format","path":"/file-format/","icon":"binary"},{"title":"Metadata","path":"/metadata-guide/","icon":"tag"},{"title":"Streaming","path":"/streaming/","icon":"wind"}]},{"title":"Project","icon":"layers","collapsible":false,"children":[{"title":"Architecture","path":"/architecture/","icon":"git-branch"},{"title":"No-std and WASM","path":"/no-std/","icon":"cpu"}]},{"title":"Live Demo","path":"/demo/","icon":"eye","external":true},{"title":"GitHub","path":"https://github.com/Audiflo/flo","icon":"github","external":true}],"searchCapabilities":{"keyword":true,"semantic":false},"isWorkspace":false,"workspaceProjects":[],"contextLimit":5};</script>
+      
+      
+      
+  </body>
+</html>

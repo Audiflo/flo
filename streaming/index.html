@@ -1,0 +1,1727 @@
+<!--
+  ---------------------------------------------------------------
+  docmd : the zero-config documentation engine.
+  @website https://docmd.io
+  [docmd-source] - Please do not remove this header.
+  ---------------------------------------------------------------
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="generator" content="docmd v0.9.5">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <script>
+      var root = "../";
+      if (root && !root.endsWith('/')) root += '/';
+      if (root === '') root = './';
+      window.DOCMD_ROOT = root;
+
+      window.DOCMD_SITE_ROOT = "/flo/";
+
+      window.DOCMD_APPEARANCE = "system";
+      window.DOCMD_VERSION_ROOT = "/";
+      window.DOCMD_BASE = "/flo/";
+      window.DOCMD_LOCALE = "";
+      window.DOCMD_DEFAULT_LOCALE = "";
+    </script>
+    <script>/**
+ * --------------------------------------------------------------------
+ * docmd : the zero-config documentation engine.
+ *
+ * @package     @docmd/core (and ecosystem)
+ * @website     https://docmd.io
+ * @repository  https://github.com/docmd-io/docmd
+ * @license     MIT
+ * @copyright   Copyright (c) 2025-present docmd.io
+ *
+ * [docmd-source] - Please do not remove this header.
+ * --------------------------------------------------------------------
+ */
+
+(function () {
+  try {
+    // 1. Determine Theme
+    //
+    // Resolve from three sources, in priority order:
+    //   1. localStorage explicit user choice (light / dark)
+    //   2. window.DOCMD_APPEARANCE  (current canonical name, set by EJS templates)
+    //   3. window.DOCMD_DEFAULT_MODE (legacy alias kept for pre-0.8.7 outputs)
+    //   4. 'light' as the final fallback
+    //
+    // Note: localStorage is only honoured when it holds an explicit
+    // 'light' or 'dark' value. A stored 'system' value (from a prior
+    // session where the user picked "follow system") must NOT win over
+    // a freshly resolved config value — the resolved value will itself
+    // be 'system' in that case and the OS preference check below takes
+    // over, so this is a no-op for the in-session behaviour but keeps
+    // any future storage migration simple.
+    var localValue = localStorage.getItem('docmd-theme');
+    var configValue = window.DOCMD_APPEARANCE
+      || window.DOCMD_DEFAULT_MODE
+      || 'light';
+    var theme = (localValue === 'light' || localValue === 'dark')
+      ? localValue
+      : configValue;
+
+    if (theme === 'system') {
+      theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+
+    // 2. Apply to Root
+    document.documentElement.setAttribute('data-theme', theme);
+
+    // 3. Highlight.js Toggle Strategy
+    var lightLink = document.getElementById('hljs-light');
+    var darkLink = document.getElementById('hljs-dark');
+
+    if (lightLink && darkLink) {
+      if (theme === 'dark') {
+        lightLink.disabled = true;
+        darkLink.disabled = false;
+      } else {
+        lightLink.disabled = false;
+        darkLink.disabled = true;
+      }
+    }
+
+    document.documentElement.style.visibility = "visible";
+  } catch (e) {
+    document.documentElement.style.visibility = "visible";
+    console.error('Theme init failed', e);
+  }
+})();</script>
+    <style>
+      html {
+        visibility: hidden;
+      }
+    </style>
+    <title>
+      Streaming Decoder : flo
+    </title>
+    
+    
+
+    <link id="site-favicon" rel="icon" href="../assets/favicon.ico?v=mtvvpwwr">
+    <link rel="stylesheet" href="../assets/css/docmd-main.css?v=mtvvpwwr">
+    
+    <link rel="stylesheet" href="../assets/css/docmd-highlight-light.css?v=mtvvpwwr" id="hljs-light" >
+    <link rel="stylesheet" href="../assets/css/docmd-highlight-dark.css?v=mtvvpwwr" id="hljs-dark" disabled>
+    
+    
+<meta name="description" content="flo is a modern lossless and lossy audio codec with Rust and WebAssembly APIs.">
+<link rel="canonical" href="https://audiflo.github.io/flo/streaming/">
+<meta property="og:title" content="Streaming Decoder - flo">
+<meta property="og:description" content="flo is a modern lossless and lossy audio codec with Rust and WebAssembly APIs.">
+<meta property="og:url" content="https://audiflo.github.io/flo/streaming/">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Streaming Decoder - flo">
+<meta name="twitter:description" content="flo is a modern lossless and lossy audio codec with Rust and WebAssembly APIs.">
+
+
+
+
+<link rel="stylesheet" href="../assets/css/docmd-theme-ruby.css?v=mtvvpwwr" >
+<link rel="stylesheet" href="../assets/css/docmd-git.css?v=mtvvpwwr" >
+<link rel="stylesheet" href="../assets/css/docmd-openapi.css?v=mtvvpwwr" >
+<link rel="stylesheet" href="../assets/css/docmd-ai.css?v=mtvvpwwr" >
+
+    
+    
+  </head>
+  <body
+    class="sidebar-collapsible"
+    data-default-collapsed="false"
+    data-copy-code-enabled="true" data-spa-enabled="true" data-source-file="docs/streaming.md">
+
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    
+    
+
+    
+    
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          
+<h1><a href="../">
+                flo
+              </a></h1>
+          
+          <span class="mobile-view sidebar-menu-button float-right">
+            
+<svg class="lucide-icon icon-menu " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-menu"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M4 5h16" />
+  <path d="M4 12h16" />
+  <path d="M4 19h16" />
+</svg>
+
+          </span>
+        </div>
+        <div class="sidebar-top-group">
+          
+          
+          
+          
+        </div>
+        
+
+<nav class="sidebar-nav" aria-label="Main Navigation">
+  <ul>
+    
+      <li class="" >
+      
+        <a href="../" class=" "
+          >
+           
+<svg class="lucide-icon icon-home " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-house"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" />
+  <path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            Home
+            </span>
+          
+          
+        </a>
+        
+
+        
+      </li>
+    
+      <li class="expanded nav-group" >
+      
+        <span class="nav-label nav-group">
+           
+<svg class="lucide-icon icon-rocket " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-rocket"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" />
+  <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09" />
+  <path d="M9 12a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.4 22.4 0 0 1-4 2z" />
+  <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 .05 5 .05" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            Getting Started
+          </span>
+          
+        </span>
+        
+
+        
+          <ul class="submenu">
+            
+      <li class="" >
+      
+        <a href="../getting-started/" class=" "
+          >
+           
+<svg class="lucide-icon icon-play " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-play"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            Getting Started
+            </span>
+          
+          
+        </a>
+        
+
+        
+      </li>
+    
+      <li class="" >
+      
+        <a href="../cli-reference/" class=" "
+          >
+           
+<svg class="lucide-icon icon-terminal " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-terminal"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12 19h8" />
+  <path d="m4 17 6-6-6-6" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            CLI Reference
+            </span>
+          
+          
+        </a>
+        
+
+        
+      </li>
+    
+          </ul>
+        
+      </li>
+    
+      <li class="expanded nav-group" >
+      
+        <span class="nav-label nav-group">
+           
+<svg class="lucide-icon icon-code " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-code"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m16 18 6-6-6-6" />
+  <path d="m8 6-6 6 6 6" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            API Reference
+          </span>
+          
+        </span>
+        
+
+        
+          <ul class="submenu">
+            
+      <li class="" >
+      
+        <a href="../rust-api/" class=" "
+          >
+           
+<svg class="lucide-icon icon-box " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-box"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+  <path d="m3.3 7 8.7 5 8.7-5" />
+  <path d="M12 22V12" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            Rust API
+            </span>
+          
+          
+        </a>
+        
+
+        
+      </li>
+    
+      <li class="" >
+      
+        <a href="../javascript-api/" class=" "
+          >
+           
+<svg class="lucide-icon icon-cpu " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-cpu"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12 20v2" />
+  <path d="M12 2v2" />
+  <path d="M17 20v2" />
+  <path d="M17 2v2" />
+  <path d="M2 12h2" />
+  <path d="M2 17h2" />
+  <path d="M2 7h2" />
+  <path d="M20 12h2" />
+  <path d="M20 17h2" />
+  <path d="M20 7h2" />
+  <path d="M7 20v2" />
+  <path d="M7 2v2" />
+  <rect x="4" y="4" width="16" height="16" rx="2" />
+  <rect x="8" y="8" width="8" height="8" rx="1" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            JavaScript / WASM
+            </span>
+          
+          
+        </a>
+        
+
+        
+      </li>
+    
+          </ul>
+        
+      </li>
+    
+      <li class="active-parent expanded nav-group" >
+      
+        <span class="nav-label nav-group">
+           
+<svg class="lucide-icon icon-file-text " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-file-text"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" />
+  <path d="M14 2v5a1 1 0 0 0 1 1h5" />
+  <path d="M10 9H8" />
+  <path d="M16 13H8" />
+  <path d="M16 17H8" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            Format and Features
+          </span>
+          
+        </span>
+        
+
+        
+          <ul class="submenu">
+            
+      <li class="" >
+      
+        <a href="../file-format/" class=" "
+          >
+           
+<svg class="lucide-icon icon-binary " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-binary"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <rect x="14" y="14" width="4" height="6" rx="2" />
+  <rect x="6" y="4" width="4" height="6" rx="2" />
+  <path d="M6 20h4" />
+  <path d="M14 10h4" />
+  <path d="M6 14h2v6" />
+  <path d="M14 4h2v6" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            File Format
+            </span>
+          
+          
+        </a>
+        
+
+        
+      </li>
+    
+      <li class="" >
+      
+        <a href="../metadata-guide/" class=" "
+          >
+           
+<svg class="lucide-icon icon-tag " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-tag"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+  <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            Metadata
+            </span>
+          
+          
+        </a>
+        
+
+        
+      </li>
+    
+      <li class="active" >
+      
+        <a href="../streaming/" class="active "
+          >
+           
+<svg class="lucide-icon icon-wind " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-wind"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12.8 19.6A2 2 0 1 0 14 16H2" />
+  <path d="M17.5 8a2.5 2.5 0 1 1 2 4H2" />
+  <path d="M9.8 4.4A2 2 0 1 1 11 8H2" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            Streaming
+            </span>
+          
+          
+        </a>
+        
+
+        
+      </li>
+    
+          </ul>
+        
+      </li>
+    
+      <li class="expanded nav-group" >
+      
+        <span class="nav-label nav-group">
+           
+<svg class="lucide-icon icon-layers " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-layers"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z" />
+  <path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12" />
+  <path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            Project
+          </span>
+          
+        </span>
+        
+
+        
+          <ul class="submenu">
+            
+      <li class="" >
+      
+        <a href="../architecture/" class=" "
+          >
+           
+<svg class="lucide-icon icon-git-branch " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-git-branch"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M15 6a9 9 0 0 0-9 9V3" />
+  <circle cx="18" cy="6" r="3" />
+  <circle cx="6" cy="18" r="3" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            Architecture
+            </span>
+          
+          
+        </a>
+        
+
+        
+      </li>
+    
+      <li class="" >
+      
+        <a href="../no-std/" class=" "
+          >
+           
+<svg class="lucide-icon icon-cpu " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-cpu"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12 20v2" />
+  <path d="M12 2v2" />
+  <path d="M17 20v2" />
+  <path d="M17 2v2" />
+  <path d="M2 12h2" />
+  <path d="M2 17h2" />
+  <path d="M2 7h2" />
+  <path d="M20 12h2" />
+  <path d="M20 17h2" />
+  <path d="M20 7h2" />
+  <path d="M7 20v2" />
+  <path d="M7 2v2" />
+  <rect x="4" y="4" width="16" height="16" rx="2" />
+  <rect x="8" y="8" width="8" height="8" rx="1" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            No-std and WASM
+            </span>
+          
+          
+        </a>
+        
+
+        
+      </li>
+    
+          </ul>
+        
+      </li>
+    
+      <li class="" >
+      
+        <a href="/demo/" class=" "
+          target=&quot;_blank&quot; rel=&quot;noopener&quot;>
+           
+<svg class="lucide-icon icon-eye " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-eye"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" />
+  <circle cx="12" cy="12" r="3" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            Live Demo
+            </span>
+          
+           
+<svg class="lucide-icon icon-external-link nav-external-icon" width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-external-link"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M15 3h6v6" />
+  <path d="M10 14 21 3" />
+  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+</svg>
+
+          
+        </a>
+        
+
+        
+      </li>
+    
+      <li class="" >
+      
+        <a href="https://github.com/Audiflo/flo" class=" "
+          target=&quot;_blank&quot; rel=&quot;noopener&quot;>
+           
+          
+          <span class="nav-item-title">
+            GitHub
+            </span>
+          
+           
+<svg class="lucide-icon icon-external-link nav-external-icon" width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-external-link"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M15 3h6v6" />
+  <path d="M10 14 21 3" />
+  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+</svg>
+
+          
+        </a>
+        
+
+        
+      </li>
+    
+  </ul>
+</nav>
+        <div class="sidebar-bottom-group mt-auto">
+          
+          
+          
+          
+        </div>
+      </aside>
+      
+      <div class="main-content-wrapper">
+        
+        
+        
+          <header class="page-header">
+            <div class="header-left">
+              
+                <button id="sidebar-toggle-button" class="sidebar-toggle-button"
+                  aria-label="Toggle Sidebar">
+                  
+<svg class="lucide-icon icon-chevron-left " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-chevron-left"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m15 18-6-6 6-6" />
+</svg>
+
+                </button>
+              
+              <div class="header-titles-wrapper">
+                <span class="header-title">
+                  Streaming Decoder
+                </span>
+              </div>
+            </div>
+            <div class="header-right">
+              
+                
+
+
+<div class="docmd-options-menu">
+    
+    <button class="docmd-search-trigger" aria-label="Search">
+        
+<svg class="lucide-icon icon-search " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-search"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m21 21-4.34-4.34" />
+  <circle cx="11" cy="11" r="8" />
+</svg>
+
+        <span class="search-label">Search</span>
+        <span class="search-keys"><kbd class="docmd-kbd">⌘</kbd><kbd class="docmd-kbd">K</kbd></span>
+    </button>
+    
+
+    
+
+    
+
+    
+    <button class="theme-toggle-button" aria-label="Toggle theme">
+        
+<svg class="lucide-icon icon-sun icon-sun" width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-sun"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="4" />
+  <path d="M12 2v2" />
+  <path d="M12 20v2" />
+  <path d="m4.93 4.93 1.41 1.41" />
+  <path d="m17.66 17.66 1.41 1.41" />
+  <path d="M2 12h2" />
+  <path d="M20 12h2" />
+  <path d="m6.34 17.66-1.41 1.41" />
+  <path d="m19.07 4.93-1.41 1.41" />
+</svg>
+ 
+<svg class="lucide-icon icon-moon icon-moon" width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-moon"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401" />
+</svg>
+
+    </button>
+    
+
+    
+</div>
+
+              
+            </div>
+          </header>
+        
+        <div class="content-theme-cover">
+          <main class="content-area" id="main-content">
+            <div class="content-layout">
+              <div class="main-content">
+                <div class="docmd-breadcrumbs-row">
+                  <div id="docmd-raw-markdown" data-content="%23%20Streaming%20Decoder%0A%0AThe%20streaming%20decoder%20enables%20real-time%20playback%20and%20progressive%20loading%20of%20flo%20files.%0A%0A%23%23%20Why%20Streaming%3F%0A%0A%7C%20Scenario%20%20%20%20%20%20%20%20%20%20%20%20%7C%20Standard%20Decode%20%20%20%20%20%20%7C%20Streaming%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%0A%7C%20-------------------%20%7C%20--------------------%20%7C%20---------------------%20%7C%0A%7C%20Large%20files%20(%3E10MB)%20%7C%20Wait%20for%20full%20decode%20%7C%20Play%20while%20loading%20%20%20%20%7C%0A%7C%20Network%20streaming%20%20%20%7C%20Download%20entire%20file%20%7C%20Play%20as%20chunks%20arrive%20%7C%0A%7C%20Memory%20usage%20%20%20%20%20%20%20%20%7C%20Full%20file%20in%20memory%20%20%7C%20Constant%20memory%20%20%20%20%20%20%20%7C%0A%7C%20Time%20to%20first%20sound%20%7C%20Seconds%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%20Milliseconds%20%20%20%20%20%20%20%20%20%20%7C%0A%0A---%0A%0A%23%23%20JavaScript%20API%0A%0A%23%23%23%20Basic%20Usage%0A%0A%60%60%60javascript%0Aimport%20init%2C%20%7B%20WasmStreamingDecoder%20%7D%20from%20%22%40flo-audio%2Flibflo%22%3B%0A%0Aawait%20init()%3B%0A%0A%2F%2F%20Create%20decoder%0Aconst%20decoder%20%3D%20new%20WasmStreamingDecoder()%3B%0A%0A%2F%2F%20Feed%20data%20(can%20be%20called%20multiple%20times)%0Adecoder.feed(chunk)%3B%0A%0A%2F%2F%20Get%20file%20info%20once%20header%20is%20parsed%0Aconst%20info%20%3D%20decoder.get_info()%3B%0Aif%20(info)%20%7B%0A%20%20console.log(%60%24%7Binfo.sample_rate%7DHz%2C%20%24%7Binfo.channels%7D%20channels%60)%3B%0A%7D%0A%0A%2F%2F%20Decode%20all%20available%20data%20at%20once%0Aconst%20samples%20%3D%20decoder.decode_available()%3B%0A%0A%2F%2F%20Or%20decode%20frame-by-frame%0Awhile%20(true)%20%7B%0A%20%20const%20frame%20%3D%20decoder.next_frame()%3B%0A%20%20if%20(frame%20%3D%3D%3D%20null)%20break%3B%0A%20%20playAudio(frame)%3B%0A%7D%0A%0A%2F%2F%20Clean%20up%20when%20done%0Adecoder.free()%3B%0A%60%60%60%0A%0A%23%23%23%20Methods%0A%0A%7C%20Method%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%20Returns%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%20Description%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%0A%7C%20----------------------------%20%7C%20----------------------%20%7C%20---------------------------------------------%20%7C%0A%7C%20%60new%20WasmStreamingDecoder()%60%20%7C%20%60WasmStreamingDecoder%60%20%7C%20Create%20new%20decoder%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%0A%7C%20%60feed(data)%60%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%20%60void%60%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%20Feed%20bytes%20(Uint8Array)%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%0A%7C%20%60get_info()%60%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%20%60Object%20%5C%7C%20null%60%20%20%20%20%20%20%20%7C%20Get%20file%20info%20(null%20if%20header%20not%20yet%20parsed)%20%7C%0A%7C%20%60decode_available()%60%20%20%20%20%20%20%20%20%20%7C%20%60Float32Array%60%20%20%20%20%20%20%20%20%20%7C%20Decode%20all%20buffered%20data%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%0A%7C%20%60next_frame()%60%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%20%60Float32Array%20%5C%7C%20null%60%20%7C%20Get%20next%20frame%20(null%20if%20none%20available)%20%20%20%20%20%20%20%7C%0A%7C%20%60available_frames()%60%20%20%20%20%20%20%20%20%20%7C%20%60number%60%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%20Number%20of%20frames%20ready%20to%20decode%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%0A%7C%20%60current_frame_index()%60%20%20%20%20%20%20%7C%20%60number%60%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%20Current%20position%20in%20file%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%0A%7C%20%60reset()%60%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%20%60void%60%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%20Reset%20decoder%20state%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%0A%7C%20%60free()%60%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%20%60void%60%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%20Release%20resources%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%0A%0A%23%23%23%20Info%20Object%0A%0A%60%60%60javascript%0A%7B%0A%20%20sample_rate%3A%2044100%2C%0A%20%20channels%3A%202%2C%0A%20%20bit_depth%3A%2016%2C%0A%20%20total_samples%3A%20180%2C%20%20%20%20%20%20%20%20%2F%2F%20Total%20sample-frames%20(samples%20per%20channel)%20in%20file%0A%20%20is_lossy%3A%20false%2C%0A%20%20lossy_quality%3A%20null%20%20%20%20%20%20%20%2F%2F%200-4%20if%20lossy%0A%7D%0A%60%60%60%0A%0A---%0A%0A%23%23%20Streaming%20from%20Network%0A%0A%23%23%23%20Fetch%20with%20Streaming%0A%0A%60%60%60javascript%0Aasync%20function%20streamFromUrl(url)%20%7B%0A%20%20const%20decoder%20%3D%20new%20WasmStreamingDecoder()%3B%0A%20%20const%20audioContext%20%3D%20new%20AudioContext()%3B%0A%0A%20%20const%20response%20%3D%20await%20fetch(url)%3B%0A%20%20const%20reader%20%3D%20response.body.getReader()%3B%0A%0A%20%20%2F%2F%20Buffer%20for%20scheduling%20audio%0A%20%20const%20sampleBuffer%20%3D%20%5B%5D%3B%0A%20%20let%20nextTime%20%3D%20audioContext.currentTime%3B%0A%0A%20%20while%20(true)%20%7B%0A%20%20%20%20const%20%7B%20done%2C%20value%20%7D%20%3D%20await%20reader.read()%3B%0A%20%20%20%20if%20(done)%20break%3B%0A%0A%20%20%20%20%2F%2F%20Feed%20chunk%20to%20decoder%0A%20%20%20%20decoder.feed(value)%3B%0A%0A%20%20%20%20%2F%2F%20Decode%20and%20schedule%20all%20available%20frames%0A%20%20%20%20while%20(true)%20%7B%0A%20%20%20%20%20%20const%20samples%20%3D%20decoder.next_frame()%3B%0A%20%20%20%20%20%20if%20(samples%20%3D%3D%3D%20null)%20break%3B%0A%0A%20%20%20%20%20%20%2F%2F%20Schedule%20playback%0A%20%20%20%20%20%20const%20info%20%3D%20decoder.get_info()%3B%0A%20%20%20%20%20%20const%20audioBuffer%20%3D%20samplesToAudioBuffer(samples%2C%20info%2C%20audioContext)%3B%0A%0A%20%20%20%20%20%20const%20source%20%3D%20audioContext.createBufferSource()%3B%0A%20%20%20%20%20%20source.buffer%20%3D%20audioBuffer%3B%0A%20%20%20%20%20%20source.connect(audioContext.destination)%3B%0A%20%20%20%20%20%20source.start(nextTime)%3B%0A%0A%20%20%20%20%20%20nextTime%20%2B%3D%20audioBuffer.duration%3B%0A%20%20%20%20%7D%0A%20%20%7D%0A%0A%20%20decoder.free()%3B%0A%7D%0A%60%60%60%0A%0A%23%23%23%20With%20Progress%20Callback%0A%0A%60%60%60javascript%0Aasync%20function%20streamWithProgress(url%2C%20onProgress)%20%7B%0A%20%20const%20response%20%3D%20await%20fetch(url)%3B%0A%20%20const%20contentLength%20%3D%20parseInt(response.headers.get(%22Content-Length%22)%20%7C%7C%20%220%22)%3B%0A%20%20const%20reader%20%3D%20response.body.getReader()%3B%0A%0A%20%20const%20decoder%20%3D%20new%20WasmStreamingDecoder()%3B%0A%20%20let%20loaded%20%3D%200%3B%0A%0A%20%20while%20(true)%20%7B%0A%20%20%20%20const%20%7B%20done%2C%20value%20%7D%20%3D%20await%20reader.read()%3B%0A%20%20%20%20if%20(done)%20break%3B%0A%0A%20%20%20%20loaded%20%2B%3D%20value.length%3B%0A%20%20%20%20onProgress(loaded%20%2F%20contentLength)%3B%0A%0A%20%20%20%20decoder.feed(value)%3B%0A%20%20%20%20%2F%2F%20Process%20frames...%0A%20%20%7D%0A%0A%20%20decoder.free()%3B%0A%7D%0A%60%60%60%0A%0A---%0A%0A%23%23%20Real-Time%20Playback%0A%0A%23%23%23%20Using%20AudioWorklet%0A%0AFor%20glitch-free%20playback%2C%20use%20an%20AudioWorklet%3A%0A%0A**audio-processor.js%3A**%0A%0A%60%60%60javascript%0Aclass%20FloProcessor%20extends%20AudioWorkletProcessor%20%7B%0A%20%20constructor()%20%7B%0A%20%20%20%20super()%3B%0A%20%20%20%20this.buffer%20%3D%20%5B%5D%3B%0A%20%20%20%20this.port.onmessage%20%3D%20(e)%20%3D%3E%20%7B%0A%20%20%20%20%20%20this.buffer.push(...e.data)%3B%0A%20%20%20%20%7D%3B%0A%20%20%7D%0A%0A%20%20process(inputs%2C%20outputs)%20%7B%0A%20%20%20%20const%20output%20%3D%20outputs%5B0%5D%3B%0A%20%20%20%20const%20channel0%20%3D%20output%5B0%5D%3B%0A%20%20%20%20const%20channel1%20%3D%20output%5B1%5D%3B%0A%0A%20%20%20%20for%20(let%20i%20%3D%200%3B%20i%20%3C%20channel0.length%3B%20i%2B%2B)%20%7B%0A%20%20%20%20%20%20if%20(this.buffer.length%20%3E%3D%202)%20%7B%0A%20%20%20%20%20%20%20%20channel0%5Bi%5D%20%3D%20this.buffer.shift()%3B%0A%20%20%20%20%20%20%20%20channel1%5Bi%5D%20%3D%20this.buffer.shift()%3B%0A%20%20%20%20%20%20%7D%20else%20%7B%0A%20%20%20%20%20%20%20%20channel0%5Bi%5D%20%3D%200%3B%0A%20%20%20%20%20%20%20%20channel1%5Bi%5D%20%3D%200%3B%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%0A%20%20%20%20return%20true%3B%0A%20%20%7D%0A%7D%0A%0AregisterProcessor(%22flo-processor%22%2C%20FloProcessor)%3B%0A%60%60%60%0A%0A**Main%20code%3A**%0A%0A%60%60%60javascript%0Aconst%20audioContext%20%3D%20new%20AudioContext()%3B%0Aawait%20audioContext.audioWorklet.addModule(%22audio-processor.js%22)%3B%0A%0Aconst%20processor%20%3D%20new%20AudioWorkletNode(audioContext%2C%20%22flo-processor%22)%3B%0Aprocessor.connect(audioContext.destination)%3B%0A%0A%2F%2F%20Feed%20samples%20to%20worklet%0Afunction%20sendSamplesToWorklet(samples)%20%7B%0A%20%20processor.port.postMessage(Array.from(samples))%3B%0A%7D%0A%0A%2F%2F%20Streaming%20loop%0Aconst%20decoder%20%3D%20new%20WasmStreamingDecoder()%3B%0Adecoder.feed(data)%3B%0A%0Awhile%20(true)%20%7B%0A%20%20const%20samples%20%3D%20decoder.next_frame()%3B%0A%20%20if%20(samples%20%3D%3D%3D%20null)%20break%3B%0A%20%20sendSamplesToWorklet(samples)%3B%0A%7D%0A%60%60%60%0A%0A---%0A%0A%23%23%20Buffering%20Strategy%0A%0AFor%20smooth%20playback%2C%20buffer%20frames%20before%20starting%3A%0A%0A%60%60%60javascript%0Aconst%20MIN_BUFFER_SAMPLES%20%3D%208192%3B%20%2F%2F%20~185ms%20at%2044100Hz%0A%0Aasync%20function%20streamWithBuffering(url)%20%7B%0A%20%20const%20decoder%20%3D%20new%20WasmStreamingDecoder()%3B%0A%20%20const%20audioContext%20%3D%20new%20AudioContext()%3B%0A%0A%20%20let%20sampleBuffer%20%3D%20new%20Float32Array(0)%3B%0A%20%20let%20playing%20%3D%20false%3B%0A%20%20let%20nextTime%20%3D%200%3B%0A%0A%20%20const%20response%20%3D%20await%20fetch(url)%3B%0A%20%20const%20reader%20%3D%20response.body.getReader()%3B%0A%0A%20%20while%20(true)%20%7B%0A%20%20%20%20const%20%7B%20done%2C%20value%20%7D%20%3D%20await%20reader.read()%3B%0A%20%20%20%20if%20(done)%20break%3B%0A%0A%20%20%20%20decoder.feed(value)%3B%0A%0A%20%20%20%20%2F%2F%20Collect%20frames%0A%20%20%20%20while%20(true)%20%7B%0A%20%20%20%20%20%20const%20samples%20%3D%20decoder.next_frame()%3B%0A%20%20%20%20%20%20if%20(samples%20%3D%3D%3D%20null)%20break%3B%0A%0A%20%20%20%20%20%20%2F%2F%20Append%20to%20buffer%0A%20%20%20%20%20%20const%20newBuffer%20%3D%20new%20Float32Array(sampleBuffer.length%20%2B%20samples.length)%3B%0A%20%20%20%20%20%20newBuffer.set(sampleBuffer)%3B%0A%20%20%20%20%20%20newBuffer.set(samples%2C%20sampleBuffer.length)%3B%0A%20%20%20%20%20%20sampleBuffer%20%3D%20newBuffer%3B%0A%20%20%20%20%7D%0A%0A%20%20%20%20%2F%2F%20Start%20playback%20once%20buffer%20is%20full%0A%20%20%20%20if%20(!playing%20%26%26%20sampleBuffer.length%20%3E%3D%20MIN_BUFFER_SAMPLES)%20%7B%0A%20%20%20%20%20%20playing%20%3D%20true%3B%0A%20%20%20%20%20%20nextTime%20%3D%20audioContext.currentTime%3B%0A%20%20%20%20%7D%0A%0A%20%20%20%20%2F%2F%20Schedule%20buffered%20audio%0A%20%20%20%20if%20(playing%20%26%26%20sampleBuffer.length%20%3E%3D%20MIN_BUFFER_SAMPLES)%20%7B%0A%20%20%20%20%20%20scheduleAudio(sampleBuffer%2C%20audioContext%2C%20nextTime)%3B%0A%20%20%20%20%20%20nextTime%20%2B%3D%20sampleBuffer.length%20%2F%202%20%2F%2044100%3B%20%2F%2F%20stereo%0A%20%20%20%20%20%20sampleBuffer%20%3D%20new%20Float32Array(0)%3B%0A%20%20%20%20%7D%0A%20%20%7D%0A%0A%20%20%2F%2F%20Play%20remaining%20buffer%0A%20%20if%20(sampleBuffer.length%20%3E%200)%20%7B%0A%20%20%20%20scheduleAudio(sampleBuffer%2C%20audioContext%2C%20nextTime)%3B%0A%20%20%7D%0A%0A%20%20decoder.free()%3B%0A%7D%0A%60%60%60%0A%0A---%0A%0A%23%23%20Frame%20Sizes%0A%0AFrame%20sizes%20vary%20by%20encoding%20mode%3A%0A%0A%7C%20Mode%20%20%20%20%20%7C%20Samples%20per%20Frame%20%7C%20Duration%20at%2044.1kHz%20%7C%0A%7C%20--------%20%7C%20-----------------%20%7C%20-------------------%20%7C%0A%7C%20Lossless%20%7C%2044100%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%201%20second%20%20%20%20%20%20%20%20%20%20%20%20%7C%0A%7C%20Lossy%20%20%20%20%7C%201024-2048%20%20%20%20%20%20%20%20%20%7C%20~23-46ms%20%20%20%20%20%20%20%20%20%20%20%20%7C%0A%0AFor%20lossy%20files%2C%20use%20buffering%20to%20collect%20multiple%20small%20frames%20before%20scheduling.%0A%0A---%0A%0A%23%23%20Error%20Handling%0A%0A%60%60%60javascript%0Aconst%20decoder%20%3D%20new%20WasmStreamingDecoder()%3B%0A%0Atry%20%7B%0A%20%20decoder.feed(chunk)%3B%0A%0A%20%20const%20info%20%3D%20decoder.get_info()%3B%0A%20%20if%20(!info)%20%7B%0A%20%20%20%20console.log(%22Header%20not%20yet%20received%22)%3B%0A%20%20%20%20return%3B%0A%20%20%7D%0A%0A%20%20const%20samples%20%3D%20decoder.next_frame()%3B%0A%20%20%2F%2F%20...%0A%7D%20catch%20(error)%20%7B%0A%20%20console.error(%22Streaming%20error%3A%22%2C%20error.message)%3B%0A%7D%20finally%20%7B%0A%20%20decoder.free()%3B%0A%7D%0A%60%60%60%0A%0A---%0A%0A%23%23%20Memory%20Management%0A%0AAlways%20call%20%60free()%60%20when%20done%3A%0A%0A%60%60%60javascript%0Aconst%20decoder%20%3D%20new%20WasmStreamingDecoder()%3B%0A%0Atry%20%7B%0A%20%20%2F%2F%20Use%20decoder...%0A%7D%20finally%20%7B%0A%20%20decoder.free()%3B%20%2F%2F%20Release%20WASM%20memory%0A%7D%0A%60%60%60%0A%0AThe%20decoder%20holds%3A%0A%0A-%20Input%20buffer%20(grows%20as%20you%20feed%20data)%0A-%20Internal%20decode%20state%0A-%20Overlap%20buffers%20(for%20lossy%20MDCT)%0A%0ACalling%20%60reset()%60%20clears%20decode%20state%20but%20keeps%20the%20decoder%20usable.%0ACalling%20%60free()%60%20releases%20all%20memory%20and%20invalidates%20the%20decoder.%0A" style="display: none;"></div>
+                  
+                    <nav aria-label="breadcrumb" class="docmd-breadcrumbs">
+                      <ol>
+                        
+                        
+                          <li class="breadcrumb-item " >
+                            
+                              <span>Format and Features</span>
+                            
+                            
+                              <span class="breadcrumb-separator">
+<svg class="lucide-icon icon-chevron-right " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-chevron-right"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m9 18 6-6-6-6" />
+</svg>
+</span>
+                            
+                          </li>
+                        
+                          <li class="breadcrumb-item active" aria-current=&quot;page&quot;>
+                            
+                              <span>Streaming</span>
+                            
+                            
+                          </li>
+                        
+                      </ol>
+                    </nav>
+                  
+
+                  
+                    <div class="docmd-copy-widgets">
+                      
+                        <button class="docmd-copy-btn docmd-copy-raw-btn" data-copied="Copied!" title="Copy Markdown" aria-label="Copy Markdown">
+                          <span class="docmd-btn-icon">
+<svg class="lucide-icon icon-copy " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-copy"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+  <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+</svg>
+</span>
+                        </button>
+                      
+                      
+                        <button class="docmd-copy-btn docmd-copy-context-btn" data-copied="Copied!" title="Copy Context">
+                          <span class="docmd-btn-icon">
+<svg class="lucide-icon icon-message-square " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-message-square"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z" />
+</svg>
+</span>
+                          <span class="docmd-btn-text">Copy Context</span>
+                        </button>
+                      
+                    </div>
+                  
+                </div>
+                
+                <h1 id="streaming-decoder" class="docmd-heading"><a href="#streaming-decoder" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Streaming Decoder</h1>
+<p>The streaming decoder enables real-time playback and progressive loading of flo files.</p>
+<h2 id="streaming-decoder-why-streaming" class="docmd-heading"><a href="#streaming-decoder-why-streaming" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Why Streaming?</h2>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>Standard Decode</th>
+<th>Streaming</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Large files (&gt;10MB)</td>
+<td>Wait for full decode</td>
+<td>Play while loading</td>
+</tr>
+<tr>
+<td>Network streaming</td>
+<td>Download entire file</td>
+<td>Play as chunks arrive</td>
+</tr>
+<tr>
+<td>Memory usage</td>
+<td>Full file in memory</td>
+<td>Constant memory</td>
+</tr>
+<tr>
+<td>Time to first sound</td>
+<td>Seconds</td>
+<td>Milliseconds</td>
+</tr>
+</tbody>
+</table>
+</div><hr>
+<h2 id="streaming-decoder-javascript-api" class="docmd-heading"><a href="#streaming-decoder-javascript-api" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>JavaScript API</h2>
+<h3 id="streaming-decoder-javascript-api-basic-usage" class="docmd-heading"><a href="#streaming-decoder-javascript-api-basic-usage" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Basic Usage</h3>
+<pre class="hljs"><code class="language-javascript"><span class="hljs-keyword">import</span> init, { WasmStreamingDecoder } <span class="hljs-keyword">from</span> <span class="hljs-string">&quot;@flo-audio/libflo&quot;</span>;
+
+<span class="hljs-keyword">await</span> <span class="hljs-title function_">init</span>();
+
+<span class="hljs-comment">// Create decoder</span>
+<span class="hljs-keyword">const</span> decoder <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title function_">WasmStreamingDecoder</span>();
+
+<span class="hljs-comment">// Feed data (can be called multiple times)</span>
+decoder.<span class="hljs-title function_">feed</span>(chunk);
+
+<span class="hljs-comment">// Get file info once header is parsed</span>
+<span class="hljs-keyword">const</span> info <span class="hljs-operator">=</span> decoder.<span class="hljs-title function_">get_info</span>();
+<span class="hljs-keyword">if</span> (info) {
+  console.<span class="hljs-title function_">log</span>(<span class="hljs-string">`${info.sample_rate}Hz, ${info.channels} channels`</span>);
+}
+
+<span class="hljs-comment">// Decode all available data at once</span>
+<span class="hljs-keyword">const</span> samples <span class="hljs-operator">=</span> decoder.<span class="hljs-title function_">decode_available</span>();
+
+<span class="hljs-comment">// Or decode frame-by-frame</span>
+<span class="hljs-keyword">while</span> (<span class="hljs-literal">true</span>) {
+  <span class="hljs-keyword">const</span> frame <span class="hljs-operator">=</span> decoder.<span class="hljs-title function_">next_frame</span>();
+  <span class="hljs-keyword">if</span> (frame <span class="hljs-operator">===</span> <span class="hljs-literal">null</span>) <span class="hljs-keyword">break</span>;
+  <span class="hljs-title function_">playAudio</span>(frame);
+}
+
+<span class="hljs-comment">// Clean up when done</span>
+decoder.<span class="hljs-keyword">free</span>();
+</code></pre>
+<h3 id="streaming-decoder-javascript-api-methods" class="docmd-heading"><a href="#streaming-decoder-javascript-api-methods" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Methods</h3>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>new WasmStreamingDecoder()</code></td>
+<td><code>WasmStreamingDecoder</code></td>
+<td>Create new decoder</td>
+</tr>
+<tr>
+<td><code>feed(data)</code></td>
+<td><code>void</code></td>
+<td>Feed bytes (Uint8Array)</td>
+</tr>
+<tr>
+<td><code>get_info()</code></td>
+<td><code>Object | null</code></td>
+<td>Get file info (null if header not yet parsed)</td>
+</tr>
+<tr>
+<td><code>decode_available()</code></td>
+<td><code>Float32Array</code></td>
+<td>Decode all buffered data</td>
+</tr>
+<tr>
+<td><code>next_frame()</code></td>
+<td><code>Float32Array | null</code></td>
+<td>Get next frame (null if none available)</td>
+</tr>
+<tr>
+<td><code>available_frames()</code></td>
+<td><code>number</code></td>
+<td>Number of frames ready to decode</td>
+</tr>
+<tr>
+<td><code>current_frame_index()</code></td>
+<td><code>number</code></td>
+<td>Current position in file</td>
+</tr>
+<tr>
+<td><code>reset()</code></td>
+<td><code>void</code></td>
+<td>Reset decoder state</td>
+</tr>
+<tr>
+<td><code>free()</code></td>
+<td><code>void</code></td>
+<td>Release resources</td>
+</tr>
+</tbody>
+</table>
+</div><h3 id="streaming-decoder-javascript-api-info-object" class="docmd-heading"><a href="#streaming-decoder-javascript-api-info-object" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Info Object</h3>
+<pre class="hljs"><code class="language-javascript">{
+  sample_rate<span class="hljs-operator">:</span> <span class="hljs-number">44100</span>,
+  channels<span class="hljs-operator">:</span> <span class="hljs-number">2</span>,
+  bit_depth<span class="hljs-operator">:</span> <span class="hljs-number">16</span>,
+  total_samples<span class="hljs-operator">:</span> <span class="hljs-number">180</span>,        <span class="hljs-comment">// Total sample-frames (samples per channel) in file</span>
+  is_lossy<span class="hljs-operator">:</span> <span class="hljs-literal">false</span>,
+  lossy_quality<span class="hljs-operator">:</span> <span class="hljs-literal">null</span>       <span class="hljs-comment">// 0-4 if lossy</span>
+}
+</code></pre>
+<hr>
+<h2 id="streaming-decoder-streaming-from-network" class="docmd-heading"><a href="#streaming-decoder-streaming-from-network" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Streaming from Network</h2>
+<h3 id="streaming-decoder-streaming-from-network-fetch-with-streaming" class="docmd-heading"><a href="#streaming-decoder-streaming-from-network-fetch-with-streaming" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Fetch with Streaming</h3>
+<pre class="hljs"><code class="language-javascript"><span class="hljs-keyword">async</span> <span class="hljs-keyword">function</span> <span class="hljs-title function_">streamFromUrl</span>(url) {
+  <span class="hljs-keyword">const</span> decoder <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title function_">WasmStreamingDecoder</span>();
+  <span class="hljs-keyword">const</span> audioContext <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title function_">AudioContext</span>();
+
+  <span class="hljs-keyword">const</span> response <span class="hljs-operator">=</span> <span class="hljs-keyword">await</span> <span class="hljs-title function_">fetch</span>(url);
+  <span class="hljs-keyword">const</span> reader <span class="hljs-operator">=</span> response.<span class="hljs-attr">body</span>.<span class="hljs-title function_">getReader</span>();
+
+  <span class="hljs-comment">// Buffer for scheduling audio</span>
+  <span class="hljs-keyword">const</span> sampleBuffer <span class="hljs-operator">=</span> [];
+  <span class="hljs-keyword">let</span> nextTime <span class="hljs-operator">=</span> audioContext.<span class="hljs-attr">currentTime</span>;
+
+  <span class="hljs-keyword">while</span> (<span class="hljs-literal">true</span>) {
+    <span class="hljs-keyword">const</span> { done, value } <span class="hljs-operator">=</span> <span class="hljs-keyword">await</span> reader.<span class="hljs-keyword">read</span>();
+    <span class="hljs-keyword">if</span> (done) <span class="hljs-keyword">break</span>;
+
+    <span class="hljs-comment">// Feed chunk to decoder</span>
+    decoder.<span class="hljs-title function_">feed</span>(value);
+
+    <span class="hljs-comment">// Decode and schedule all available frames</span>
+    <span class="hljs-keyword">while</span> (<span class="hljs-literal">true</span>) {
+      <span class="hljs-keyword">const</span> samples <span class="hljs-operator">=</span> decoder.<span class="hljs-title function_">next_frame</span>();
+      <span class="hljs-keyword">if</span> (samples <span class="hljs-operator">===</span> <span class="hljs-literal">null</span>) <span class="hljs-keyword">break</span>;
+
+      <span class="hljs-comment">// Schedule playback</span>
+      <span class="hljs-keyword">const</span> info <span class="hljs-operator">=</span> decoder.<span class="hljs-title function_">get_info</span>();
+      <span class="hljs-keyword">const</span> audioBuffer <span class="hljs-operator">=</span> <span class="hljs-title function_">samplesToAudioBuffer</span>(samples, info, audioContext);
+
+      <span class="hljs-keyword">const</span> <span class="hljs-keyword">source</span> <span class="hljs-operator">=</span> audioContext.<span class="hljs-title function_">createBufferSource</span>();
+      <span class="hljs-keyword">source</span>.<span class="hljs-attr">buffer</span> <span class="hljs-operator">=</span> audioBuffer;
+      <span class="hljs-keyword">source</span>.<span class="hljs-title function_">connect</span>(audioContext.<span class="hljs-attr">destination</span>);
+      <span class="hljs-keyword">source</span>.<span class="hljs-title function_">start</span>(nextTime);
+
+      nextTime <span class="hljs-operator">+=</span> audioBuffer.<span class="hljs-attr">duration</span>;
+    }
+  }
+
+  decoder.<span class="hljs-keyword">free</span>();
+}
+</code></pre>
+<h3 id="streaming-decoder-streaming-from-network-with-progress-callback" class="docmd-heading"><a href="#streaming-decoder-streaming-from-network-with-progress-callback" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>With Progress Callback</h3>
+<pre class="hljs"><code class="language-javascript"><span class="hljs-keyword">async</span> <span class="hljs-keyword">function</span> <span class="hljs-title function_">streamWithProgress</span>(url, onProgress) {
+  <span class="hljs-keyword">const</span> response <span class="hljs-operator">=</span> <span class="hljs-keyword">await</span> <span class="hljs-title function_">fetch</span>(url);
+  <span class="hljs-keyword">const</span> contentLength <span class="hljs-operator">=</span> <span class="hljs-title function_">parseInt</span>(response.<span class="hljs-attr">headers</span>.<span class="hljs-title function_">get</span>(<span class="hljs-string">&quot;Content-Length&quot;</span>) <span class="hljs-operator">||</span> <span class="hljs-string">&quot;0&quot;</span>);
+  <span class="hljs-keyword">const</span> reader <span class="hljs-operator">=</span> response.<span class="hljs-attr">body</span>.<span class="hljs-title function_">getReader</span>();
+
+  <span class="hljs-keyword">const</span> decoder <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title function_">WasmStreamingDecoder</span>();
+  <span class="hljs-keyword">let</span> loaded <span class="hljs-operator">=</span> <span class="hljs-number">0</span>;
+
+  <span class="hljs-keyword">while</span> (<span class="hljs-literal">true</span>) {
+    <span class="hljs-keyword">const</span> { done, value } <span class="hljs-operator">=</span> <span class="hljs-keyword">await</span> reader.<span class="hljs-keyword">read</span>();
+    <span class="hljs-keyword">if</span> (done) <span class="hljs-keyword">break</span>;
+
+    loaded <span class="hljs-operator">+=</span> value.<span class="hljs-attr">length</span>;
+    <span class="hljs-title function_">onProgress</span>(loaded <span class="hljs-operator">/</span> contentLength);
+
+    decoder.<span class="hljs-title function_">feed</span>(value);
+    <span class="hljs-comment">// Process frames...</span>
+  }
+
+  decoder.<span class="hljs-keyword">free</span>();
+}
+</code></pre>
+<hr>
+<h2 id="streaming-decoder-real-time-playback" class="docmd-heading"><a href="#streaming-decoder-real-time-playback" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Real-Time Playback</h2>
+<h3 id="streaming-decoder-real-time-playback-using-audioworklet" class="docmd-heading"><a href="#streaming-decoder-real-time-playback-using-audioworklet" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Using AudioWorklet</h3>
+<p>For glitch-free playback, use an AudioWorklet:</p>
+<p><strong>audio-processor.js:</strong></p>
+<pre class="hljs"><code class="language-javascript"><span class="hljs-keyword">class</span> FloProcessor <span class="hljs-keyword">extends</span> AudioWorkletProcessor {
+  <span class="hljs-title function_">constructor</span>() {
+    <span class="hljs-keyword">super</span>();
+    <span class="hljs-keyword">this</span>.<span class="hljs-attr">buffer</span> <span class="hljs-operator">=</span> [];
+    <span class="hljs-keyword">this</span>.<span class="hljs-attr">port</span>.<span class="hljs-attr">onmessage</span> <span class="hljs-operator">=</span> (e) <span class="hljs-operator">=&gt;</span> {
+      <span class="hljs-keyword">this</span>.<span class="hljs-attr">buffer</span>.<span class="hljs-title function_">push</span>(...<span class="hljs-attr">e</span>.<span class="hljs-attr">data</span>);
+    };
+  }
+
+  <span class="hljs-title function_">process</span>(inputs, outputs) {
+    <span class="hljs-keyword">const</span> output <span class="hljs-operator">=</span> outputs[<span class="hljs-number">0</span>];
+    <span class="hljs-keyword">const</span> channel0 <span class="hljs-operator">=</span> output[<span class="hljs-number">0</span>];
+    <span class="hljs-keyword">const</span> channel1 <span class="hljs-operator">=</span> output[<span class="hljs-number">1</span>];
+
+    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">let</span> i <span class="hljs-operator">=</span> <span class="hljs-number">0</span>; i <span class="hljs-operator">&lt;</span> channel0.<span class="hljs-attr">length</span>; i<span class="hljs-operator">++</span>) {
+      <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.<span class="hljs-attr">buffer</span>.<span class="hljs-attr">length</span> <span class="hljs-operator">&gt;=</span> <span class="hljs-number">2</span>) {
+        channel0[i] <span class="hljs-operator">=</span> <span class="hljs-keyword">this</span>.<span class="hljs-attr">buffer</span>.<span class="hljs-title function_">shift</span>();
+        channel1[i] <span class="hljs-operator">=</span> <span class="hljs-keyword">this</span>.<span class="hljs-attr">buffer</span>.<span class="hljs-title function_">shift</span>();
+      } <span class="hljs-keyword">else</span> {
+        channel0[i] <span class="hljs-operator">=</span> <span class="hljs-number">0</span>;
+        channel1[i] <span class="hljs-operator">=</span> <span class="hljs-number">0</span>;
+      }
+    }
+
+    <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;
+  }
+}
+
+<span class="hljs-title function_">registerProcessor</span>(<span class="hljs-string">&quot;flo-processor&quot;</span>, FloProcessor);
+</code></pre>
+<p><strong>Main code:</strong></p>
+<pre class="hljs"><code class="language-javascript"><span class="hljs-keyword">const</span> audioContext <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title function_">AudioContext</span>();
+<span class="hljs-keyword">await</span> audioContext.<span class="hljs-attr">audioWorklet</span>.<span class="hljs-title function_">addModule</span>(<span class="hljs-string">&quot;audio-processor.js&quot;</span>);
+
+<span class="hljs-keyword">const</span> processor <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title function_">AudioWorkletNode</span>(audioContext, <span class="hljs-string">&quot;flo-processor&quot;</span>);
+processor.<span class="hljs-title function_">connect</span>(audioContext.<span class="hljs-attr">destination</span>);
+
+<span class="hljs-comment">// Feed samples to worklet</span>
+<span class="hljs-keyword">function</span> <span class="hljs-title function_">sendSamplesToWorklet</span>(samples) {
+  processor.<span class="hljs-attr">port</span>.<span class="hljs-title function_">postMessage</span>(Array.<span class="hljs-keyword">from</span>(samples));
+}
+
+<span class="hljs-comment">// Streaming loop</span>
+<span class="hljs-keyword">const</span> decoder <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title function_">WasmStreamingDecoder</span>();
+decoder.<span class="hljs-title function_">feed</span>(data);
+
+<span class="hljs-keyword">while</span> (<span class="hljs-literal">true</span>) {
+  <span class="hljs-keyword">const</span> samples <span class="hljs-operator">=</span> decoder.<span class="hljs-title function_">next_frame</span>();
+  <span class="hljs-keyword">if</span> (samples <span class="hljs-operator">===</span> <span class="hljs-literal">null</span>) <span class="hljs-keyword">break</span>;
+  <span class="hljs-title function_">sendSamplesToWorklet</span>(samples);
+}
+</code></pre>
+<hr>
+<h2 id="streaming-decoder-buffering-strategy" class="docmd-heading"><a href="#streaming-decoder-buffering-strategy" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Buffering Strategy</h2>
+<p>For smooth playback, buffer frames before starting:</p>
+<pre class="hljs"><code class="language-javascript"><span class="hljs-keyword">const</span> MIN_BUFFER_SAMPLES <span class="hljs-operator">=</span> <span class="hljs-number">8192</span>; <span class="hljs-comment">// ~185ms at 44100Hz</span>
+
+<span class="hljs-keyword">async</span> <span class="hljs-keyword">function</span> <span class="hljs-title function_">streamWithBuffering</span>(url) {
+  <span class="hljs-keyword">const</span> decoder <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title function_">WasmStreamingDecoder</span>();
+  <span class="hljs-keyword">const</span> audioContext <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title function_">AudioContext</span>();
+
+  <span class="hljs-keyword">let</span> sampleBuffer <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title function_">Float32Array</span>(<span class="hljs-number">0</span>);
+  <span class="hljs-keyword">let</span> playing <span class="hljs-operator">=</span> <span class="hljs-literal">false</span>;
+  <span class="hljs-keyword">let</span> nextTime <span class="hljs-operator">=</span> <span class="hljs-number">0</span>;
+
+  <span class="hljs-keyword">const</span> response <span class="hljs-operator">=</span> <span class="hljs-keyword">await</span> <span class="hljs-title function_">fetch</span>(url);
+  <span class="hljs-keyword">const</span> reader <span class="hljs-operator">=</span> response.<span class="hljs-attr">body</span>.<span class="hljs-title function_">getReader</span>();
+
+  <span class="hljs-keyword">while</span> (<span class="hljs-literal">true</span>) {
+    <span class="hljs-keyword">const</span> { done, value } <span class="hljs-operator">=</span> <span class="hljs-keyword">await</span> reader.<span class="hljs-keyword">read</span>();
+    <span class="hljs-keyword">if</span> (done) <span class="hljs-keyword">break</span>;
+
+    decoder.<span class="hljs-title function_">feed</span>(value);
+
+    <span class="hljs-comment">// Collect frames</span>
+    <span class="hljs-keyword">while</span> (<span class="hljs-literal">true</span>) {
+      <span class="hljs-keyword">const</span> samples <span class="hljs-operator">=</span> decoder.<span class="hljs-title function_">next_frame</span>();
+      <span class="hljs-keyword">if</span> (samples <span class="hljs-operator">===</span> <span class="hljs-literal">null</span>) <span class="hljs-keyword">break</span>;
+
+      <span class="hljs-comment">// Append to buffer</span>
+      <span class="hljs-keyword">const</span> newBuffer <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title function_">Float32Array</span>(sampleBuffer.<span class="hljs-attr">length</span> <span class="hljs-operator">+</span> samples.<span class="hljs-attr">length</span>);
+      newBuffer.<span class="hljs-keyword">set</span>(sampleBuffer);
+      newBuffer.<span class="hljs-keyword">set</span>(samples, sampleBuffer.<span class="hljs-attr">length</span>);
+      sampleBuffer <span class="hljs-operator">=</span> newBuffer;
+    }
+
+    <span class="hljs-comment">// Start playback once buffer is full</span>
+    <span class="hljs-keyword">if</span> (<span class="hljs-operator">!</span>playing <span class="hljs-operator">&amp;&amp;</span> sampleBuffer.<span class="hljs-attr">length</span> <span class="hljs-operator">&gt;=</span> MIN_BUFFER_SAMPLES) {
+      playing <span class="hljs-operator">=</span> <span class="hljs-literal">true</span>;
+      nextTime <span class="hljs-operator">=</span> audioContext.<span class="hljs-attr">currentTime</span>;
+    }
+
+    <span class="hljs-comment">// Schedule buffered audio</span>
+    <span class="hljs-keyword">if</span> (playing <span class="hljs-operator">&amp;&amp;</span> sampleBuffer.<span class="hljs-attr">length</span> <span class="hljs-operator">&gt;=</span> MIN_BUFFER_SAMPLES) {
+      <span class="hljs-title function_">scheduleAudio</span>(sampleBuffer, audioContext, nextTime);
+      nextTime <span class="hljs-operator">+=</span> sampleBuffer.<span class="hljs-attr">length</span> <span class="hljs-operator">/</span> <span class="hljs-number">2</span> <span class="hljs-operator">/</span> <span class="hljs-number">44100</span>; <span class="hljs-comment">// stereo</span>
+      sampleBuffer <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title function_">Float32Array</span>(<span class="hljs-number">0</span>);
+    }
+  }
+
+  <span class="hljs-comment">// Play remaining buffer</span>
+  <span class="hljs-keyword">if</span> (sampleBuffer.<span class="hljs-attr">length</span> <span class="hljs-operator">&gt;</span> <span class="hljs-number">0</span>) {
+    <span class="hljs-title function_">scheduleAudio</span>(sampleBuffer, audioContext, nextTime);
+  }
+
+  decoder.<span class="hljs-keyword">free</span>();
+}
+</code></pre>
+<hr>
+<h2 id="streaming-decoder-frame-sizes" class="docmd-heading"><a href="#streaming-decoder-frame-sizes" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Frame Sizes</h2>
+<p>Frame sizes vary by encoding mode:</p>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Mode</th>
+<th>Samples per Frame</th>
+<th>Duration at 44.1kHz</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Lossless</td>
+<td>44100</td>
+<td>1 second</td>
+</tr>
+<tr>
+<td>Lossy</td>
+<td>1024-2048</td>
+<td>~23-46ms</td>
+</tr>
+</tbody>
+</table>
+</div><p>For lossy files, use buffering to collect multiple small frames before scheduling.</p>
+<hr>
+<h2 id="streaming-decoder-error-handling" class="docmd-heading"><a href="#streaming-decoder-error-handling" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Error Handling</h2>
+<pre class="hljs"><code class="language-javascript"><span class="hljs-keyword">const</span> decoder <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title function_">WasmStreamingDecoder</span>();
+
+<span class="hljs-keyword">try</span> {
+  decoder.<span class="hljs-title function_">feed</span>(chunk);
+
+  <span class="hljs-keyword">const</span> info <span class="hljs-operator">=</span> decoder.<span class="hljs-title function_">get_info</span>();
+  <span class="hljs-keyword">if</span> (<span class="hljs-operator">!</span>info) {
+    console.<span class="hljs-title function_">log</span>(<span class="hljs-string">&quot;Header not yet received&quot;</span>);
+    <span class="hljs-keyword">return</span>;
+  }
+
+  <span class="hljs-keyword">const</span> samples <span class="hljs-operator">=</span> decoder.<span class="hljs-title function_">next_frame</span>();
+  <span class="hljs-comment">// ...</span>
+} <span class="hljs-keyword">catch</span> (error) {
+  console.<span class="hljs-title function_">error</span>(<span class="hljs-string">&quot;Streaming error:&quot;</span>, error.<span class="hljs-attr">message</span>);
+} <span class="hljs-keyword">finally</span> {
+  decoder.<span class="hljs-keyword">free</span>();
+}
+</code></pre>
+<hr>
+<h2 id="streaming-decoder-memory-management" class="docmd-heading"><a href="#streaming-decoder-memory-management" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Memory Management</h2>
+<p>Always call <code>free()</code> when done:</p>
+<pre class="hljs"><code class="language-javascript"><span class="hljs-keyword">const</span> decoder <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title function_">WasmStreamingDecoder</span>();
+
+<span class="hljs-keyword">try</span> {
+  <span class="hljs-comment">// Use decoder...</span>
+} <span class="hljs-keyword">finally</span> {
+  decoder.<span class="hljs-keyword">free</span>(); <span class="hljs-comment">// Release WASM memory</span>
+}
+</code></pre>
+<p>The decoder holds:</p>
+<ul>
+<li>Input buffer (grows as you feed data)</li>
+<li>Internal decode state</li>
+<li>Overlap buffers (for lossy MDCT)</li>
+</ul>
+<p>Calling <code>reset()</code> clears decode state but keeps the decoder usable.<br>
+Calling <code>free()</code> releases all memory and invalidates the decoder.</p>
+
+                
+                  <div class="page-navigation">
+                    
+                      <a href="../metadata-guide/" class="prev-page">
+                        
+<svg class="lucide-icon icon-arrow-left page-nav-icon" width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-arrow-left"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m12 19-7-7 7-7" />
+  <path d="M19 12H5" />
+</svg>
+
+                        <span><small>Previous</small><strong>
+                            Metadata
+                          </strong></span>
+                      </a>
+                    
+                    
+                      <a href="../architecture/" class="next-page">
+                        <span><small>Next</small>
+                          <strong>
+                            Architecture
+                          </strong></span>
+                        
+<svg class="lucide-icon icon-arrow-right page-nav-icon" width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-arrow-right"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M5 12h14" />
+  <path d="m12 5 7 7-7 7" />
+</svg>
+
+                      </a>
+                    
+                  </div>
+                
+              </div>
+              
+              <div class="toc-sidebar">
+                
+
+
+  <div class="toc-container">
+    <h2 class="toc-title">On This Page<span class="mobile-view toc-menu-button float-right">
+<svg class="lucide-icon icon-chevron-down " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-chevron-down"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m6 9 6 6 6-6" />
+</svg>
+</span></h2>
+    <ul class="toc-list">
+      
+        <li class="toc-item toc-level-1">
+          <a href="#streaming-decoder" class="toc-link">Streaming Decoder</a>
+        </li>
+      
+        <li class="toc-item toc-level-2">
+          <a href="#streaming-decoder-why-streaming" class="toc-link">Why Streaming?</a>
+        </li>
+      
+        <li class="toc-item toc-level-2">
+          <a href="#streaming-decoder-javascript-api" class="toc-link">JavaScript API</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#streaming-decoder-javascript-api-basic-usage" class="toc-link">Basic Usage</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#streaming-decoder-javascript-api-methods" class="toc-link">Methods</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#streaming-decoder-javascript-api-info-object" class="toc-link">Info Object</a>
+        </li>
+      
+        <li class="toc-item toc-level-2">
+          <a href="#streaming-decoder-streaming-from-network" class="toc-link">Streaming from Network</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#streaming-decoder-streaming-from-network-fetch-with-streaming" class="toc-link">Fetch with Streaming</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#streaming-decoder-streaming-from-network-with-progress-callback" class="toc-link">With Progress Callback</a>
+        </li>
+      
+        <li class="toc-item toc-level-2">
+          <a href="#streaming-decoder-real-time-playback" class="toc-link">Real-Time Playback</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#streaming-decoder-real-time-playback-using-audioworklet" class="toc-link">Using AudioWorklet</a>
+        </li>
+      
+        <li class="toc-item toc-level-2">
+          <a href="#streaming-decoder-buffering-strategy" class="toc-link">Buffering Strategy</a>
+        </li>
+      
+        <li class="toc-item toc-level-2">
+          <a href="#streaming-decoder-frame-sizes" class="toc-link">Frame Sizes</a>
+        </li>
+      
+        <li class="toc-item toc-level-2">
+          <a href="#streaming-decoder-error-handling" class="toc-link">Error Handling</a>
+        </li>
+      
+        <li class="toc-item toc-level-2">
+          <a href="#streaming-decoder-memory-management" class="toc-link">Memory Management</a>
+        </li>
+      
+    </ul>
+  </div>
+
+              </div>
+              
+            </div>
+            <div class="page-footer-actions">
+              
+              
+                <span class="git-last-updated" data-timestamp="1789065744000">
+                  <svg class="git-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                  <span class="git-label">Last updated:</span>
+                  <span class="git-time" data-timestamp="1789065744000"></span>
+                  
+                  <div class="git-commit-tooltip" role="tooltip">
+                    <div class="git-tooltip-title">Recent commits</div>
+                    <ul class="git-commit-list">
+                      
+                        <li class="git-commit-item">
+                          <div class="git-commit-avatar" title="NellowTCS">
+                            
+                              <img src="https://www.gravatar.com/avatar/baecf29c7bedbb00a8d5bd5984799c55?d=mp&amp;s=64" alt="NellowTCS">
+                            
+                          </div>
+                          <div class="git-commit-details">
+                            <div class="git-commit-message" title="oop">oop</div>
+                            <div class="git-commit-meta">
+                              <span class="git-commit-author">NellowTCS</span>
+                              <span class="git-commit-date" data-timestamp="1789065744000"></span>
+                            </div>
+                          </div>
+                        </li>
+                      
+                    </ul>
+                  </div>
+                  
+                </span>
+              
+              <span class="git-spacer"></span>
+              
+                <a href="https://github.com/Audiflo/flo/edit/main/Docs/docs/streaming.md" target="_blank" rel="noopener noreferrer" class="edit-link">
+                  
+<svg class="lucide-icon icon-pencil " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-pencil"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" />
+  <path d="m15 5 4 4" />
+</svg>
+
+                  Edit this page
+                </a>
+              
+            </div>
+          </main>
+          
+
+
+<footer class="footer-complete">
+  <div class="footer-complete-top">
+      <div class="footer-brand">
+          
+            <span class="footer-title">flo</span>
+          
+          
+            <p class="footer-desc">A modern lossless and lossy audio codec with native and WebAssembly APIs.</p>
+          
+        </div>
+        
+          <div class="footer-columns">
+            
+              <div class="footer-column">
+                <span class="footer-column-title">Resources</span>
+                <ul>
+                  
+                    <li><a href="getting-started/" >Getting Started</a></li>
+                  
+                    <li><a href="rust-api/" >Rust API</a></li>
+                  
+                    <li><a href="javascript-api/" >JavaScript API</a></li>
+                  
+                </ul>
+              </div>
+            
+              <div class="footer-column">
+                <span class="footer-column-title">Project</span>
+                <ul>
+                  
+                    <li><a href="./demo/" target=&quot;_blank&quot; rel=&quot;noopener&quot;>Live Demo</a></li>
+                  
+                    <li><a href="https://github.com/Audiflo/flo" >GitHub</a></li>
+                  
+                    <li><a href="https://github.com/Audiflo/flo/issues" >Issues</a></li>
+                  
+                </ul>
+              </div>
+            
+          </div>
+        
+      </div>
+      <div class="footer-complete-bottom">
+        <div class="user-footer">Built with <a href="https://docmd.io">docmd</a>. <a href="https://github.com/Audiflo/flo">View on GitHub</a>.</div>
+        
+          <div class="branding-footer">
+            Built with <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path><path d="M12 5 9.04 7.96a2.17 2.17 0 0 0 0 3.08c.82.82 2.13.85 3 .07l2.07-1.9a2.82 2.82 0 0 1 3.79 0l2.96 2.66"></path><path d="m18 15-2-2"></path><path d="m15 18-2-2"></path></svg> <a href="https://docmd.io" target="_blank" rel="noopener">docmd.</a>
+          </div>
+        
+      </div>
+  </footer>
+
+        </div>
+      </div>
+      
+      <script src="../assets/js/docmd-main.js?v=mtvvpwwr"></script>
+      
+      <script src="../assets/js/docmd-git.js?v=mtvvpwwr"></script>
+      <script src="../assets/js/docmd-image-lightbox.js?v=mtvvpwwr" ></script>
+<script src="../assets/js/vendor/minisearch.js?v=mtvvpwwr" ></script>
+<script src="../assets/js/docmd-search.js?v=mtvvpwwr" ></script>
+<script src="../assets/js/docmd-git.js?v=mtvvpwwr" ></script>
+<script src="../assets/js/docmd-ai.js?v=mtvvpwwr" ></script>
+
+  <!-- Search Modal (Injected by @docmd/plugin-search) -->
+  <div id="docmd-search-modal" class="docmd-search-modal" style="display: none;" data-show-confidence="false" data-show-filters="true"
+       data-search-placeholder="Search documentation..."
+       data-search-no-results="No results found."
+       data-search-error="Failed to load search index."
+       data-search-offline="Search requires a web server. Open this site via http://localhost instead of file:// to enable search."
+       data-search-offline-build="Search is disabled because these docs were built with the --offline flag. Rebuild the site without the flag to enable search."
+       data-search-initial="Type to start searching..."
+       data-search-navigate="to navigate"
+       data-search-escape="to close">
+      <div class="docmd-search-box">
+          <div class="docmd-search-header">
+              <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide-icon icon-search"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+              <input type="text" id="docmd-search-input" placeholder="Search documentation..." autocomplete="off" spellcheck="false">
+              <button onclick="window.closeDocmdSearch()" class="docmd-search-close" aria-label="Close search">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide-icon icon-x"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+              </button>
+          </div>
+          <div id="docmd-search-results" class="docmd-search-results"></div>
+          <div class="docmd-search-footer">
+              <span><kbd class="docmd-kbd">↑</kbd> <kbd class="docmd-kbd">↓</kbd> to navigate</span>
+              <span><kbd class="docmd-kbd">ESC</kbd> to close</span>
+          </div>
+      </div>
+  </div>
+
+    <script>
+      (function() {
+        var searchDebounceTimer;
+
+        document.addEventListener('click', function(e) {
+          var link = e.target.closest('a');
+          if (!link || !window.gtag) return;
+          
+          var url = link.href;
+          var hostname = window.location.hostname;
+          var isExternal = link.hostname && link.hostname !== hostname;
+          var isDownload = link.hasAttribute('download') || url.match(/\.(pdf|zip|tar|gz|exe|pkg)$/i);
+          
+          if (isExternal) {
+            gtag('event', 'click_external', { 'url': url, 'link_text': link.innerText.trim() });
+          } else if (isDownload) {
+            gtag('event', 'download', { 'file_name': url.split('/').pop(), 'url': url });
+          }
+
+          // TOC tracking
+          if (link.classList.contains('toc-link')) {
+            gtag('event', 'toc_click', { 'target_id': link.getAttribute('href'), 'title': link.innerText.trim() });
+          }
+
+          // Permalink tracking
+          if (link.classList.contains('heading-anchor')) {
+            gtag('event', 'permalink_click', { 'url': url });
+          }
+        });
+
+        
+        // Search Keyword Tracking
+        document.addEventListener('input', function(e) {
+          if (e.target.id === 'docmd-search-input' && window.gtag) {
+            var query = e.target.value.trim();
+            if (query.length < 3) return;
+            
+            clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(function() {
+              gtag('event', 'search', { 'search_term': query });
+            }, 1000);
+          }
+        });
+        
+      })();
+    </script>
+
+<script>window.__git_config={"repo":"https://github.com/Audiflo/flo/edit/main/","branch":"main","editLink":true,"lastUpdated":true,"commitHistory":true,"maxCommits":5,"dateFormat":"relative"};window.__git_i18n={"lastUpdated":"Last updated","recentCommits":"Recent commits","viewCommitHistory":"View commit history","editOnGitHub":"Edit on GitHub","editOnGitLab":"Edit on GitLab","editOnBitbucket":"Edit on Bitbucket","editThisPage":"Edit this page","justNow":"just now","minutesAgo":"{n}m ago","hoursAgo":"{n}h ago","daysAgo":"{n}d ago"}</script>
+<div id="docmd-ai-root"></div><script>window.__docmd_ai_config={"endpoint":"","cloud":{},"captcha":true,"position":"bottom-center","siteTitle":"flo","siteBase":"/flo/","siteUrl":"https://audiflo.github.io/flo/","versions":null,"i18n":null,"navigation":[{"title":"Home","path":"/","icon":"home"},{"title":"Getting Started","icon":"rocket","collapsible":false,"children":[{"title":"Getting Started","path":"/getting-started/","icon":"play"},{"title":"CLI Reference","path":"/cli-reference/","icon":"terminal"}]},{"title":"API Reference","icon":"code","collapsible":false,"children":[{"title":"Rust API","path":"/rust-api/","icon":"box"},{"title":"JavaScript / WASM","path":"/javascript-api/","icon":"cpu"}]},{"title":"Format and Features","icon":"file-text","collapsible":false,"children":[{"title":"File Format","path":"/file-format/","icon":"binary"},{"title":"Metadata","path":"/metadata-guide/","icon":"tag"},{"title":"Streaming","path":"/streaming/","icon":"wind"}]},{"title":"Project","icon":"layers","collapsible":false,"children":[{"title":"Architecture","path":"/architecture/","icon":"git-branch"},{"title":"No-std and WASM","path":"/no-std/","icon":"cpu"}]},{"title":"Live Demo","path":"/demo/","icon":"eye","external":true},{"title":"GitHub","path":"https://github.com/Audiflo/flo","icon":"github","external":true}],"searchCapabilities":{"keyword":true,"semantic":false},"isWorkspace":false,"workspaceProjects":[],"contextLimit":5};</script>
+      
+      
+      
+  </body>
+</html>

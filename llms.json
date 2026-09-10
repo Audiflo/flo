@@ -1,0 +1,66 @@
+{
+  "title": "flo",
+  "description": "",
+  "pages": [
+    {
+      "title": "Architecture",
+      "url": "https://audiflo.github.io/flo/architecture/",
+      "description": "",
+      "priority": "medium"
+    },
+    {
+      "title": "CLI Reference",
+      "url": "https://audiflo.github.io/flo/cli-reference/",
+      "description": "",
+      "priority": "medium"
+    },
+    {
+      "title": "File Format Specification",
+      "url": "https://audiflo.github.io/flo/file-format/",
+      "description": "",
+      "priority": "medium"
+    },
+    {
+      "title": "Getting Started",
+      "url": "https://audiflo.github.io/flo/getting-started/",
+      "description": "",
+      "priority": "medium"
+    },
+    {
+      "title": "flo Documentation",
+      "url": "https://audiflo.github.io/flo/",
+      "description": "",
+      "priority": "high"
+    },
+    {
+      "title": "JavaScript API",
+      "url": "https://audiflo.github.io/flo/javascript-api/",
+      "description": "",
+      "priority": "medium"
+    },
+    {
+      "title": "Metadata Guide",
+      "url": "https://audiflo.github.io/flo/metadata-guide/",
+      "description": "",
+      "priority": "medium"
+    },
+    {
+      "title": "No-std and WebAssembly",
+      "url": "https://audiflo.github.io/flo/no-std/",
+      "description": "",
+      "priority": "medium"
+    },
+    {
+      "title": "Rust API",
+      "url": "https://audiflo.github.io/flo/rust-api/",
+      "description": "",
+      "priority": "medium"
+    },
+    {
+      "title": "Streaming Decoder",
+      "url": "https://audiflo.github.io/flo/streaming/",
+      "description": "",
+      "priority": "medium"
+    }
+  ]
+}

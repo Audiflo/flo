@@ -1,0 +1,2007 @@
+<!--
+  ---------------------------------------------------------------
+  docmd : the zero-config documentation engine.
+  @website https://docmd.io
+  [docmd-source] - Please do not remove this header.
+  ---------------------------------------------------------------
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="generator" content="docmd v0.9.5">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <script>
+      var root = "../";
+      if (root && !root.endsWith('/')) root += '/';
+      if (root === '') root = './';
+      window.DOCMD_ROOT = root;
+
+      window.DOCMD_SITE_ROOT = "/flo/";
+
+      window.DOCMD_APPEARANCE = "system";
+      window.DOCMD_VERSION_ROOT = "/";
+      window.DOCMD_BASE = "/flo/";
+      window.DOCMD_LOCALE = "";
+      window.DOCMD_DEFAULT_LOCALE = "";
+    </script>
+    <script>/**
+ * --------------------------------------------------------------------
+ * docmd : the zero-config documentation engine.
+ *
+ * @package     @docmd/core (and ecosystem)
+ * @website     https://docmd.io
+ * @repository  https://github.com/docmd-io/docmd
+ * @license     MIT
+ * @copyright   Copyright (c) 2025-present docmd.io
+ *
+ * [docmd-source] - Please do not remove this header.
+ * --------------------------------------------------------------------
+ */
+
+(function () {
+  try {
+    // 1. Determine Theme
+    //
+    // Resolve from three sources, in priority order:
+    //   1. localStorage explicit user choice (light / dark)
+    //   2. window.DOCMD_APPEARANCE  (current canonical name, set by EJS templates)
+    //   3. window.DOCMD_DEFAULT_MODE (legacy alias kept for pre-0.8.7 outputs)
+    //   4. 'light' as the final fallback
+    //
+    // Note: localStorage is only honoured when it holds an explicit
+    // 'light' or 'dark' value. A stored 'system' value (from a prior
+    // session where the user picked "follow system") must NOT win over
+    // a freshly resolved config value — the resolved value will itself
+    // be 'system' in that case and the OS preference check below takes
+    // over, so this is a no-op for the in-session behaviour but keeps
+    // any future storage migration simple.
+    var localValue = localStorage.getItem('docmd-theme');
+    var configValue = window.DOCMD_APPEARANCE
+      || window.DOCMD_DEFAULT_MODE
+      || 'light';
+    var theme = (localValue === 'light' || localValue === 'dark')
+      ? localValue
+      : configValue;
+
+    if (theme === 'system') {
+      theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+
+    // 2. Apply to Root
+    document.documentElement.setAttribute('data-theme', theme);
+
+    // 3. Highlight.js Toggle Strategy
+    var lightLink = document.getElementById('hljs-light');
+    var darkLink = document.getElementById('hljs-dark');
+
+    if (lightLink && darkLink) {
+      if (theme === 'dark') {
+        lightLink.disabled = true;
+        darkLink.disabled = false;
+      } else {
+        lightLink.disabled = false;
+        darkLink.disabled = true;
+      }
+    }
+
+    document.documentElement.style.visibility = "visible";
+  } catch (e) {
+    document.documentElement.style.visibility = "visible";
+    console.error('Theme init failed', e);
+  }
+})();</script>
+    <style>
+      html {
+        visibility: hidden;
+      }
+    </style>
+    <title>
+      File Format Specification : flo
+    </title>
+    
+    
+
+    <link id="site-favicon" rel="icon" href="../assets/favicon.ico?v=mtvvpwwr">
+    <link rel="stylesheet" href="../assets/css/docmd-main.css?v=mtvvpwwr">
+    
+    <link rel="stylesheet" href="../assets/css/docmd-highlight-light.css?v=mtvvpwwr" id="hljs-light" >
+    <link rel="stylesheet" href="../assets/css/docmd-highlight-dark.css?v=mtvvpwwr" id="hljs-dark" disabled>
+    
+    
+<meta name="description" content="flo is a modern lossless and lossy audio codec with Rust and WebAssembly APIs.">
+<link rel="canonical" href="https://audiflo.github.io/flo/file-format/">
+<meta property="og:title" content="File Format Specification - flo">
+<meta property="og:description" content="flo is a modern lossless and lossy audio codec with Rust and WebAssembly APIs.">
+<meta property="og:url" content="https://audiflo.github.io/flo/file-format/">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="File Format Specification - flo">
+<meta name="twitter:description" content="flo is a modern lossless and lossy audio codec with Rust and WebAssembly APIs.">
+
+
+
+
+<link rel="stylesheet" href="../assets/css/docmd-theme-ruby.css?v=mtvvpwwr" >
+<link rel="stylesheet" href="../assets/css/docmd-git.css?v=mtvvpwwr" >
+<link rel="stylesheet" href="../assets/css/docmd-openapi.css?v=mtvvpwwr" >
+<link rel="stylesheet" href="../assets/css/docmd-ai.css?v=mtvvpwwr" >
+
+    
+    
+  </head>
+  <body
+    class="sidebar-collapsible"
+    data-default-collapsed="false"
+    data-copy-code-enabled="true" data-spa-enabled="true" data-source-file="docs/file-format.md">
+
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    
+    
+
+    
+    
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          
+<h1><a href="../">
+                flo
+              </a></h1>
+          
+          <span class="mobile-view sidebar-menu-button float-right">
+            
+<svg class="lucide-icon icon-menu " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-menu"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M4 5h16" />
+  <path d="M4 12h16" />
+  <path d="M4 19h16" />
+</svg>
+
+          </span>
+        </div>
+        <div class="sidebar-top-group">
+          
+          
+          
+          
+        </div>
+        
+
+<nav class="sidebar-nav" aria-label="Main Navigation">
+  <ul>
+    
+      <li class="" >
+      
+        <a href="../" class=" "
+          >
+           
+<svg class="lucide-icon icon-home " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-house"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" />
+  <path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            Home
+            </span>
+          
+          
+        </a>
+        
+
+        
+      </li>
+    
+      <li class="expanded nav-group" >
+      
+        <span class="nav-label nav-group">
+           
+<svg class="lucide-icon icon-rocket " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-rocket"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" />
+  <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09" />
+  <path d="M9 12a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.4 22.4 0 0 1-4 2z" />
+  <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 .05 5 .05" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            Getting Started
+          </span>
+          
+        </span>
+        
+
+        
+          <ul class="submenu">
+            
+      <li class="" >
+      
+        <a href="../getting-started/" class=" "
+          >
+           
+<svg class="lucide-icon icon-play " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-play"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            Getting Started
+            </span>
+          
+          
+        </a>
+        
+
+        
+      </li>
+    
+      <li class="" >
+      
+        <a href="../cli-reference/" class=" "
+          >
+           
+<svg class="lucide-icon icon-terminal " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-terminal"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12 19h8" />
+  <path d="m4 17 6-6-6-6" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            CLI Reference
+            </span>
+          
+          
+        </a>
+        
+
+        
+      </li>
+    
+          </ul>
+        
+      </li>
+    
+      <li class="expanded nav-group" >
+      
+        <span class="nav-label nav-group">
+           
+<svg class="lucide-icon icon-code " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-code"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m16 18 6-6-6-6" />
+  <path d="m8 6-6 6 6 6" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            API Reference
+          </span>
+          
+        </span>
+        
+
+        
+          <ul class="submenu">
+            
+      <li class="" >
+      
+        <a href="../rust-api/" class=" "
+          >
+           
+<svg class="lucide-icon icon-box " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-box"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+  <path d="m3.3 7 8.7 5 8.7-5" />
+  <path d="M12 22V12" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            Rust API
+            </span>
+          
+          
+        </a>
+        
+
+        
+      </li>
+    
+      <li class="" >
+      
+        <a href="../javascript-api/" class=" "
+          >
+           
+<svg class="lucide-icon icon-cpu " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-cpu"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12 20v2" />
+  <path d="M12 2v2" />
+  <path d="M17 20v2" />
+  <path d="M17 2v2" />
+  <path d="M2 12h2" />
+  <path d="M2 17h2" />
+  <path d="M2 7h2" />
+  <path d="M20 12h2" />
+  <path d="M20 17h2" />
+  <path d="M20 7h2" />
+  <path d="M7 20v2" />
+  <path d="M7 2v2" />
+  <rect x="4" y="4" width="16" height="16" rx="2" />
+  <rect x="8" y="8" width="8" height="8" rx="1" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            JavaScript / WASM
+            </span>
+          
+          
+        </a>
+        
+
+        
+      </li>
+    
+          </ul>
+        
+      </li>
+    
+      <li class="active-parent expanded nav-group" >
+      
+        <span class="nav-label nav-group">
+           
+<svg class="lucide-icon icon-file-text " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-file-text"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" />
+  <path d="M14 2v5a1 1 0 0 0 1 1h5" />
+  <path d="M10 9H8" />
+  <path d="M16 13H8" />
+  <path d="M16 17H8" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            Format and Features
+          </span>
+          
+        </span>
+        
+
+        
+          <ul class="submenu">
+            
+      <li class="active" >
+      
+        <a href="../file-format/" class="active "
+          >
+           
+<svg class="lucide-icon icon-binary " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-binary"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <rect x="14" y="14" width="4" height="6" rx="2" />
+  <rect x="6" y="4" width="4" height="6" rx="2" />
+  <path d="M6 20h4" />
+  <path d="M14 10h4" />
+  <path d="M6 14h2v6" />
+  <path d="M14 4h2v6" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            File Format
+            </span>
+          
+          
+        </a>
+        
+
+        
+      </li>
+    
+      <li class="" >
+      
+        <a href="../metadata-guide/" class=" "
+          >
+           
+<svg class="lucide-icon icon-tag " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-tag"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+  <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            Metadata
+            </span>
+          
+          
+        </a>
+        
+
+        
+      </li>
+    
+      <li class="" >
+      
+        <a href="../streaming/" class=" "
+          >
+           
+<svg class="lucide-icon icon-wind " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-wind"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12.8 19.6A2 2 0 1 0 14 16H2" />
+  <path d="M17.5 8a2.5 2.5 0 1 1 2 4H2" />
+  <path d="M9.8 4.4A2 2 0 1 1 11 8H2" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            Streaming
+            </span>
+          
+          
+        </a>
+        
+
+        
+      </li>
+    
+          </ul>
+        
+      </li>
+    
+      <li class="expanded nav-group" >
+      
+        <span class="nav-label nav-group">
+           
+<svg class="lucide-icon icon-layers " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-layers"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z" />
+  <path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12" />
+  <path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            Project
+          </span>
+          
+        </span>
+        
+
+        
+          <ul class="submenu">
+            
+      <li class="" >
+      
+        <a href="../architecture/" class=" "
+          >
+           
+<svg class="lucide-icon icon-git-branch " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-git-branch"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M15 6a9 9 0 0 0-9 9V3" />
+  <circle cx="18" cy="6" r="3" />
+  <circle cx="6" cy="18" r="3" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            Architecture
+            </span>
+          
+          
+        </a>
+        
+
+        
+      </li>
+    
+      <li class="" >
+      
+        <a href="../no-std/" class=" "
+          >
+           
+<svg class="lucide-icon icon-cpu " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-cpu"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12 20v2" />
+  <path d="M12 2v2" />
+  <path d="M17 20v2" />
+  <path d="M17 2v2" />
+  <path d="M2 12h2" />
+  <path d="M2 17h2" />
+  <path d="M2 7h2" />
+  <path d="M20 12h2" />
+  <path d="M20 17h2" />
+  <path d="M20 7h2" />
+  <path d="M7 20v2" />
+  <path d="M7 2v2" />
+  <rect x="4" y="4" width="16" height="16" rx="2" />
+  <rect x="8" y="8" width="8" height="8" rx="1" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            No-std and WASM
+            </span>
+          
+          
+        </a>
+        
+
+        
+      </li>
+    
+          </ul>
+        
+      </li>
+    
+      <li class="" >
+      
+        <a href="/demo/" class=" "
+          target=&quot;_blank&quot; rel=&quot;noopener&quot;>
+           
+<svg class="lucide-icon icon-eye " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-eye"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" />
+  <circle cx="12" cy="12" r="3" />
+</svg>
+
+          
+          <span class="nav-item-title">
+            Live Demo
+            </span>
+          
+           
+<svg class="lucide-icon icon-external-link nav-external-icon" width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-external-link"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M15 3h6v6" />
+  <path d="M10 14 21 3" />
+  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+</svg>
+
+          
+        </a>
+        
+
+        
+      </li>
+    
+      <li class="" >
+      
+        <a href="https://github.com/Audiflo/flo" class=" "
+          target=&quot;_blank&quot; rel=&quot;noopener&quot;>
+           
+          
+          <span class="nav-item-title">
+            GitHub
+            </span>
+          
+           
+<svg class="lucide-icon icon-external-link nav-external-icon" width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-external-link"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M15 3h6v6" />
+  <path d="M10 14 21 3" />
+  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+</svg>
+
+          
+        </a>
+        
+
+        
+      </li>
+    
+  </ul>
+</nav>
+        <div class="sidebar-bottom-group mt-auto">
+          
+          
+          
+          
+        </div>
+      </aside>
+      
+      <div class="main-content-wrapper">
+        
+        
+        
+          <header class="page-header">
+            <div class="header-left">
+              
+                <button id="sidebar-toggle-button" class="sidebar-toggle-button"
+                  aria-label="Toggle Sidebar">
+                  
+<svg class="lucide-icon icon-chevron-left " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-chevron-left"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m15 18-6-6 6-6" />
+</svg>
+
+                </button>
+              
+              <div class="header-titles-wrapper">
+                <span class="header-title">
+                  File Format Specification
+                </span>
+              </div>
+            </div>
+            <div class="header-right">
+              
+                
+
+
+<div class="docmd-options-menu">
+    
+    <button class="docmd-search-trigger" aria-label="Search">
+        
+<svg class="lucide-icon icon-search " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-search"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m21 21-4.34-4.34" />
+  <circle cx="11" cy="11" r="8" />
+</svg>
+
+        <span class="search-label">Search</span>
+        <span class="search-keys"><kbd class="docmd-kbd">⌘</kbd><kbd class="docmd-kbd">K</kbd></span>
+    </button>
+    
+
+    
+
+    
+
+    
+    <button class="theme-toggle-button" aria-label="Toggle theme">
+        
+<svg class="lucide-icon icon-sun icon-sun" width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-sun"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="4" />
+  <path d="M12 2v2" />
+  <path d="M12 20v2" />
+  <path d="m4.93 4.93 1.41 1.41" />
+  <path d="m17.66 17.66 1.41 1.41" />
+  <path d="M2 12h2" />
+  <path d="M20 12h2" />
+  <path d="m6.34 17.66-1.41 1.41" />
+  <path d="m19.07 4.93-1.41 1.41" />
+</svg>
+ 
+<svg class="lucide-icon icon-moon icon-moon" width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-moon"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401" />
+</svg>
+
+    </button>
+    
+
+    
+</div>
+
+              
+            </div>
+          </header>
+        
+        <div class="content-theme-cover">
+          <main class="content-area" id="main-content">
+            <div class="content-layout">
+              <div class="main-content">
+                <div class="docmd-breadcrumbs-row">
+                  <div id="docmd-raw-markdown" data-content="%23%20File%20Format%20Specification%0A%0ATechnical%20specification%20for%20the%20flo%20audio%20format.%0A%0A%23%23%20Overview%0A%0Aflo%20(Fast%20Layered%20Object)%20is%20a%20chunked%20audio%20format%20supporting%20both%20lossless%20and%20lossy%20compression.%0A%0A**Key%20features%3A**%0A%0A-%20Magic%20number%20identification%0A-%20CRC32%20integrity%20verification%0A-%20Fixed-duration%20frames%20(1%20second%20default)%0A-%20Chunk-based%20structure%20for%20seeking%0A-%20MessagePack%20metadata%0A%0A---%0A%0A%23%23%20File%20Structure%0A%0A%60%60%60%0A%E2%94%8C%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%90%0A%E2%94%82%20HEADER%20(66%20bytes)%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%E2%94%82%0A%E2%94%82%20%20%20Magic%2C%20version%2C%20audio%20params%20%20%20%20%20%20%E2%94%82%0A%E2%94%82%20%20%20CRC32%2C%20chunk%20sizes%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%E2%94%82%0A%E2%94%9C%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%A4%0A%E2%94%82%20TOC%20CHUNK%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%E2%94%82%0A%E2%94%82%20%20%20Frame%20seek%20table%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%E2%94%82%0A%E2%94%9C%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%A4%0A%E2%94%82%20DATA%20CHUNK%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%E2%94%82%0A%E2%94%82%20%20%20Compressed%20audio%20frames%20%20%20%20%20%20%20%20%20%20%20%E2%94%82%0A%E2%94%9C%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%A4%0A%E2%94%82%20EXTRA%20CHUNK%20(reserved)%20%20%20%20%20%20%20%20%20%20%20%20%20%20%E2%94%82%0A%E2%94%9C%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%A4%0A%E2%94%82%20META%20CHUNK%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%E2%94%82%0A%E2%94%82%20%20%20MessagePack%20metadata%20%20%20%20%20%20%20%20%20%20%20%20%20%20%E2%94%82%0A%E2%94%94%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%98%0A%60%60%60%0A%0A---%0A%0A%23%23%20Header%0A%0A66%20bytes%2C%20little-endian%3A%0A%0A%7C%20Offset%20%7C%20Size%20%7C%20Field%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%20Description%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%0A%7C%20------%20%7C%20----%20%7C%20-------------------%20%7C%20----------------------------------------------%20%7C%0A%7C%200%20%20%20%20%20%20%7C%204%20%20%20%20%7C%20%60magic%60%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%20%60FLO!%60%20(0x464C4F21)%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%0A%7C%204%20%20%20%20%20%20%7C%201%20%20%20%20%7C%20%60version_major%60%20%20%20%20%20%7C%20Format%20version%20(1)%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%0A%7C%205%20%20%20%20%20%20%7C%201%20%20%20%20%7C%20%60version_minor%60%20%20%20%20%20%7C%20Minor%20version%20(1)%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%0A%7C%206%20%20%20%20%20%20%7C%202%20%20%20%20%7C%20%60flags%60%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%20Bit%20flags%20(see%20below)%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%0A%7C%208%20%20%20%20%20%20%7C%204%20%20%20%20%7C%20%60sample_rate%60%20%20%20%20%20%20%20%7C%20Hz%20(44100%2C%2048000%2C%20etc.)%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%0A%7C%2012%20%20%20%20%20%7C%201%20%20%20%20%7C%20%60channels%60%20%20%20%20%20%20%20%20%20%20%7C%201%3Dmono%2C%202%3Dstereo%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%0A%7C%2013%20%20%20%20%20%7C%201%20%20%20%20%7C%20%60bit_depth%60%20%20%20%20%20%20%20%20%20%7C%2016%2C%2024%2C%20or%2032%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%0A%7C%2014%20%20%20%20%20%7C%208%20%20%20%20%7C%20%60total_samples%60%20%20%20%20%20%7C%20Total%20sample-frames%20(samples%20per%20channel)%20%20%20%20%20%20%7C%0A%7C%2022%20%20%20%20%20%7C%201%20%20%20%20%7C%20%60compression_level%60%20%7C%20Hint%20(0-9)%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%0A%7C%2023%20%20%20%20%20%7C%203%20%20%20%20%7C%20%60reserved%60%20%20%20%20%20%20%20%20%20%20%7C%20Must%20be%200%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%0A%7C%2026%20%20%20%20%20%7C%204%20%20%20%20%7C%20%60data_crc32%60%20%20%20%20%20%20%20%20%7C%20CRC32%20of%20DATA%20chunk%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%0A%7C%2030%20%20%20%20%20%7C%208%20%20%20%20%7C%20%60header_size%60%20%20%20%20%20%20%20%7C%20Size%20of%20header%20(66)%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%0A%7C%2038%20%20%20%20%20%7C%208%20%20%20%20%7C%20%60toc_size%60%20%20%20%20%20%20%20%20%20%20%7C%20Size%20of%20TOC%20chunk%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%0A%7C%2046%20%20%20%20%20%7C%208%20%20%20%20%7C%20%60data_size%60%20%20%20%20%20%20%20%20%20%7C%20Size%20of%20DATA%20chunk%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%0A%7C%2054%20%20%20%20%20%7C%208%20%20%20%20%7C%20%60extra_size%60%20%20%20%20%20%20%20%20%7C%20Size%20of%20EXTRA%20chunk%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%0A%7C%2062%20%20%20%20%20%7C%208%20%20%20%20%7C%20%60meta_size%60%20%20%20%20%20%20%20%20%20%7C%20Size%20of%20META%20chunk%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%0A%0A%23%23%23%20Flags%0A%0A%7C%20Bit%20%20%20%7C%20Meaning%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%0A%7C%20-----%20%7C%20--------------------------------%20%7C%0A%7C%200%20%20%20%20%20%7C%20Lossy%20mode%20(0%3Dlossless%2C%201%3Dlossy)%20%7C%0A%7C%208-11%20%20%7C%20Lossy%20quality%20level%20(0-4)%20%20%20%20%20%20%20%20%7C%0A%7C%20Other%20%7C%20Reserved%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%0A%0A**Quality%20levels%3A**%200%3DLow%2C%201%3DMedium%2C%202%3DHigh%2C%203%3DVeryHigh%2C%204%3DTransparent%0A%0A---%0A%0A%23%23%20TOC%20Chunk%0A%0ATable%20of%20contents%20for%20seeking.%0A%0A%23%23%23%20Structure%0A%0A%7C%20Offset%20%7C%20Size%20%7C%20Field%20%20%20%20%20%20%20%20%20%7C%20Description%20%20%20%20%20%20%20%20%20%20%20%7C%0A%7C%20------%20%7C%20----%20%7C%20-------------%20%7C%20---------------------%20%7C%0A%7C%200%20%20%20%20%20%20%7C%204%20%20%20%20%7C%20%60num_entries%60%20%7C%20Number%20of%20seek%20points%20%7C%0A%7C%204%20%20%20%20%20%20%7C%2020%C3%97N%20%7C%20%60entries%60%20%20%20%20%20%7C%20Seek%20point%20array%20%20%20%20%20%20%7C%0A%0A%23%23%23%20TOC%20Entry%20(20%20bytes)%0A%0A%7C%20Offset%20%7C%20Size%20%7C%20Field%20%20%20%20%20%20%20%20%20%20%7C%20Description%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%0A%7C%20------%20%7C%20----%20%7C%20--------------%20%7C%20----------------------------%20%7C%0A%7C%200%20%20%20%20%20%20%7C%204%20%20%20%20%7C%20%60frame_index%60%20%20%7C%20Frame%20number%20(0-based)%20%20%20%20%20%20%20%7C%0A%7C%204%20%20%20%20%20%20%7C%208%20%20%20%20%7C%20%60byte_offset%60%20%20%7C%20Offset%20from%20DATA%20chunk%20start%20%7C%0A%7C%2012%20%20%20%20%20%7C%204%20%20%20%20%7C%20%60frame_size%60%20%20%20%7C%20Size%20in%20bytes%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%0A%7C%2016%20%20%20%20%20%7C%204%20%20%20%20%7C%20%60timestamp_ms%60%20%7C%20Time%20in%20milliseconds%20%20%20%20%20%20%20%20%20%7C%0A%0A---%0A%0A%23%23%20DATA%20Chunk%0A%0AContains%20compressed%20audio%20frames.%0A%0A%23%23%23%20Audio%20Frame%0A%0A%7C%20Field%20%20%20%20%20%20%20%20%20%20%20%7C%20Size%20%20%20%20%20%7C%20Description%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%0A%7C%20---------------%20%7C%20--------%20%7C%20-------------------------%20%7C%0A%7C%20%60frame_type%60%20%20%20%20%7C%201%20%20%20%20%20%20%20%20%7C%20Encoding%20type%20(see%20below)%20%7C%0A%7C%20%60frame_samples%60%20%7C%204%20%20%20%20%20%20%20%20%7C%20Sample%20count%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%0A%7C%20%60flags%60%20%20%20%20%20%20%20%20%20%7C%201%20%20%20%20%20%20%20%20%7C%20Per-frame%20flags%20%20%20%20%20%20%20%20%20%20%20%7C%0A%7C%20%60channels%60%20%20%20%20%20%20%7C%20variable%20%7C%20Channel%20data%20array%20%20%20%20%20%20%20%20%7C%0A%0A%23%23%23%20Frame%20Types%0A%0A%7C%20Value%20%7C%20Name%20%20%20%20%20%20%7C%20Description%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%0A%7C%20-----%20%7C%20---------%20%7C%20-----------------------%20%7C%0A%7C%200%20%20%20%20%20%7C%20Silence%20%20%20%7C%20No%20data%20stored%20%20%20%20%20%20%20%20%20%20%7C%0A%7C%201-12%20%20%7C%20ALPC%20%20%20%20%20%20%7C%20Lossless%20LPC%20order%201-12%20%7C%0A%7C%20253%20%20%20%7C%20Transform%20%7C%20Lossy%20MDCT%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%0A%7C%20254%20%20%20%7C%20Raw%20%20%20%20%20%20%20%7C%20Uncompressed%20PCM%20%20%20%20%20%20%20%20%7C%0A%7C%20255%20%20%20%7C%20Reserved%20%20%7C%20Future%20use%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%0A%0A---%0A%0A%23%23%20Channel%20Data%0A%0AEach%20channel%20is%20prefixed%20with%20its%20size%3A%0A%0A%60%60%60%0A%E2%94%8C%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%AC%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%90%0A%E2%94%82%20channel_size%20(4)%20%E2%94%82%20channel_data%20%20%20%20%20%E2%94%82%0A%E2%94%94%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%B4%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%80%E2%94%98%0A%60%60%60%0A%0A%23%23%23%20ALPC%20Channel%20(Frame%20Types%201-12)%0A%0AAdaptive%20Linear%20Predictive%20Coding%20for%20lossless%20compression.%0A%0A%7C%20Field%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%20Size%20%20%20%20%20%7C%20Description%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%0A%7C%20-------------------%20%7C%20--------%20%7C%20----------------------------%20%7C%0A%7C%20%60coeff_count%60%20%20%20%20%20%20%20%7C%201%20%20%20%20%20%20%20%20%7C%20Number%20of%20LPC%20coefficients%20%20%20%7C%0A%7C%20%60predictor_coeffs%60%20%20%7C%204%C3%97N%20%20%20%20%20%20%7C%20i32%20coefficients%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%0A%7C%20%60shift_bits%60%20%20%20%20%20%20%20%20%7C%201%20%20%20%20%20%20%20%20%7C%20Dequantization%20shift%20%20%20%20%20%20%20%20%20%7C%0A%7C%20%60residual_encoding%60%20%7C%201%20%20%20%20%20%20%20%20%7C%200%3DRice%2C%201%3DGolomb%2C%202%3DRaw%20%20%20%20%20%20%7C%0A%7C%20%60rice_parameter%60%20%20%20%20%7C%201%20%20%20%20%20%20%20%20%7C%20Rice%20k%20value%20(if%20encoding%3D0)%20%7C%0A%7C%20%60residuals%60%20%20%20%20%20%20%20%20%20%7C%20variable%20%7C%20Encoded%20residuals%20%20%20%20%20%20%20%20%20%20%20%20%7C%0A%0A**Reconstruction%3A**%0A%0A%60%60%60%0Asample%5Bn%5D%20%3D%20residual%5Bn%5D%20%2B%20%CE%A3(coeff%5Bi%5D%20%C3%97%20sample%5Bn-1-i%5D)%20%3E%3E%20shift%0A%60%60%60%0A%0A%23%23%23%20Transform%20Channel%20(Frame%20Type%20253)%0A%0AMDCT-based%20lossy%20compression.%0A%0A%7C%20Field%20%20%20%20%20%20%20%20%20%20%20%7C%20Size%20%20%20%20%20%7C%20Description%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%0A%7C%20---------------%20%7C%20--------%20%7C%20-------------------------------------------%20%7C%0A%7C%20%60block_size%60%20%20%20%20%7C%201%20%20%20%20%20%20%20%20%7C%200%3DLong(2048)%2C%201%3DShort(256)%2C%202%3DStart%2C%203%3DStop%20%7C%0A%7C%20%60scale_factors%60%20%7C%2050%20%20%20%20%20%20%20%7C%2025%20bands%20%C3%97%202%20bytes%20(log-scale%20u16)%20%20%20%20%20%20%20%20%20%20%7C%0A%7C%20%60coeff_length%60%20%20%7C%204%20%20%20%20%20%20%20%20%7C%20Size%20of%20coefficient%20data%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%0A%7C%20%60coefficients%60%20%20%7C%20variable%20%7C%20Sparse%20RLE%20i16%20values%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%0A%0A**Scale%20factor%20decode%3A**%0A%0A%60%60%60%0Ascale%20%3D%202%5E((log_value%20-%2032768)%20%2F%20256)%0A%60%60%60%0A%0A**Coefficient%20decode%3A**%0A%0A%60%60%60%0Acoeff%5Bk%5D%20%3D%20quantized%5Bk%5D%20%2F%20scale_factor%5Bbark_band(k)%5D%0A%60%60%60%0A%0A%23%23%23%20Sparse%20Coefficient%20Encoding%0A%0ACoefficients%20use%20RLE%20for%20zero%20runs%3A%0A%0A%60%60%60%0A%5Bzero_count%20(varint)%5D%20%5Bnon_zero_count%20(1)%5D%20%5Bvalues%20(2%C3%97N)%5D%0A%60%60%60%0A%0A---%0A%0A%23%23%20EXTRA%20Chunk%0A%0AReserved%20for%20future%20extensions.%20Currently%20empty.%0A%0A---%0A%0A%23%23%20META%20Chunk%0A%0AMessagePack-encoded%20metadata.%0A%0A%23%23%23%20Standard%20Fields%20(ID3v2.4%20compatible)%0A%0A%7C%20Field%20%20%20%20%20%20%20%20%20%20%7C%20Type%20%20%20%7C%20ID3%20Frame%20%7C%0A%7C%20--------------%20%7C%20------%20%7C%20---------%20%7C%0A%7C%20%60title%60%20%20%20%20%20%20%20%20%7C%20string%20%7C%20TIT2%20%20%20%20%20%20%7C%0A%7C%20%60artist%60%20%20%20%20%20%20%20%7C%20string%20%7C%20TPE1%20%20%20%20%20%20%7C%0A%7C%20%60album%60%20%20%20%20%20%20%20%20%7C%20string%20%7C%20TALB%20%20%20%20%20%20%7C%0A%7C%20%60album_artist%60%20%7C%20string%20%7C%20TPE2%20%20%20%20%20%20%7C%0A%7C%20%60composer%60%20%20%20%20%20%7C%20string%20%7C%20TCOM%20%20%20%20%20%20%7C%0A%7C%20%60genre%60%20%20%20%20%20%20%20%20%7C%20string%20%7C%20TCON%20%20%20%20%20%20%7C%0A%7C%20%60year%60%20%20%20%20%20%20%20%20%20%7C%20u32%20%20%20%20%7C%20TYER%20%20%20%20%20%20%7C%0A%7C%20%60track_number%60%20%7C%20u32%20%20%20%20%7C%20TRCK%20%20%20%20%20%20%7C%0A%7C%20%60track_total%60%20%20%7C%20u32%20%20%20%20%7C%20TRCK%20%20%20%20%20%20%7C%0A%7C%20%60disc_number%60%20%20%7C%20u32%20%20%20%20%7C%20TPOS%20%20%20%20%20%20%7C%0A%7C%20%60disc_total%60%20%20%20%7C%20u32%20%20%20%20%7C%20TPOS%20%20%20%20%20%20%7C%0A%7C%20%60bpm%60%20%20%20%20%20%20%20%20%20%20%7C%20u32%20%20%20%20%7C%20TBPM%20%20%20%20%20%20%7C%0A%7C%20%60key%60%20%20%20%20%20%20%20%20%20%20%7C%20string%20%7C%20TKEY%20%20%20%20%20%20%7C%0A%7C%20%60isrc%60%20%20%20%20%20%20%20%20%20%7C%20string%20%7C%20TSRC%20%20%20%20%20%20%7C%0A%7C%20%60lyrics%60%20%20%20%20%20%20%20%7C%20string%20%7C%20USLT%20%20%20%20%20%20%7C%0A%7C%20%60comments%60%20%20%20%20%20%7C%20array%20%20%7C%20COMM%20%20%20%20%20%20%7C%0A%7C%20%60pictures%60%20%20%20%20%20%7C%20array%20%20%7C%20APIC%20%20%20%20%20%20%7C%0A%0A%23%23%23%20flo%20Extensions%0A%0A%7C%20Field%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%20Type%20%20%20%7C%20Description%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%0A%7C%20------------------%20%7C%20------%20%7C%20--------------------------%20%7C%0A%7C%20%60section_markers%60%20%20%7C%20array%20%20%7C%20Intro%2Fverse%2Fchorus%20markers%20%7C%0A%7C%20%60bpm_map%60%20%20%20%20%20%20%20%20%20%20%7C%20array%20%20%7C%20Tempo%20changes%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%0A%7C%20%60key_changes%60%20%20%20%20%20%20%7C%20array%20%20%7C%20Key%20signature%20changes%20%20%20%20%20%20%7C%0A%7C%20%60loudness_profile%60%20%7C%20array%20%20%7C%20LUFS%20per%20frame%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%0A%7C%20%60waveform_data%60%20%20%20%20%7C%20object%20%7C%20Pre-computed%20peaks%20%20%20%20%20%20%20%20%20%7C%0A%7C%20%60synced_lyrics%60%20%20%20%20%7C%20array%20%20%7C%20SYLT-style%20lyrics%20%20%20%20%20%20%20%20%20%20%7C%0A%7C%20%60creator_notes%60%20%20%20%20%7C%20array%20%20%7C%20Producer%20commentary%20%20%20%20%20%20%20%20%7C%0A%7C%20%60animated_cover%60%20%20%20%7C%20object%20%7C%20GIF%2FWebP%20cover%20%20%20%20%20%20%20%20%20%20%20%20%20%7C%0A%0A%23%23%23%20Section%20Marker%0A%0A%60%60%60javascript%0A%7B%0A%20%20timestamp_ms%3A%2030000%2C%0A%20%20section_type%3A%20%22chorus%22%2C%0A%20%20label%3A%20%22Chorus%201%22%20%20%2F%2F%20optional%0A%7D%0A%60%60%60%0A%0A%23%23%23%20Section%20Types%0A%0A%60intro%60%2C%20%60verse%60%2C%20%60pre_chorus%60%2C%20%60chorus%60%2C%20%60post_chorus%60%2C%20%60bridge%60%2C%20%60breakdown%60%2C%20%60drop%60%2C%20%60buildup%60%2C%20%60solo%60%2C%20%60instrumental%60%2C%20%60outro%60%2C%20%60silence%60%2C%20%60other%60%0A%0A%23%23%23%20Picture%0A%0A%60%60%60javascript%0A%7B%0A%20%20mime_type%3A%20%22image%2Fjpeg%22%2C%0A%20%20picture_type%3A%20%22cover_front%22%2C%0A%20%20description%3A%20%22Album%20art%22%2C%0A%20%20data%3A%20Uint8Array%0A%7D%0A%60%60%60%0A%0A%23%23%23%20Picture%20Types%0A%0A%60other%60%2C%20%60file_icon%60%2C%20%60cover_front%60%2C%20%60cover_back%60%2C%20%60leaflet_page%60%2C%20%60media%60%2C%20%60lead_artist%60%2C%20%60artist%60%2C%20%60conductor%60%2C%20%60band%60%2C%20%60composer%60%2C%20%60lyricist%60%2C%20%60recording_location%60%2C%20%60during_recording%60%2C%20%60during_performance%60%2C%20%60video_screen_capture%60%2C%20%60illustration%60%2C%20%60band_logo%60%2C%20%60publisher_logo%60%0A%0A---%0A%0A%23%23%20CRC32%0A%0AThe%20DATA%20chunk%20is%20verified%20using%20CRC32%20(IEEE%20802.3%20polynomial).%0A%0A**Verification%3A**%0A%0A1.%20Read%20%60data_crc32%60%20from%20header%0A2.%20Compute%20CRC32%20of%20entire%20DATA%20chunk%0A3.%20Compare%20values%0A%0A---%0A%0A%23%23%20Byte%20Order%0A%0AAll%20multi-byte%20values%20are%20**little-endian**.%0A%0A---%0A%0A%23%23%20Version%20History%0A%0A%7C%20Version%20%7C%20Changes%20%20%20%20%20%20%20%20%20%7C%0A%7C%20-------%20%7C%20---------------%20%7C%0A%7C%201.0%20%20%20%20%20%7C%20Initial%20release%20%7C%0A%0A---%0A%0A%23%23%20Kaitai%20Struct%0A%0AA%20complete%20Kaitai%20Struct%20specification%20is%20available%20at%20%5Bflo_audio.ksy%5D(..%2Fflo_audio.ksy).%0A%0A%60%60%60bash%0A%23%20Generate%20parser%20for%20your%20language%0Akaitai-struct-compiler%20-t%20python%20flo_audio.ksy%0Akaitai-struct-compiler%20-t%20javascript%20flo_audio.ksy%0A%60%60%60%0A" style="display: none;"></div>
+                  
+                    <nav aria-label="breadcrumb" class="docmd-breadcrumbs">
+                      <ol>
+                        
+                        
+                          <li class="breadcrumb-item " >
+                            
+                              <span>Format and Features</span>
+                            
+                            
+                              <span class="breadcrumb-separator">
+<svg class="lucide-icon icon-chevron-right " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-chevron-right"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m9 18 6-6-6-6" />
+</svg>
+</span>
+                            
+                          </li>
+                        
+                          <li class="breadcrumb-item active" aria-current=&quot;page&quot;>
+                            
+                              <span>File Format</span>
+                            
+                            
+                          </li>
+                        
+                      </ol>
+                    </nav>
+                  
+
+                  
+                    <div class="docmd-copy-widgets">
+                      
+                        <button class="docmd-copy-btn docmd-copy-raw-btn" data-copied="Copied!" title="Copy Markdown" aria-label="Copy Markdown">
+                          <span class="docmd-btn-icon">
+<svg class="lucide-icon icon-copy " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-copy"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+  <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+</svg>
+</span>
+                        </button>
+                      
+                      
+                        <button class="docmd-copy-btn docmd-copy-context-btn" data-copied="Copied!" title="Copy Context">
+                          <span class="docmd-btn-icon">
+<svg class="lucide-icon icon-message-square " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-message-square"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z" />
+</svg>
+</span>
+                          <span class="docmd-btn-text">Copy Context</span>
+                        </button>
+                      
+                    </div>
+                  
+                </div>
+                
+                <h1 id="file-format-specification" class="docmd-heading"><a href="#file-format-specification" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>File Format Specification</h1>
+<p>Technical specification for the flo audio format.</p>
+<h2 id="file-format-specification-overview" class="docmd-heading"><a href="#file-format-specification-overview" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Overview</h2>
+<p>flo (Fast Layered Object) is a chunked audio format supporting both lossless and lossy compression.</p>
+<p><strong>Key features:</strong></p>
+<ul>
+<li>Magic number identification</li>
+<li>CRC32 integrity verification</li>
+<li>Fixed-duration frames (1 second default)</li>
+<li>Chunk-based structure for seeking</li>
+<li>MessagePack metadata</li>
+</ul>
+<hr>
+<h2 id="file-format-specification-file-structure" class="docmd-heading"><a href="#file-format-specification-file-structure" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>File Structure</h2>
+<pre class="hljs"><code>┌─────────────────────────────────────┐
+│ <span class="hljs-title function_">HEADER</span> (<span class="hljs-number">66</span> bytes)                   │
+│   Magic, version, audio params      │
+│   CRC32, chunk sizes                │
+├─────────────────────────────────────┤
+│ TOC CHUNK                           │
+│   Frame seek table                  │
+├─────────────────────────────────────┤
+│ DATA CHUNK                          │
+│   Compressed audio frames           │
+├─────────────────────────────────────┤
+│ EXTRA <span class="hljs-title function_">CHUNK</span> (reserved)              │
+├─────────────────────────────────────┤
+│ META CHUNK                          │
+│   MessagePack metadata              │
+└─────────────────────────────────────┘
+</code></pre>
+<hr>
+<h2 id="file-format-specification-header" class="docmd-heading"><a href="#file-format-specification-header" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Header</h2>
+<p>66 bytes, little-endian:</p>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Offset</th>
+<th>Size</th>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>4</td>
+<td><code>magic</code></td>
+<td><code>FLO!</code> (0x464C4F21)</td>
+</tr>
+<tr>
+<td>4</td>
+<td>1</td>
+<td><code>version_major</code></td>
+<td>Format version (1)</td>
+</tr>
+<tr>
+<td>5</td>
+<td>1</td>
+<td><code>version_minor</code></td>
+<td>Minor version (1)</td>
+</tr>
+<tr>
+<td>6</td>
+<td>2</td>
+<td><code>flags</code></td>
+<td>Bit flags (see below)</td>
+</tr>
+<tr>
+<td>8</td>
+<td>4</td>
+<td><code>sample_rate</code></td>
+<td>Hz (44100, 48000, etc.)</td>
+</tr>
+<tr>
+<td>12</td>
+<td>1</td>
+<td><code>channels</code></td>
+<td>1=mono, 2=stereo</td>
+</tr>
+<tr>
+<td>13</td>
+<td>1</td>
+<td><code>bit_depth</code></td>
+<td>16, 24, or 32</td>
+</tr>
+<tr>
+<td>14</td>
+<td>8</td>
+<td><code>total_samples</code></td>
+<td>Total sample-frames (samples per channel)</td>
+</tr>
+<tr>
+<td>22</td>
+<td>1</td>
+<td><code>compression_level</code></td>
+<td>Hint (0-9)</td>
+</tr>
+<tr>
+<td>23</td>
+<td>3</td>
+<td><code>reserved</code></td>
+<td>Must be 0</td>
+</tr>
+<tr>
+<td>26</td>
+<td>4</td>
+<td><code>data_crc32</code></td>
+<td>CRC32 of DATA chunk</td>
+</tr>
+<tr>
+<td>30</td>
+<td>8</td>
+<td><code>header_size</code></td>
+<td>Size of header (66)</td>
+</tr>
+<tr>
+<td>38</td>
+<td>8</td>
+<td><code>toc_size</code></td>
+<td>Size of TOC chunk</td>
+</tr>
+<tr>
+<td>46</td>
+<td>8</td>
+<td><code>data_size</code></td>
+<td>Size of DATA chunk</td>
+</tr>
+<tr>
+<td>54</td>
+<td>8</td>
+<td><code>extra_size</code></td>
+<td>Size of EXTRA chunk</td>
+</tr>
+<tr>
+<td>62</td>
+<td>8</td>
+<td><code>meta_size</code></td>
+<td>Size of META chunk</td>
+</tr>
+</tbody>
+</table>
+</div><h3 id="file-format-specification-header-flags" class="docmd-heading"><a href="#file-format-specification-header-flags" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Flags</h3>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Bit</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>Lossy mode (0=lossless, 1=lossy)</td>
+</tr>
+<tr>
+<td>8-11</td>
+<td>Lossy quality level (0-4)</td>
+</tr>
+<tr>
+<td>Other</td>
+<td>Reserved</td>
+</tr>
+</tbody>
+</table>
+</div><p><strong>Quality levels:</strong> 0=Low, 1=Medium, 2=High, 3=VeryHigh, 4=Transparent</p>
+<hr>
+<h2 id="file-format-specification-toc-chunk" class="docmd-heading"><a href="#file-format-specification-toc-chunk" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>TOC Chunk</h2>
+<p>Table of contents for seeking.</p>
+<h3 id="file-format-specification-toc-chunk-structure" class="docmd-heading"><a href="#file-format-specification-toc-chunk-structure" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Structure</h3>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Offset</th>
+<th>Size</th>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>4</td>
+<td><code>num_entries</code></td>
+<td>Number of seek points</td>
+</tr>
+<tr>
+<td>4</td>
+<td>20×N</td>
+<td><code>entries</code></td>
+<td>Seek point array</td>
+</tr>
+</tbody>
+</table>
+</div><h3 id="file-format-specification-toc-chunk-toc-entry-20-bytes" class="docmd-heading"><a href="#file-format-specification-toc-chunk-toc-entry-20-bytes" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>TOC Entry (20 bytes)</h3>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Offset</th>
+<th>Size</th>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>4</td>
+<td><code>frame_index</code></td>
+<td>Frame number (0-based)</td>
+</tr>
+<tr>
+<td>4</td>
+<td>8</td>
+<td><code>byte_offset</code></td>
+<td>Offset from DATA chunk start</td>
+</tr>
+<tr>
+<td>12</td>
+<td>4</td>
+<td><code>frame_size</code></td>
+<td>Size in bytes</td>
+</tr>
+<tr>
+<td>16</td>
+<td>4</td>
+<td><code>timestamp_ms</code></td>
+<td>Time in milliseconds</td>
+</tr>
+</tbody>
+</table>
+</div><hr>
+<h2 id="file-format-specification-data-chunk" class="docmd-heading"><a href="#file-format-specification-data-chunk" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>DATA Chunk</h2>
+<p>Contains compressed audio frames.</p>
+<h3 id="file-format-specification-data-chunk-audio-frame" class="docmd-heading"><a href="#file-format-specification-data-chunk-audio-frame" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Audio Frame</h3>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Size</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>frame_type</code></td>
+<td>1</td>
+<td>Encoding type (see below)</td>
+</tr>
+<tr>
+<td><code>frame_samples</code></td>
+<td>4</td>
+<td>Sample count</td>
+</tr>
+<tr>
+<td><code>flags</code></td>
+<td>1</td>
+<td>Per-frame flags</td>
+</tr>
+<tr>
+<td><code>channels</code></td>
+<td>variable</td>
+<td>Channel data array</td>
+</tr>
+</tbody>
+</table>
+</div><h3 id="file-format-specification-data-chunk-frame-types" class="docmd-heading"><a href="#file-format-specification-data-chunk-frame-types" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Frame Types</h3>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>Silence</td>
+<td>No data stored</td>
+</tr>
+<tr>
+<td>1-12</td>
+<td>ALPC</td>
+<td>Lossless LPC order 1-12</td>
+</tr>
+<tr>
+<td>253</td>
+<td>Transform</td>
+<td>Lossy MDCT</td>
+</tr>
+<tr>
+<td>254</td>
+<td>Raw</td>
+<td>Uncompressed PCM</td>
+</tr>
+<tr>
+<td>255</td>
+<td>Reserved</td>
+<td>Future use</td>
+</tr>
+</tbody>
+</table>
+</div><hr>
+<h2 id="file-format-specification-channel-data" class="docmd-heading"><a href="#file-format-specification-channel-data" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Channel Data</h2>
+<p>Each channel is prefixed with its size:</p>
+<pre class="hljs"><code>┌──────────────────┬──────────────────┐
+│ <span class="hljs-title function_">channel_size</span> (<span class="hljs-number">4</span>) │ channel_data     │
+└──────────────────┴──────────────────┘
+</code></pre>
+<h3 id="file-format-specification-channel-data-alpc-channel-frame-types-1-12" class="docmd-heading"><a href="#file-format-specification-channel-data-alpc-channel-frame-types-1-12" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>ALPC Channel (Frame Types 1-12)</h3>
+<p>Adaptive Linear Predictive Coding for lossless compression.</p>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Size</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>coeff_count</code></td>
+<td>1</td>
+<td>Number of LPC coefficients</td>
+</tr>
+<tr>
+<td><code>predictor_coeffs</code></td>
+<td>4×N</td>
+<td>i32 coefficients</td>
+</tr>
+<tr>
+<td><code>shift_bits</code></td>
+<td>1</td>
+<td>Dequantization shift</td>
+</tr>
+<tr>
+<td><code>residual_encoding</code></td>
+<td>1</td>
+<td>0=Rice, 1=Golomb, 2=Raw</td>
+</tr>
+<tr>
+<td><code>rice_parameter</code></td>
+<td>1</td>
+<td>Rice k value (if encoding=0)</td>
+</tr>
+<tr>
+<td><code>residuals</code></td>
+<td>variable</td>
+<td>Encoded residuals</td>
+</tr>
+</tbody>
+</table>
+</div><p><strong>Reconstruction:</strong></p>
+<pre class="hljs"><code>sample[n] <span class="hljs-operator">=</span> residual[n] <span class="hljs-operator">+</span> Σ(coeff[i] × sample[n<span class="hljs-operator">-</span><span class="hljs-number">1</span><span class="hljs-operator">-</span>i]) <span class="hljs-operator">&gt;&gt;</span> shift
+</code></pre>
+<h3 id="file-format-specification-channel-data-transform-channel-frame-type-253" class="docmd-heading"><a href="#file-format-specification-channel-data-transform-channel-frame-type-253" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Transform Channel (Frame Type 253)</h3>
+<p>MDCT-based lossy compression.</p>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Size</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>block_size</code></td>
+<td>1</td>
+<td>0=Long(2048), 1=Short(256), 2=Start, 3=Stop</td>
+</tr>
+<tr>
+<td><code>scale_factors</code></td>
+<td>50</td>
+<td>25 bands × 2 bytes (log-scale u16)</td>
+</tr>
+<tr>
+<td><code>coeff_length</code></td>
+<td>4</td>
+<td>Size of coefficient data</td>
+</tr>
+<tr>
+<td><code>coefficients</code></td>
+<td>variable</td>
+<td>Sparse RLE i16 values</td>
+</tr>
+</tbody>
+</table>
+</div><p><strong>Scale factor decode:</strong></p>
+<pre class="hljs"><code>scale <span class="hljs-operator">=</span> <span class="hljs-number">2</span><span class="hljs-operator">^</span>((log_value <span class="hljs-operator">-</span> <span class="hljs-number">32768</span>) <span class="hljs-operator">/</span> <span class="hljs-number">256</span>)
+</code></pre>
+<p><strong>Coefficient decode:</strong></p>
+<pre class="hljs"><code>coeff[k] <span class="hljs-operator">=</span> quantized[k] <span class="hljs-operator">/</span> scale_factor[<span class="hljs-title function_">bark_band</span>(k)]
+</code></pre>
+<h3 id="file-format-specification-channel-data-sparse-coefficient-encoding" class="docmd-heading"><a href="#file-format-specification-channel-data-sparse-coefficient-encoding" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Sparse Coefficient Encoding</h3>
+<p>Coefficients use RLE for zero runs:</p>
+<pre class="hljs"><code>[<span class="hljs-title function_">zero_count</span> (varint)] [<span class="hljs-title function_">non_zero_count</span> (<span class="hljs-number">1</span>)] [<span class="hljs-title function_">values</span> (<span class="hljs-number">2</span>×N)]
+</code></pre>
+<hr>
+<h2 id="file-format-specification-extra-chunk" class="docmd-heading"><a href="#file-format-specification-extra-chunk" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>EXTRA Chunk</h2>
+<p>Reserved for future extensions. Currently empty.</p>
+<hr>
+<h2 id="file-format-specification-meta-chunk" class="docmd-heading"><a href="#file-format-specification-meta-chunk" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>META Chunk</h2>
+<p>MessagePack-encoded metadata.</p>
+<h3 id="file-format-specification-meta-chunk-standard-fields-id3v24-compatible" class="docmd-heading"><a href="#file-format-specification-meta-chunk-standard-fields-id3v24-compatible" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Standard Fields (ID3v2.4 compatible)</h3>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>ID3 Frame</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>title</code></td>
+<td>string</td>
+<td>TIT2</td>
+</tr>
+<tr>
+<td><code>artist</code></td>
+<td>string</td>
+<td>TPE1</td>
+</tr>
+<tr>
+<td><code>album</code></td>
+<td>string</td>
+<td>TALB</td>
+</tr>
+<tr>
+<td><code>album_artist</code></td>
+<td>string</td>
+<td>TPE2</td>
+</tr>
+<tr>
+<td><code>composer</code></td>
+<td>string</td>
+<td>TCOM</td>
+</tr>
+<tr>
+<td><code>genre</code></td>
+<td>string</td>
+<td>TCON</td>
+</tr>
+<tr>
+<td><code>year</code></td>
+<td>u32</td>
+<td>TYER</td>
+</tr>
+<tr>
+<td><code>track_number</code></td>
+<td>u32</td>
+<td>TRCK</td>
+</tr>
+<tr>
+<td><code>track_total</code></td>
+<td>u32</td>
+<td>TRCK</td>
+</tr>
+<tr>
+<td><code>disc_number</code></td>
+<td>u32</td>
+<td>TPOS</td>
+</tr>
+<tr>
+<td><code>disc_total</code></td>
+<td>u32</td>
+<td>TPOS</td>
+</tr>
+<tr>
+<td><code>bpm</code></td>
+<td>u32</td>
+<td>TBPM</td>
+</tr>
+<tr>
+<td><code>key</code></td>
+<td>string</td>
+<td>TKEY</td>
+</tr>
+<tr>
+<td><code>isrc</code></td>
+<td>string</td>
+<td>TSRC</td>
+</tr>
+<tr>
+<td><code>lyrics</code></td>
+<td>string</td>
+<td>USLT</td>
+</tr>
+<tr>
+<td><code>comments</code></td>
+<td>array</td>
+<td>COMM</td>
+</tr>
+<tr>
+<td><code>pictures</code></td>
+<td>array</td>
+<td>APIC</td>
+</tr>
+</tbody>
+</table>
+</div><h3 id="file-format-specification-meta-chunk-flo-extensions" class="docmd-heading"><a href="#file-format-specification-meta-chunk-flo-extensions" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>flo Extensions</h3>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>section_markers</code></td>
+<td>array</td>
+<td>Intro/verse/chorus markers</td>
+</tr>
+<tr>
+<td><code>bpm_map</code></td>
+<td>array</td>
+<td>Tempo changes</td>
+</tr>
+<tr>
+<td><code>key_changes</code></td>
+<td>array</td>
+<td>Key signature changes</td>
+</tr>
+<tr>
+<td><code>loudness_profile</code></td>
+<td>array</td>
+<td>LUFS per frame</td>
+</tr>
+<tr>
+<td><code>waveform_data</code></td>
+<td>object</td>
+<td>Pre-computed peaks</td>
+</tr>
+<tr>
+<td><code>synced_lyrics</code></td>
+<td>array</td>
+<td>SYLT-style lyrics</td>
+</tr>
+<tr>
+<td><code>creator_notes</code></td>
+<td>array</td>
+<td>Producer commentary</td>
+</tr>
+<tr>
+<td><code>animated_cover</code></td>
+<td>object</td>
+<td>GIF/WebP cover</td>
+</tr>
+</tbody>
+</table>
+</div><h3 id="file-format-specification-meta-chunk-section-marker" class="docmd-heading"><a href="#file-format-specification-meta-chunk-section-marker" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Section Marker</h3>
+<pre class="hljs"><code class="language-javascript">{
+  timestamp_ms<span class="hljs-operator">:</span> <span class="hljs-number">30000</span>,
+  section_type<span class="hljs-operator">:</span> <span class="hljs-string">&quot;chorus&quot;</span>,
+  label<span class="hljs-operator">:</span> <span class="hljs-string">&quot;Chorus 1&quot;</span>  <span class="hljs-comment">// optional</span>
+}
+</code></pre>
+<h3 id="file-format-specification-meta-chunk-section-types" class="docmd-heading"><a href="#file-format-specification-meta-chunk-section-types" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Section Types</h3>
+<p><code>intro</code>, <code>verse</code>, <code>pre_chorus</code>, <code>chorus</code>, <code>post_chorus</code>, <code>bridge</code>, <code>breakdown</code>, <code>drop</code>, <code>buildup</code>, <code>solo</code>, <code>instrumental</code>, <code>outro</code>, <code>silence</code>, <code>other</code></p>
+<h3 id="file-format-specification-meta-chunk-picture" class="docmd-heading"><a href="#file-format-specification-meta-chunk-picture" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Picture</h3>
+<pre class="hljs"><code class="language-javascript">{
+  mime_type<span class="hljs-operator">:</span> <span class="hljs-string">&quot;image/jpeg&quot;</span>,
+  picture_type<span class="hljs-operator">:</span> <span class="hljs-string">&quot;cover_front&quot;</span>,
+  description<span class="hljs-operator">:</span> <span class="hljs-string">&quot;Album art&quot;</span>,
+  data<span class="hljs-operator">:</span> Uint8Array
+}
+</code></pre>
+<h3 id="file-format-specification-meta-chunk-picture-types" class="docmd-heading"><a href="#file-format-specification-meta-chunk-picture-types" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Picture Types</h3>
+<p><code>other</code>, <code>file_icon</code>, <code>cover_front</code>, <code>cover_back</code>, <code>leaflet_page</code>, <code>media</code>, <code>lead_artist</code>, <code>artist</code>, <code>conductor</code>, <code>band</code>, <code>composer</code>, <code>lyricist</code>, <code>recording_location</code>, <code>during_recording</code>, <code>during_performance</code>, <code>video_screen_capture</code>, <code>illustration</code>, <code>band_logo</code>, <code>publisher_logo</code></p>
+<hr>
+<h2 id="file-format-specification-crc32" class="docmd-heading"><a href="#file-format-specification-crc32" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>CRC32</h2>
+<p>The DATA chunk is verified using CRC32 (IEEE 802.3 polynomial).</p>
+<p><strong>Verification:</strong></p>
+<ol>
+<li>Read <code>data_crc32</code> from header</li>
+<li>Compute CRC32 of entire DATA chunk</li>
+<li>Compare values</li>
+</ol>
+<hr>
+<h2 id="file-format-specification-byte-order" class="docmd-heading"><a href="#file-format-specification-byte-order" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Byte Order</h2>
+<p>All multi-byte values are <strong>little-endian</strong>.</p>
+<hr>
+<h2 id="file-format-specification-version-history" class="docmd-heading"><a href="#file-format-specification-version-history" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Version History</h2>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Version</th>
+<th>Changes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1.0</td>
+<td>Initial release</td>
+</tr>
+</tbody>
+</table>
+</div><hr>
+<h2 id="file-format-specification-kaitai-struct" class="docmd-heading"><a href="#file-format-specification-kaitai-struct" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Kaitai Struct</h2>
+<p>A complete Kaitai Struct specification is available at <a href="../flo_audio.ksy">flo_audio.ksy</a>.</p>
+<pre class="hljs"><code class="language-bash"><span class="hljs-comment"># Generate parser for your language</span>
+kaitai<span class="hljs-operator">-</span><span class="hljs-keyword">struct</span><span class="hljs-operator">-</span>compiler <span class="hljs-operator">-</span>t python flo_audio.<span class="hljs-attr">ksy</span>
+kaitai<span class="hljs-operator">-</span><span class="hljs-keyword">struct</span><span class="hljs-operator">-</span>compiler <span class="hljs-operator">-</span>t javascript flo_audio.<span class="hljs-attr">ksy</span>
+</code></pre>
+
+                
+                  <div class="page-navigation">
+                    
+                      <a href="../javascript-api/" class="prev-page">
+                        
+<svg class="lucide-icon icon-arrow-left page-nav-icon" width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-arrow-left"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m12 19-7-7 7-7" />
+  <path d="M19 12H5" />
+</svg>
+
+                        <span><small>Previous</small><strong>
+                            JavaScript / WASM
+                          </strong></span>
+                      </a>
+                    
+                    
+                      <a href="../metadata-guide/" class="next-page">
+                        <span><small>Next</small>
+                          <strong>
+                            Metadata
+                          </strong></span>
+                        
+<svg class="lucide-icon icon-arrow-right page-nav-icon" width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-arrow-right"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M5 12h14" />
+  <path d="m12 5 7 7-7 7" />
+</svg>
+
+                      </a>
+                    
+                  </div>
+                
+              </div>
+              
+              <div class="toc-sidebar">
+                
+
+
+  <div class="toc-container">
+    <h2 class="toc-title">On This Page<span class="mobile-view toc-menu-button float-right">
+<svg class="lucide-icon icon-chevron-down " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-chevron-down"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m6 9 6 6 6-6" />
+</svg>
+</span></h2>
+    <ul class="toc-list">
+      
+        <li class="toc-item toc-level-1">
+          <a href="#file-format-specification" class="toc-link">File Format Specification</a>
+        </li>
+      
+        <li class="toc-item toc-level-2">
+          <a href="#file-format-specification-overview" class="toc-link">Overview</a>
+        </li>
+      
+        <li class="toc-item toc-level-2">
+          <a href="#file-format-specification-file-structure" class="toc-link">File Structure</a>
+        </li>
+      
+        <li class="toc-item toc-level-2">
+          <a href="#file-format-specification-header" class="toc-link">Header</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#file-format-specification-header-flags" class="toc-link">Flags</a>
+        </li>
+      
+        <li class="toc-item toc-level-2">
+          <a href="#file-format-specification-toc-chunk" class="toc-link">TOC Chunk</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#file-format-specification-toc-chunk-structure" class="toc-link">Structure</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#file-format-specification-toc-chunk-toc-entry-20-bytes" class="toc-link">TOC Entry (20 bytes)</a>
+        </li>
+      
+        <li class="toc-item toc-level-2">
+          <a href="#file-format-specification-data-chunk" class="toc-link">DATA Chunk</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#file-format-specification-data-chunk-audio-frame" class="toc-link">Audio Frame</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#file-format-specification-data-chunk-frame-types" class="toc-link">Frame Types</a>
+        </li>
+      
+        <li class="toc-item toc-level-2">
+          <a href="#file-format-specification-channel-data" class="toc-link">Channel Data</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#file-format-specification-channel-data-alpc-channel-frame-types-1-12" class="toc-link">ALPC Channel (Frame Types 1-12)</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#file-format-specification-channel-data-transform-channel-frame-type-253" class="toc-link">Transform Channel (Frame Type 253)</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#file-format-specification-channel-data-sparse-coefficient-encoding" class="toc-link">Sparse Coefficient Encoding</a>
+        </li>
+      
+        <li class="toc-item toc-level-2">
+          <a href="#file-format-specification-extra-chunk" class="toc-link">EXTRA Chunk</a>
+        </li>
+      
+        <li class="toc-item toc-level-2">
+          <a href="#file-format-specification-meta-chunk" class="toc-link">META Chunk</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#file-format-specification-meta-chunk-standard-fields-id3v24-compatible" class="toc-link">Standard Fields (ID3v2.4 compatible)</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#file-format-specification-meta-chunk-flo-extensions" class="toc-link">flo Extensions</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#file-format-specification-meta-chunk-section-marker" class="toc-link">Section Marker</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#file-format-specification-meta-chunk-section-types" class="toc-link">Section Types</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#file-format-specification-meta-chunk-picture" class="toc-link">Picture</a>
+        </li>
+      
+        <li class="toc-item toc-level-3">
+          <a href="#file-format-specification-meta-chunk-picture-types" class="toc-link">Picture Types</a>
+        </li>
+      
+        <li class="toc-item toc-level-2">
+          <a href="#file-format-specification-crc32" class="toc-link">CRC32</a>
+        </li>
+      
+        <li class="toc-item toc-level-2">
+          <a href="#file-format-specification-byte-order" class="toc-link">Byte Order</a>
+        </li>
+      
+        <li class="toc-item toc-level-2">
+          <a href="#file-format-specification-version-history" class="toc-link">Version History</a>
+        </li>
+      
+        <li class="toc-item toc-level-2">
+          <a href="#file-format-specification-kaitai-struct" class="toc-link">Kaitai Struct</a>
+        </li>
+      
+    </ul>
+  </div>
+
+              </div>
+              
+            </div>
+            <div class="page-footer-actions">
+              
+              
+                <span class="git-last-updated" data-timestamp="1789065744000">
+                  <svg class="git-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                  <span class="git-label">Last updated:</span>
+                  <span class="git-time" data-timestamp="1789065744000"></span>
+                  
+                  <div class="git-commit-tooltip" role="tooltip">
+                    <div class="git-tooltip-title">Recent commits</div>
+                    <ul class="git-commit-list">
+                      
+                        <li class="git-commit-item">
+                          <div class="git-commit-avatar" title="NellowTCS">
+                            
+                              <img src="https://www.gravatar.com/avatar/baecf29c7bedbb00a8d5bd5984799c55?d=mp&amp;s=64" alt="NellowTCS">
+                            
+                          </div>
+                          <div class="git-commit-details">
+                            <div class="git-commit-message" title="oop">oop</div>
+                            <div class="git-commit-meta">
+                              <span class="git-commit-author">NellowTCS</span>
+                              <span class="git-commit-date" data-timestamp="1789065744000"></span>
+                            </div>
+                          </div>
+                        </li>
+                      
+                    </ul>
+                  </div>
+                  
+                </span>
+              
+              <span class="git-spacer"></span>
+              
+                <a href="https://github.com/Audiflo/flo/edit/main/Docs/docs/file-format.md" target="_blank" rel="noopener noreferrer" class="edit-link">
+                  
+<svg class="lucide-icon icon-pencil " width="1em" height="1em" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+  class="lucide lucide-pencil"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" />
+  <path d="m15 5 4 4" />
+</svg>
+
+                  Edit this page
+                </a>
+              
+            </div>
+          </main>
+          
+
+
+<footer class="footer-complete">
+  <div class="footer-complete-top">
+      <div class="footer-brand">
+          
+            <span class="footer-title">flo</span>
+          
+          
+            <p class="footer-desc">A modern lossless and lossy audio codec with native and WebAssembly APIs.</p>
+          
+        </div>
+        
+          <div class="footer-columns">
+            
+              <div class="footer-column">
+                <span class="footer-column-title">Resources</span>
+                <ul>
+                  
+                    <li><a href="getting-started/" >Getting Started</a></li>
+                  
+                    <li><a href="rust-api/" >Rust API</a></li>
+                  
+                    <li><a href="javascript-api/" >JavaScript API</a></li>
+                  
+                </ul>
+              </div>
+            
+              <div class="footer-column">
+                <span class="footer-column-title">Project</span>
+                <ul>
+                  
+                    <li><a href="./demo/" target=&quot;_blank&quot; rel=&quot;noopener&quot;>Live Demo</a></li>
+                  
+                    <li><a href="https://github.com/Audiflo/flo" >GitHub</a></li>
+                  
+                    <li><a href="https://github.com/Audiflo/flo/issues" >Issues</a></li>
+                  
+                </ul>
+              </div>
+            
+          </div>
+        
+      </div>
+      <div class="footer-complete-bottom">
+        <div class="user-footer">Built with <a href="https://docmd.io">docmd</a>. <a href="https://github.com/Audiflo/flo">View on GitHub</a>.</div>
+        
+          <div class="branding-footer">
+            Built with <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path><path d="M12 5 9.04 7.96a2.17 2.17 0 0 0 0 3.08c.82.82 2.13.85 3 .07l2.07-1.9a2.82 2.82 0 0 1 3.79 0l2.96 2.66"></path><path d="m18 15-2-2"></path><path d="m15 18-2-2"></path></svg> <a href="https://docmd.io" target="_blank" rel="noopener">docmd.</a>
+          </div>
+        
+      </div>
+  </footer>
+
+        </div>
+      </div>
+      
+      <script src="../assets/js/docmd-main.js?v=mtvvpwwr"></script>
+      
+      <script src="../assets/js/docmd-git.js?v=mtvvpwwr"></script>
+      <script src="../assets/js/docmd-image-lightbox.js?v=mtvvpwwr" ></script>
+<script src="../assets/js/vendor/minisearch.js?v=mtvvpwwr" ></script>
+<script src="../assets/js/docmd-search.js?v=mtvvpwwr" ></script>
+<script src="../assets/js/docmd-git.js?v=mtvvpwwr" ></script>
+<script src="../assets/js/docmd-ai.js?v=mtvvpwwr" ></script>
+
+  <!-- Search Modal (Injected by @docmd/plugin-search) -->
+  <div id="docmd-search-modal" class="docmd-search-modal" style="display: none;" data-show-confidence="false" data-show-filters="true"
+       data-search-placeholder="Search documentation..."
+       data-search-no-results="No results found."
+       data-search-error="Failed to load search index."
+       data-search-offline="Search requires a web server. Open this site via http://localhost instead of file:// to enable search."
+       data-search-offline-build="Search is disabled because these docs were built with the --offline flag. Rebuild the site without the flag to enable search."
+       data-search-initial="Type to start searching..."
+       data-search-navigate="to navigate"
+       data-search-escape="to close">
+      <div class="docmd-search-box">
+          <div class="docmd-search-header">
+              <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide-icon icon-search"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+              <input type="text" id="docmd-search-input" placeholder="Search documentation..." autocomplete="off" spellcheck="false">
+              <button onclick="window.closeDocmdSearch()" class="docmd-search-close" aria-label="Close search">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide-icon icon-x"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+              </button>
+          </div>
+          <div id="docmd-search-results" class="docmd-search-results"></div>
+          <div class="docmd-search-footer">
+              <span><kbd class="docmd-kbd">↑</kbd> <kbd class="docmd-kbd">↓</kbd> to navigate</span>
+              <span><kbd class="docmd-kbd">ESC</kbd> to close</span>
+          </div>
+      </div>
+  </div>
+
+    <script>
+      (function() {
+        var searchDebounceTimer;
+
+        document.addEventListener('click', function(e) {
+          var link = e.target.closest('a');
+          if (!link || !window.gtag) return;
+          
+          var url = link.href;
+          var hostname = window.location.hostname;
+          var isExternal = link.hostname && link.hostname !== hostname;
+          var isDownload = link.hasAttribute('download') || url.match(/\.(pdf|zip|tar|gz|exe|pkg)$/i);
+          
+          if (isExternal) {
+            gtag('event', 'click_external', { 'url': url, 'link_text': link.innerText.trim() });
+          } else if (isDownload) {
+            gtag('event', 'download', { 'file_name': url.split('/').pop(), 'url': url });
+          }
+
+          // TOC tracking
+          if (link.classList.contains('toc-link')) {
+            gtag('event', 'toc_click', { 'target_id': link.getAttribute('href'), 'title': link.innerText.trim() });
+          }
+
+          // Permalink tracking
+          if (link.classList.contains('heading-anchor')) {
+            gtag('event', 'permalink_click', { 'url': url });
+          }
+        });
+
+        
+        // Search Keyword Tracking
+        document.addEventListener('input', function(e) {
+          if (e.target.id === 'docmd-search-input' && window.gtag) {
+            var query = e.target.value.trim();
+            if (query.length < 3) return;
+            
+            clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(function() {
+              gtag('event', 'search', { 'search_term': query });
+            }, 1000);
+          }
+        });
+        
+      })();
+    </script>
+
+<script>window.__git_config={"repo":"https://github.com/Audiflo/flo/edit/main/","branch":"main","editLink":true,"lastUpdated":true,"commitHistory":true,"maxCommits":5,"dateFormat":"relative"};window.__git_i18n={"lastUpdated":"Last updated","recentCommits":"Recent commits","viewCommitHistory":"View commit history","editOnGitHub":"Edit on GitHub","editOnGitLab":"Edit on GitLab","editOnBitbucket":"Edit on Bitbucket","editThisPage":"Edit this page","justNow":"just now","minutesAgo":"{n}m ago","hoursAgo":"{n}h ago","daysAgo":"{n}d ago"}</script>
+<div id="docmd-ai-root"></div><script>window.__docmd_ai_config={"endpoint":"","cloud":{},"captcha":true,"position":"bottom-center","siteTitle":"flo","siteBase":"/flo/","siteUrl":"https://audiflo.github.io/flo/","versions":null,"i18n":null,"navigation":[{"title":"Home","path":"/","icon":"home"},{"title":"Getting Started","icon":"rocket","collapsible":false,"children":[{"title":"Getting Started","path":"/getting-started/","icon":"play"},{"title":"CLI Reference","path":"/cli-reference/","icon":"terminal"}]},{"title":"API Reference","icon":"code","collapsible":false,"children":[{"title":"Rust API","path":"/rust-api/","icon":"box"},{"title":"JavaScript / WASM","path":"/javascript-api/","icon":"cpu"}]},{"title":"Format and Features","icon":"file-text","collapsible":false,"children":[{"title":"File Format","path":"/file-format/","icon":"binary"},{"title":"Metadata","path":"/metadata-guide/","icon":"tag"},{"title":"Streaming","path":"/streaming/","icon":"wind"}]},{"title":"Project","icon":"layers","collapsible":false,"children":[{"title":"Architecture","path":"/architecture/","icon":"git-branch"},{"title":"No-std and WASM","path":"/no-std/","icon":"cpu"}]},{"title":"Live Demo","path":"/demo/","icon":"eye","external":true},{"title":"GitHub","path":"https://github.com/Audiflo/flo","icon":"github","external":true}],"searchCapabilities":{"keyword":true,"semantic":false},"isWorkspace":false,"workspaceProjects":[],"contextLimit":5};</script>
+      
+      
+      
+  </body>
+</html>
