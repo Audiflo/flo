@@ -2,7 +2,7 @@ import argparse
 import shutil
 
 from shared.constants import DEMO_DIR, EXAMPLES_DIR, FIXTURES_DIR, REFLO_DIR, TARGET_DIR
-from shared.format import check
+from shared.format import check, ensure_tool
 from shared.run import run
 
 

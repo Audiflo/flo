@@ -10,7 +10,7 @@ echo "==> rustup: wasm32 target"
 rustup target add wasm32-unknown-unknown
 
 echo "==> rustup: fmt + clippy components"
-rustup component add rustfmt clippy 2>/dev/null || true
+rustup component add rustfmt clippy
 
 has_bin() { command -v "$1" >/dev/null 2>&1; }
 
@@ -27,7 +27,7 @@ fi
 
 if ! has_bin wasm-pack; then
   echo "==> installing wasm-pack"
-  curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+  curl --fail --silent --show-error https://rustwasm.github.io/wasm-pack/installer/init.sh | sh
 fi
 
 echo "==> toolchain versions"

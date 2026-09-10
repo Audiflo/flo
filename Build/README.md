@@ -352,7 +352,7 @@ decoder.free();
 
 ## Supported Input Formats (CLI)
 
-- WAV (via hound)
+- WAV (via symphonia)
 - MP3 (via symphonia)
 - FLAC (via symphonia)
 - OGG Vorbis (via symphonia)

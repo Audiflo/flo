@@ -7,5 +7,6 @@ publish = false
 description = "Test fixtures and example generation for flo"
 
 [dependencies]
-anyhow = { workspace = true }
 reflo = { path = "../reflo" }
+
+anyhow = { workspace = true }

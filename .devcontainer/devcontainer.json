@@ -18,6 +18,9 @@
       ]
     }
   },
+  "remoteEnv": {
+    "PATH": "${containerEnv:PATH}:${containerEnv:HOME}/.cargo/bin:${containerEnv:HOME}/.local/bin"
+  },
   "postCreateCommand": "bash .devcontainer/setup.sh",
   "remoteUser": "vscode"
 }

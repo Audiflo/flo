@@ -20,15 +20,17 @@ name = "libflo_tests"
 path = "../../../Tests/libflo/mod.rs"
 
 [dependencies]
-wasm-bindgen = { workspace = true }
-console_error_panic_hook = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 serde-wasm-bindgen = { workspace = true }
-rmp-serde = { workspace = true }
 serde_bytes = { workspace = true }
-# I would make this from scratch, but I don't hate myself :P
+
+rmp-serde = { workspace = true }
 rustfft = { workspace = true }
 blake3 = { workspace = true }
+
+# WASM
+wasm-bindgen = { workspace = true }
+console_error_panic_hook = { workspace = true }
 js-sys = { workspace = true }
 web-sys = { workspace = true }

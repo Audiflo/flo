@@ -228,7 +228,7 @@ fn make_noise(rate: u32, seconds: f64) -> Vec<f32> {
         state ^= state >> 12;
         state ^= state << 25;
         state ^= state >> 27;
-        let r = (state.wrapping_mul(0x2545_F491_4F6C_DD1D) >> 33) as u64;
+        let r = (state.wrapping_mul(0x2545_F491_4F6C_DD1D) >> 33) as u32;
         // Map the low 32 bits onto [-1.0, 1.0].
         let v = (r as f32 / (1u64 << 31) as f32) - 1.0;
         out.push(v);
