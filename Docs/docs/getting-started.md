@@ -14,8 +14,8 @@ git clone https://github.com/flo-audio/flo.git
 cd flo
 
 # Build and install
-cd Build/crates/reflo
-cargo install --path .
+cd Build
+cargo install --path crates/reflo-cli --manifest-path Cargo.toml
 ```
 
 #### Pre-built Binaries
@@ -27,13 +27,14 @@ Download from [GitHub Releases](https://github.com/flo-audio/flo/releases):
 - `reflo-macos-arm64` - macOS Apple Silicon
 - `reflo-windows.exe` - Windows x64
 
-### Rust Library (libflo)
+### Rust Libraries
 
-Add to your `Cargo.toml`:
+Use `libflo-audio` for the codec or `reflo` for the higher-level raw-sample API:
 
 ```toml
 [dependencies]
 libflo-audio = { version = "0.1.2" }
+# Or: reflo = { version = "0.1.2", default-features = false }
 ```
 
 ### JavaScript (WASM)

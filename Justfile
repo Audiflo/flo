@@ -18,6 +18,9 @@ reflo *args:
 demo *args:
 	@cd {{scripts}} && python3 demo.py {{args}}
 
+docs *args:
+	@cd {{scripts}} && python3 docs.py {{args}}
+
 setup:
 	@cd {{scripts}} && python3 libflo.py setup
 	@cd {{scripts}} && python3 reflo.py setup

@@ -13,7 +13,8 @@ Welcome to the flo audio codec documentation!
 | [File Format](file-format.md) | Technical specification |
 | [Metadata Guide](metadata-guide.md) | Working with audio metadata |
 | [Streaming](streaming.md) | Real-time streaming decoder |
-| [Performance](performance.md) | Optimization tips |
+| [Architecture](architecture.md) | Crate and feature boundaries |
+| [No-std and WASM](no-std.md) | Embedded and browser builds |
 
 ## What is flo?
 
@@ -39,9 +40,10 @@ The core Rust library. Handles encoding, decoding, and metadata.
 - Available as Rust crate and WASM module
 - Pure Rust (uses `rustfft` for transforms)
 
-### reflo
+### reflo and reflo-cli
 
-The command-line converter tool.
+`reflo` is the reusable conversion facade. `reflo-cli` provides the `flo`
+command-line converter and owns filesystem/audio-container support.
 
 - Converts common formats to flo
 - Also available as WASM for browser-based conversion

@@ -50,6 +50,8 @@ Install the `flo` CLI:
 just install
 ```
 
+Full documentation is available at [audiflo.github.io/flo](https://audiflo.github.io/flo/).
+
 ### CLI Usage
 
 ```bash
@@ -212,7 +214,9 @@ flo/
 │       │       ├── core/     # Core utilities (CRC32, Rice coding, types, metadata)
 │       │       ├── lossless/ # Lossless encoder/decoder (ALPC)
 │       │       └── lossy/    # Lossy encoder/decoder (MDCT, psychoacoustic)
-│       └── reflo/            # CLI converter tool
+│       ├── reflo/            # Reusable conversion library
+│       ├── reflo-cli/        # CLI converter tool
+│       └── flo-fixtures/     # Fixture generator
 ├── Demo/                     # Web demo with JS frontend
 ├── Examples/                 # Example flo files
 ├── scripts/                  # Build and test scripts

@@ -10,10 +10,11 @@ Build/
   Cargo.toml        Rust workspace root (profiles are configured here)
   crates/
     libflo/         The encoder/decoder codec library (Rust + WASM)
-    reflo/          Converter CLI + library (uses symphonia for audio I/O)
+    reflo/          Reusable conversion library
+    reflo-cli/      Converter CLI (uses symphonia for audio I/O)
     flo-fixtures/   In-code signal synthesis for Examples/ and Tests/fixtures/
 Demo/               Browser demo (WASM bindings)
-Docs/               Markdown documentation
+Docs/               docmd documentation site source
 Examples/           Generated .flo example files (see `just examples`)
 Tests/
   libflo/           Rust integration tests + Jest (WASM) tests
@@ -49,7 +50,8 @@ Everything lives behind `just`:
 | `just audit`            | cargo-audit vulnerability scan                    |
 | `just examples`         | Regenerate `Examples/*.flo` and `Tests/fixtures/` |
 | `just libflo test_wasm` | Run the Jest WASM test suite                      |
-| `just reflo build`      | Build the CLI                                     |
+| `just reflo build`      | Build the `reflo-cli` CLI                        |
+| `just docs build`       | Build the docmd documentation site              |
 | `just wasm`             | Build WASM packages for the demo                  |
 
 ## Conventions
@@ -61,6 +63,8 @@ Everything lives behind `just`:
   in their metadata, so `just examples` is not bit-reproducible across runs.)
 - WebAssembly surfaces: keep `initSync({ module })`-style usage in tests; the
   Jest tests live in `Tests/libflo/js/`.
+- Keep raw-sample APIs in `libflo-audio`/`reflo`; filesystem and Symphonia input
+  belong to `reflo-cli`.
 - Follow the existing file layout — native Rust tests in `Tests/libflo/rust/`
   and `Tests/reflo/`, referenced from `Tests/libflo/mod.rs`.
 

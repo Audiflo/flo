@@ -22,13 +22,13 @@ jobs:
         include:
           - os: ubuntu-latest
             artifact: reflo-linux
-            binary: reflo
+            binary: flo
           - os: macos-latest
             artifact: reflo-macos
-            binary: reflo
+            binary: flo
           - os: windows-latest
             artifact: reflo-windows
-            binary: reflo.exe
+            binary: flo.exe
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -39,21 +39,21 @@ jobs:
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
         with:
-          workspaces: Build/crates/reflo
+          workspaces: Build
 
       - name: Install just
         uses: taiki-e/install-action@v2
         with:
           tool: just
 
-      - name: Build reflo (release)
-        run: just reflo build
+      - name: Build flo CLI (release)
+        run: cargo build --manifest-path Build/Cargo.toml -p reflo-cli --release
 
       - name: Upload CLI artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact }}
-          path: Build/crates/reflo/target/release/${{ matrix.binary }}
+          path: Build/target/release/${{ matrix.binary }}
           retention-days: 7
 
   build-cli-arm:
@@ -71,13 +71,13 @@ jobs:
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
         with:
-          workspaces: Build/crates/reflo
+          workspaces: Build
 
       - name: Build for ARM64
-        run: cd Build/crates/reflo && cargo build --release --target aarch64-apple-darwin
+        run: cargo build --manifest-path Build/Cargo.toml -p reflo-cli --release --target aarch64-apple-darwin
 
       - name: Upload ARM64 artifact
         uses: actions/upload-artifact@v4
         with:
           name: flo-macos-arm64
-          path: Build/crates/reflo/target/aarch64-apple-darwin/release/flo
+          path: Build/target/aarch64-apple-darwin/release/flo

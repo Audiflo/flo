@@ -17,7 +17,7 @@ Available on crates.io! <https://crates.io/crates/reflo>
 ### As a CLI tool (Native)
 
 ```bash
-cargo install --path . --features cli
+cargo install --path ../reflo-cli --manifest-path ../../Cargo.toml
 ```
 
 Or build from source:

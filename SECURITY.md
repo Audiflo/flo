@@ -29,7 +29,7 @@ release is available.
 The following areas are in scope:
 
 - The `flo` binary format (see `flo_audio.ksy`)
-- `Build/crates/libflo-audio` and `Build/crates/reflo` parsing/decoding paths
+- `Build/crates/libflo` and `Build/crates/reflo` parsing/decoding paths
 - WASM bindings and the web demo
 - CI and release tooling under `.github/workflows`
 
