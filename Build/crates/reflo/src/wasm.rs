@@ -9,7 +9,7 @@ use symphonia::core::meta::MetadataOptions;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", feature = "audio-io"))]
 #[wasm_bindgen]
 pub fn encode_audio_to_flo(
     audio_bytes: &[u8],
@@ -26,7 +26,7 @@ pub fn encode_audio_to_flo(
     crate::encode_from_audio(audio_bytes, options).map_err(|e| JsValue::from_str(&e.to_string()))
 }
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", feature = "audio-io"))]
 #[wasm_bindgen]
 pub fn decode_flo_to_wav(flo_bytes: &[u8]) -> Result<Vec<u8>, JsValue> {
     crate::decode_to_wav(flo_bytes).map_err(|e| JsValue::from_str(&e.to_string()))
@@ -69,7 +69,7 @@ pub fn get_flo_info(flo_bytes: &[u8]) -> Result<JsValue, JsValue> {
     }
 }
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", feature = "audio-io"))]
 #[wasm_bindgen]
 pub fn get_audio_file_info(audio_bytes: &[u8]) -> Result<JsValue, JsValue> {
     let owned_bytes = audio_bytes.to_vec();

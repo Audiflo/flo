@@ -2,8 +2,8 @@
 // and part's of ffmpeg's as well.
 
 use rustfft::{num_complex::Complex, FftPlanner};
-use std::f32::consts::PI;
-use std::sync::Arc;
+use alloc::sync::Arc;
+use core::f32::consts::PI;
 
 /// Window types for MDCT
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

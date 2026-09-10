@@ -11,10 +11,6 @@ categories = ["multimedia::audio", "multimedia::encoding", "command-line-utiliti
 readme = "README.md"
 homepage = "https://github.com/Audiflo/flo"
 
-[[bin]]
-name = "reflo"
-path = "src/main.rs"
-
 [lib]
 name = "reflo"
 path = "src/lib.rs"
@@ -25,9 +21,16 @@ name = "reflo_tests"
 path = "../../../Tests/reflo/encode_decode_tests.rs"
 
 [features]
-default = ["cli"]
-cli = ["dep:clap"]
-wasm = ["dep:wasm-bindgen", "dep:js-sys", "dep:console_error_panic_hook", "dep:serde-wasm-bindgen"]
+default = ["std", "audio-io"]
+std = ["dep:chrono"]
+audio-io = ["std", "dep:symphonia"]
+wasm = [
+	"audio-io",
+	"dep:wasm-bindgen",
+	"dep:js-sys",
+	"dep:console_error_panic_hook",
+	"dep:serde-wasm-bindgen",
+]
 
 [dependencies]
 libflo-audio = { workspace = true }
@@ -35,10 +38,9 @@ libflo-audio = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 
-clap = { workspace = true, optional = true }
-anyhow = { workspace = true }
-chrono = { workspace = true }
-symphonia = { workspace = true }
+anyhow = { workspace = true, default-features = false }
+chrono = { workspace = true, optional = true }
+symphonia = { workspace = true, optional = true }
 
 # WASM
 wasm-bindgen = { workspace = true, optional = true }

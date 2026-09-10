@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use crate::AudioMetadata;
+use reflo::AudioMetadata;
 use std::io::{Cursor, Write};
 use std::path::Path;
 use symphonia::core::audio::GenericAudioBufferRef;

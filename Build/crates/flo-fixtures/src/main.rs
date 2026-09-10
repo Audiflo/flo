@@ -1,8 +1,8 @@
 //! flo-fixtures
 
 use anyhow::{anyhow, Context, Result};
-use reflo::audio::{write_wav_to_bytes, AudioMetadata};
-use reflo::{encode_from_audio, encode_from_samples, EncodeOptions};
+use reflo::audio::write_wav_to_bytes;
+use reflo::{encode_from_audio, encode_from_samples, AudioMetadata, EncodeOptions};
 use std::f32::consts::PI;
 use std::fs;
 use std::path::{Path, PathBuf};

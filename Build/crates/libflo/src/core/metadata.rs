@@ -3,8 +3,10 @@
 //! Supports most commonly used ID3v2.4 fields plus flo-unique extensions
 //! Uses MessagePack serialization for efficiency and flexibility
 
+extern crate alloc;
+
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use alloc::collections::BTreeMap;
 
 // ============================================================================
 // Picture Types (ID3v2.4 APIC)
@@ -658,8 +660,8 @@ pub struct FloMetadata {
     pub source_format: Option<String>,
 
     /// Custom key-value pairs for extensions
-    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
-    pub custom: HashMap<String, String>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub custom: BTreeMap<String, String>,
 }
 
 // Helper for Option<Vec<u8>> serialization
@@ -706,13 +708,17 @@ impl FloMetadata {
     }
 
     /// Serialize to MessagePack bytes
-    pub fn to_msgpack(&self) -> Result<Vec<u8>, rmp_serde::encode::Error> {
-        rmp_serde::to_vec_named(self)
+    pub fn to_msgpack(
+        &self,
+    ) -> Result<Vec<u8>, messagepack_serde::ser::Error<core::convert::Infallible>> {
+        messagepack_serde::to_vec(self)
     }
 
     /// Deserialize from MessagePack bytes
-    pub fn from_msgpack(data: &[u8]) -> Result<Self, rmp_serde::decode::Error> {
-        rmp_serde::from_slice(data)
+    pub fn from_msgpack(
+        data: &[u8],
+    ) -> Result<Self, messagepack_serde::de::Error<messagepack_serde::messagepack_core::io::RError>> {
+        messagepack_serde::from_slice(data)
     }
 
     /// Check if metadata is empty (no significant fields set)

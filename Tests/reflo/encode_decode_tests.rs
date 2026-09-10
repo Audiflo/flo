@@ -1,7 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use reflo::audio::AudioMetadata;
-    use reflo::{decode_to_samples, encode_from_samples, EncodeOptions};
+    use reflo::{decode_to_samples, encode_from_samples, AudioMetadata, EncodeOptions};
 
     #[test]
     fn test_encode_decode_round_trip() {

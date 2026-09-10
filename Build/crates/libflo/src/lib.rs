@@ -1,6 +1,8 @@
 #![allow(clippy::needless_range_loop)]
 
-use rmp_serde::{from_slice, to_vec_named};
+extern crate alloc;
+
+use messagepack_serde::{from_slice, to_vec};
 use wasm_bindgen::prelude::*;
 
 pub mod core;
@@ -282,7 +284,7 @@ fn add_analysis_data_if_missing(
         );
 
         // Convert spectral data to bytes for storage
-        if let Ok(spectral_bytes) = rmp_serde::to_vec_named(&spectral_fingerprint) {
+        if let Ok(spectral_bytes) = messagepack_serde::to_vec(&spectral_fingerprint) {
             flo_metadata.spectrum_fingerprint = Some(spectral_bytes);
         }
     }
@@ -309,7 +311,7 @@ fn add_analysis_data_if_missing(
     flo_metadata.length_ms = Some(length_ms);
 
     // Serialize back to bytes
-    to_vec_named(&flo_metadata).map_err(|e| format!("Failed to serialize metadata: {}", e))
+    to_vec(&flo_metadata).map_err(|e| format!("Failed to serialize metadata: {}", e))
 }
 
 /// decode flo file to samples

@@ -4,12 +4,35 @@
 //! It works on native targets and can be compiled to WebAssembly.
 //!
 
+#[cfg(feature = "audio-io")]
 pub mod audio;
 
 #[cfg(all(target_arch = "wasm32", feature = "wasm"))]
 pub mod wasm;
 
-use anyhow::{Context, Result};
+use anyhow::Result;
+#[cfg(feature = "audio-io")]
+use anyhow::Context;
+
+/// Metadata collected from an input audio source.
+#[derive(Debug, Default)]
+pub struct AudioMetadata {
+    pub title: Option<String>,
+    pub artist: Option<String>,
+    pub album: Option<String>,
+    pub album_artist: Option<String>,
+    pub year: Option<i32>,
+    pub genre: Option<String>,
+    pub track_number: Option<u32>,
+    pub track_total: Option<u32>,
+    pub disc_number: Option<u32>,
+    pub composer: Option<String>,
+    pub comment: Option<String>,
+    pub bpm: Option<f32>,
+    pub cover_art: Option<(String, Vec<u8>)>,
+    pub source_format: Option<String>,
+    pub original_filename: Option<String>,
+}
 
 /// Re-export libflo types
 pub use libflo_audio::FloMetadata;
@@ -180,6 +203,7 @@ pub struct AudioInfo {
 ///
 /// # Returns
 /// Raw bytes of the flo file
+#[cfg(feature = "audio-io")]
 pub fn encode_from_audio(audio_bytes: &[u8], options: EncodeOptions) -> Result<Vec<u8>> {
     // Read audio file
     let (samples, sample_rate, channels, source_meta) =
@@ -203,7 +227,7 @@ pub fn encode_from_samples(
     samples: &[f32],
     sample_rate: u32,
     channels: usize,
-    source_metadata: audio::AudioMetadata,
+    source_metadata: AudioMetadata,
     options: EncodeOptions,
 ) -> Result<Vec<u8>> {
     // Build metadata - options override source metadata
@@ -253,10 +277,13 @@ pub fn encode_from_samples(
         let date = js_sys::Date::new_0();
         date.to_iso_string().as_string().unwrap_or_default()
     };
-    #[cfg(not(all(target_arch = "wasm32", feature = "wasm")))]
+    #[cfg(feature = "std")]
     let encoding_time = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string();
 
-    meta.encoding_time = Some(encoding_time);
+    #[cfg(feature = "std")]
+    {
+        meta.encoding_time = Some(encoding_time);
+    }
     meta.source_format = source_metadata.source_format.or(meta.source_format);
     meta.original_filename = source_metadata.original_filename.or(meta.original_filename);
 
@@ -373,6 +400,7 @@ pub fn decode_to_samples(flo_bytes: &[u8]) -> Result<(Vec<f32>, u32, usize)> {
 ///
 /// # Returns
 /// Raw bytes of a WAV file
+#[cfg(feature = "audio-io")]
 pub fn decode_to_wav(flo_bytes: &[u8]) -> Result<Vec<u8>> {
     let (samples, sample_rate, channels) = decode_to_samples(flo_bytes)?;
 
@@ -409,6 +437,7 @@ pub fn get_metadata(flo_bytes: &[u8]) -> Result<Option<FloMetadata>> {
 ///
 /// # Returns
 /// Audio information
+#[cfg(feature = "audio-io")]
 pub fn get_audio_info(audio_bytes: &[u8]) -> Result<AudioInfo> {
     let (samples, sample_rate, channels, _) =
         audio::read_audio_from_bytes(audio_bytes).context("Failed to read audio file")?;

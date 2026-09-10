@@ -1,7 +1,14 @@
 import argparse
 import shutil
 
-from shared.constants import DEMO_DIR, EXAMPLES_DIR, FIXTURES_DIR, REFLO_DIR, TARGET_DIR
+from shared.constants import (
+    DEMO_DIR,
+    EXAMPLES_DIR,
+    FIXTURES_DIR,
+    REFLO_CLI_DIR,
+    REFLO_DIR,
+    TARGET_DIR,
+)
 from shared.format import check, ensure_tool
 from shared.run import run
 
@@ -24,11 +31,11 @@ def test():
 
 
 def build():
-    run(["cargo", "build", "--release"], REFLO_DIR)
+    run(["cargo", "build", "--release", "-p", "reflo-cli"], REFLO_DIR)
 
 
 def install():
-    run(["cargo", "install", "--path", str(REFLO_DIR)], REFLO_DIR)
+    run(["cargo", "install", "--path", str(REFLO_CLI_DIR)], REFLO_DIR)
 
 
 def wasm():

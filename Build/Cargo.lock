@@ -330,7 +330,7 @@ dependencies = [
  "blake3",
  "console_error_panic_hook",
  "js-sys",
- "rmp-serde",
+ "messagepack-serde",
  "rustfft",
  "serde",
  "serde-wasm-bindgen",
@@ -351,6 +351,26 @@ name = "memchr"
 version = "2.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf8baf1c55e62ffcace7a9f06f4bd9cd3f0c4beb022d3b367256b91b87513d98"
+
+[[package]]
+name = "messagepack-core"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "95fe590f7b7d58bfefd83d9995c0b09eaecb8607e4bb66a658c95c0bd691f876"
+dependencies = [
+ "num-traits",
+]
+
+[[package]]
+name = "messagepack-serde"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4a630d3ff4e4c893267925baffa3f8e75f0cdb20d212170ee7d8576a45ac1869"
+dependencies = [
+ "messagepack-core",
+ "num-traits",
+ "serde",
+]
 
 [[package]]
 name = "num-complex"
@@ -430,7 +450,6 @@ version = "0.1.2"
 dependencies = [
  "anyhow",
  "chrono",
- "clap",
  "console_error_panic_hook",
  "js-sys",
  "libflo-audio",
@@ -442,29 +461,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "reflo-cli"
+version = "0.1.2"
+dependencies = [
+ "anyhow",
+ "clap",
+ "libflo-audio",
+ "reflo",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "regex-lite"
 version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cab834c73d247e67f4fae452806d17d3c7501756d98c8808d7c9c7aa7d18f973"
-
-[[package]]
-name = "rmp"
-version = "0.8.15"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4ba8be72d372b2c9b35542551678538b562e7cf86c3315773cae48dfbfe7790c"
-dependencies = [
- "num-traits",
-]
-
-[[package]]
-name = "rmp-serde"
-version = "1.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "72f81bee8c8ef9b577d1681a70ebbc962c232461e397b22c208c43c04b67a155"
-dependencies = [
- "rmp",
- "serde",
-]
 
 [[package]]
 name = "rustfft"

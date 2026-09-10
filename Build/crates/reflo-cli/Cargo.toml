@@ -1,0 +1,27 @@
+[package]
+name = "reflo-cli"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Command-line audio converter for the flo audio format"
+keywords = ["audio", "compression", "converter"]
+categories = ["multimedia::audio", "command-line-utilities"]
+readme = "../reflo/README.md"
+homepage = "https://github.com/Audiflo/flo"
+publish = false
+
+[[bin]]
+name = "flo"
+path = "src/main.rs"
+
+[dependencies]
+reflo = { workspace = true, features = ["audio-io"] }
+libflo-audio = { workspace = true }
+
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+anyhow = { workspace = true }
+clap = { workspace = true }

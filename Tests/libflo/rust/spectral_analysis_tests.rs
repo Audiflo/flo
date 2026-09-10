@@ -206,7 +206,7 @@ fn test_fingerprint_compact_size() {
     let fingerprint = extract_spectral_fingerprint(&samples, 2, 48000, None, None);
 
     // The fingerprint should be compact, let's verify the serialized size
-    let serialized = rmp_serde::to_vec_named(&fingerprint).unwrap();
+    let serialized = messagepack_serde::to_vec(&fingerprint).unwrap();
 
     // Should be much smaller than the raw audio (10000 * 2 * 4 = 80KB for stereo)
     // Compact fingerprint should be under 1KB
