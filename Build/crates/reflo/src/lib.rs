@@ -277,10 +277,7 @@ pub fn encode_from_samples(
         let date = js_sys::Date::new_0();
         date.to_iso_string().as_string().unwrap_or_default()
     };
-    #[cfg(all(
-        feature = "std",
-        not(all(target_arch = "wasm32", feature = "wasm"))
-    ))]
+    #[cfg(all(feature = "std", not(all(target_arch = "wasm32", feature = "wasm"))))]
     let encoding_time = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string();
 
     #[cfg(feature = "std")]
