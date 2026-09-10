@@ -6,10 +6,10 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -38,30 +38,15 @@ jobs:
       - name: Build documentation
         run: just docs build
 
-      - name: Configure GitHub Pages
-        uses: actions/configure-pages@v5
-
       - name: Assemble Pages site
         run: |
           mkdir -p gh-pages-root/demo
           cp -R Docs/site/. gh-pages-root/
           cp -R Demo/. gh-pages-root/demo/
 
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Publish to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          path: gh-pages-root
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./gh-pages-root
+          publish_branch: gh-pages
