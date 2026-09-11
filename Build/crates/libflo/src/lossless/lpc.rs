@@ -1,3 +1,6 @@
+use alloc::vec;
+use alloc::vec::Vec;
+
 /// Calculate autocorrelation coefficients
 pub fn autocorrelation(samples: &[f32], max_lag: usize) -> Vec<f32> {
     let n = samples.len();
@@ -114,7 +117,7 @@ pub fn quantize_coefficients(coeffs: &[f32]) -> (Vec<i32>, u8) {
     let shift_bits = if max_val > 0.0 && max_val.is_finite() {
         let ratio = 2147483647.0f32 / max_val;
         if ratio > 1.0 {
-            (ratio.log2().floor() as i32).clamp(0, 28) as u8
+            (libm::floorf(libm::log2f(ratio)) as i32).clamp(0, 28) as u8
         } else {
             0
         }
@@ -127,7 +130,10 @@ pub fn quantize_coefficients(coeffs: &[f32]) -> (Vec<i32>, u8) {
     } else {
         2147483648.0
     };
-    let quantized: Vec<i32> = coeffs.iter().map(|&c| (c * scale).round() as i32).collect();
+    let quantized: Vec<i32> = coeffs
+        .iter()
+        .map(|&c| libm::roundf(c * scale) as i32)
+        .collect();
 
     (quantized, shift_bits)
 }
@@ -266,11 +272,14 @@ pub fn levinson_durbin_int(autocorr: &[i64], order: usize) -> Option<(Vec<i32>, 
     }
 
     // Use shift that keeps coefficients in i32 range with good precision
-    let shift = ((1 << 30) as f64 / max_coeff).log2().floor() as u8;
+    let shift = libm::floor(libm::log2((1 << 30) as f64 / max_coeff)) as u8;
     let shift = shift.min(15); // Cap at 15 bits
     let scale = (1i64 << shift) as f64;
 
-    let coeffs_fp: Vec<i32> = coeffs.iter().map(|&c| (c * scale).round() as i32).collect();
+    let coeffs_fp: Vec<i32> = coeffs
+        .iter()
+        .map(|&c| libm::round(c * scale) as i32)
+        .collect();
 
     Some((coeffs_fp, shift))
 }

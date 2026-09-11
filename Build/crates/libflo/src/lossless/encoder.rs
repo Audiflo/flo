@@ -1,6 +1,9 @@
 use crate::core::audio_constants::f32_to_i32;
 use crate::core::{ChannelData, Frame, FrameType, ResidualEncoding};
 use crate::{core::rice, FloResult, Writer};
+use alloc::string::ToString;
+use alloc::vec;
+use alloc::vec::Vec;
 
 use super::lpc::{
     autocorr_int, calc_residuals_int, fixed_predictor_residuals, levinson_durbin_int,

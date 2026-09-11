@@ -29,8 +29,10 @@ jobs:
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Install cargo-audit
-        run: cargo install cargo-audit --locked
+      - name: Install cargo tools
+        uses: ./.github/actions/setup-rust-tools
+        with:
+          tools: cargo-audit
 
       - name: Audit workspace
         run: cargo audit
@@ -46,10 +48,10 @@ jobs:
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Install cargo-deny
-        uses: taiki-e/install-action@v2
+      - name: Install cargo tools
+        uses: ./.github/actions/setup-rust-tools
         with:
-          tool: cargo-deny
+          tools: cargo-deny
 
       - name: Check licenses and banned dependencies
         run: cargo deny --manifest-path Build/Cargo.toml check

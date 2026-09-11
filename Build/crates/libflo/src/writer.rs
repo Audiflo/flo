@@ -1,5 +1,6 @@
 use crate::core::{crc32, FloResult, Frame, FrameType};
 use crate::{ResidualEncoding, HEADER_SIZE, MAGIC, VERSION_MAJOR, VERSION_MINOR};
+use alloc::vec::Vec;
 
 /// binary writer for flo format
 pub struct Writer {

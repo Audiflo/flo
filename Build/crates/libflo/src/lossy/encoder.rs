@@ -1,6 +1,8 @@
 use super::mdct::{BlockSize, Mdct, WindowType};
 use super::psychoacoustic::{PsychoacousticModel, NUM_BARK_BANDS};
 use crate::core::{ChannelData, Frame, FrameType, ResidualEncoding, I16_MAX_F32, I16_MIN_F32};
+use alloc::vec;
+use alloc::vec::Vec;
 
 /// Transform lossy encoder
 pub struct TransformEncoder {
@@ -132,7 +134,7 @@ impl TransformEncoder {
         } else {
             // Exponential decay from 0 dB at quality=0 to -60 dB at quality=1
             let t = (1.0 - self.quality).max(0.001);
-            -60.0 * (1.0 - t.powf(0.5))
+            -60.0 * (1.0 - libm::powf(t, 0.5))
         };
 
         // Quantize
@@ -145,7 +147,7 @@ impl TransformEncoder {
             if smr[k] > smr_threshold {
                 // Above masking threshold, quantize with appropriate precision
                 let scaled = c * scale_factors[band];
-                *q = scaled.round().clamp(I16_MIN_F32, I16_MAX_F32) as i16;
+                *q = libm::roundf(scaled).clamp(I16_MIN_F32, I16_MAX_F32) as i16;
             }
             // else: below threshold, leave as 0
         }
@@ -229,10 +231,10 @@ impl TransformEncoder {
         writer.write_ex(
             self.sample_rate,
             self.channels,
-            16,                                          // bit_depth for lossy
+            16,                                              // bit_depth for lossy
             5,    // compression level (not used for transform)
             true, // is_lossy
-            ((self.quality * 4.0).round() as u8).min(4), // quality as 0-4
+            (libm::roundf(self.quality * 4.0) as u8).min(4), // quality as 0-4
             &encoded_frames,
             metadata,
         )
@@ -260,7 +262,7 @@ pub fn serialize_frame(frame: &TransformFrame) -> Vec<u8> {
         for &s in sf {
             // Convert to log scale: log2(sf) * 256 + 32768
             let log_sf = if s > 1e-10 {
-                ((s.log2() * 256.0) + 32768.0).clamp(0.0, 65535.0) as u16
+                ((libm::log2f(s) * 256.0) + 32768.0).clamp(0.0, 65535.0) as u16
             } else {
                 0
             };

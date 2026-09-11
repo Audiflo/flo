@@ -27,10 +27,10 @@ jobs:
         with:
           workspaces: Build/crates/libflo
 
-      - name: Install just
-        uses: taiki-e/install-action@v2
+      - name: Install cargo tools
+        uses: ./.github/actions/setup-rust-tools
         with:
-          tool: just
+          tools: just
 
       - name: Run clippy
         run: just lint
@@ -47,10 +47,10 @@ jobs:
         with:
           components: rustfmt
 
-      - name: Install just
-        uses: taiki-e/install-action@v2
+      - name: Install cargo tools
+        uses: ./.github/actions/setup-rust-tools
         with:
-          tool: just
+          tools: just
 
       - name: Check formatting
         run: just format

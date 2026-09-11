@@ -1,8 +1,19 @@
+#![cfg_attr(not(test), no_std)]
 #![allow(clippy::needless_range_loop)]
 
 extern crate alloc;
 
+#[cfg(feature = "wasm")]
+use alloc::format;
+#[cfg(feature = "wasm")]
+use alloc::string::String;
+use alloc::string::ToString;
+#[cfg(feature = "wasm")]
+use alloc::vec;
+use alloc::vec::Vec;
+#[cfg(feature = "wasm")]
 use messagepack_serde::{from_slice, to_vec};
+#[cfg(feature = "wasm")]
 use wasm_bindgen::prelude::*;
 
 pub mod core;
@@ -34,6 +45,7 @@ pub use writer::Writer;
 // audio info for the info() function
 
 /// info about a flo file
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 #[derive(Debug, Clone)]
 pub struct AudioInfo {
@@ -64,6 +76,7 @@ pub struct AudioInfo {
     pub lossy_quality: u8,
 }
 
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 impl AudioInfo {
     #[wasm_bindgen(getter)]
@@ -75,6 +88,7 @@ impl AudioInfo {
 // result helpers
 
 /// turn an error into js
+#[cfg(feature = "wasm")]
 fn to_js_err(e: String) -> JsValue {
     JsValue::from_str(&e)
 }
@@ -96,6 +110,7 @@ fn to_js_err(e: String) -> JsValue {
 /// # Note
 /// For advanced usage with custom compression levels (0-9),
 /// use the `Encoder` builder pattern directly.
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn encode(
     samples: &[f32],
@@ -138,6 +153,7 @@ pub fn encode(
 /// # Note
 /// For advanced usage with continuous quality control (0.0-1.0) or custom settings,
 /// use the `LossyEncoder` builder pattern directly.
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn encode_lossy(
     samples: &[f32],
@@ -186,6 +202,7 @@ pub fn encode_lossy(
 ///
 /// # Returns
 /// flo file as byte array
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn encode_with_bitrate(
     samples: &[f32],
@@ -228,6 +245,7 @@ pub fn encode_with_bitrate(
 ///
 /// # Returns
 /// Updated metadata with analysis data (waveform, spectrum, loudness)
+#[cfg(feature = "wasm")]
 fn validate_audio_format(
     samples: &[f32],
     sample_rate: u32,
@@ -249,6 +267,7 @@ fn validate_audio_format(
     Ok(())
 }
 
+#[cfg(feature = "wasm")]
 fn add_analysis_data_if_missing(
     metadata: &[u8],
     samples: &[f32],
@@ -325,6 +344,7 @@ fn add_analysis_data_if_missing(
 ///
 /// # Returns
 /// Interleaved audio samples (f32, -1.0 to 1.0)
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn decode(data: &[u8]) -> Result<Vec<f32>, JsValue> {
     // figure out if its transform/lossy
@@ -355,6 +375,7 @@ pub fn decode(data: &[u8]) -> Result<Vec<f32>, JsValue> {
 /// # Returns
 /// Interleaved audio samples (f32, -1.0 to 1.0)
 /// Decode a transform-based lossy file
+#[cfg(feature = "wasm")]
 fn decode_transform_file(file: &FloFile) -> FloResult<Vec<f32>> {
     let mut decoder = lossy::TransformDecoder::new(file.header.sample_rate, file.header.channels);
     let mut all_samples = Vec::new();
@@ -391,6 +412,7 @@ fn decode_transform_file(file: &FloFile) -> FloResult<Vec<f32>> {
 ///
 /// # Returns
 /// true if file is valid and CRC matches
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn validate(data: &[u8]) -> Result<bool, JsValue> {
     let reader = Reader::new();
@@ -416,6 +438,7 @@ pub fn validate(data: &[u8]) -> Result<bool, JsValue> {
 ///
 /// # Returns
 /// AudioInfo struct with file details
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn info(data: &[u8]) -> Result<AudioInfo, JsValue> {
     let reader = Reader::new();
@@ -473,12 +496,14 @@ pub fn info(data: &[u8]) -> Result<AudioInfo, JsValue> {
 }
 
 /// get lib version
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn version() -> String {
     format!("{}.{}", VERSION_MAJOR, VERSION_MINOR)
 }
 
 /// Format time in seconds to MM:SS or H:MM:SS string
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn format_time(seconds: f64) -> String {
     if !seconds.is_finite() || seconds < 0.0 {
@@ -498,6 +523,7 @@ pub fn format_time(seconds: f64) -> String {
 }
 
 /// Format time in milliseconds to MM:SS or H:MM:SS string
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn format_time_ms(milliseconds: f64) -> String {
     format_time(milliseconds / 1000.0)
@@ -507,6 +533,7 @@ pub fn format_time_ms(milliseconds: f64) -> String {
 ///
 /// # Returns
 /// Array of TOC entries with frame indices, byte offsets, and timestamps
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn get_toc(flo_data: &[u8]) -> Result<Vec<JsValue>, JsValue> {
     let toc = seeking::get_toc(flo_data).map_err(to_js_err)?;
@@ -537,6 +564,7 @@ pub fn get_toc(flo_data: &[u8]) -> Result<Vec<JsValue>, JsValue> {
 ///
 /// # Returns
 /// Interleaved audio samples for that frame (f32, -1.0 to 1.0)
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn decode_frame_at(flo_data: &[u8], frame_index: u32) -> Result<Vec<f32>, JsValue> {
     seeking::decode_frame_at(flo_data, frame_index).map_err(to_js_err)
@@ -550,6 +578,7 @@ pub fn decode_frame_at(flo_data: &[u8], frame_index: u32) -> Result<Vec<f32>, Js
 ///
 /// # Returns
 /// Seek result object containing frame index, byte offset, timestamp, sample offset, and next timestamp.
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn seek_to_time(flo_data: &[u8], time_ms: u32) -> Result<JsValue, JsValue> {
     let result = seeking::seek_to_time(flo_data, time_ms).map_err(to_js_err)?;
@@ -574,11 +603,13 @@ pub fn seek_to_time(flo_data: &[u8], time_ms: u32) -> Result<JsValue, JsValue> {
 
 // streaming decoder wasm api
 
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub struct WasmStreamingDecoder {
     inner: StreamingDecoder,
 }
 
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 impl WasmStreamingDecoder {
     /// new streaming decoder
@@ -590,30 +621,35 @@ impl WasmStreamingDecoder {
     }
 
     /// feed data to the decoder, call as bytes come in from network
+    #[cfg(feature = "wasm")]
     #[wasm_bindgen]
     pub fn feed(&mut self, data: &[u8]) -> Result<bool, JsValue> {
         self.inner.feed(data).map_err(to_js_err)
     }
 
     /// Check if the decoder is ready to produce audio
+    #[cfg(feature = "wasm")]
     #[wasm_bindgen]
     pub fn is_ready(&self) -> bool {
         self.inner.state() == DecoderState::Ready
     }
 
     /// stream done?
+    #[cfg(feature = "wasm")]
     #[wasm_bindgen]
     pub fn is_finished(&self) -> bool {
         self.inner.state() == DecoderState::Finished
     }
 
     /// Check if there was an error
+    #[cfg(feature = "wasm")]
     #[wasm_bindgen]
     pub fn has_error(&self) -> bool {
         self.inner.state() == DecoderState::Error
     }
 
     /// Get the current state as a string
+    #[cfg(feature = "wasm")]
     #[wasm_bindgen]
     pub fn state(&self) -> String {
         match self.inner.state() {
@@ -628,6 +664,7 @@ impl WasmStreamingDecoder {
     /// Get audio information (available after header is parsed)
     ///
     /// Returns null if header hasn't been parsed yet.
+    #[cfg(feature = "wasm")]
     #[wasm_bindgen]
     pub fn get_info(&self) -> Result<JsValue, JsValue> {
         match self.inner.info() {
@@ -649,6 +686,7 @@ impl WasmStreamingDecoder {
     }
 
     /// decode all currently available samples
+    #[cfg(feature = "wasm")]
     #[wasm_bindgen]
     pub fn decode_available(&mut self) -> Result<Vec<f32>, JsValue> {
         self.inner.decode_available().map_err(to_js_err)
@@ -667,6 +705,7 @@ impl WasmStreamingDecoder {
     ///     playAudio(samples);
     /// }
     /// ```
+    #[cfg(feature = "wasm")]
     #[wasm_bindgen]
     pub fn next_frame(&mut self) -> Result<JsValue, JsValue> {
         match self.inner.next_frame() {
@@ -681,12 +720,14 @@ impl WasmStreamingDecoder {
     }
 
     /// how many frames ready to decode
+    #[cfg(feature = "wasm")]
     #[wasm_bindgen]
     pub fn available_frames(&self) -> usize {
         self.inner.available_frames()
     }
 
     /// current frame index
+    #[cfg(feature = "wasm")]
     #[wasm_bindgen]
     pub fn current_frame_index(&self) -> usize {
         self.inner.current_frame_index()
@@ -695,18 +736,21 @@ impl WasmStreamingDecoder {
     /// Reset the decoder to initial state
     ///
     /// Use this to start decoding a new stream.
+    #[cfg(feature = "wasm")]
     #[wasm_bindgen]
     pub fn reset(&mut self) {
         self.inner.reset();
     }
 
     /// bytes currently buffered
+    #[cfg(feature = "wasm")]
     #[wasm_bindgen]
     pub fn buffered_bytes(&self) -> usize {
         self.inner.buffered_bytes()
     }
 }
 
+#[cfg(feature = "wasm")]
 impl Default for WasmStreamingDecoder {
     fn default() -> Self {
         Self::new()
@@ -715,11 +759,13 @@ impl Default for WasmStreamingDecoder {
 
 /// Encodes samples frame-by-frame as they arrive, returning encoded frames ready for transmission.
 /// Use this for low-latency streaming encoding where you push samples and pull frames.
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub struct WasmStreamingEncoder {
     inner: StreamingEncoder,
 }
 
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 impl WasmStreamingEncoder {
     /// Create a new streaming encoder
@@ -745,6 +791,7 @@ impl WasmStreamingEncoder {
     ///
     /// # Returns
     /// Self for method chaining
+    #[cfg(feature = "wasm")]
     #[wasm_bindgen]
     pub fn with_compression(mut self, level: u8) -> Self {
         self.inner = self.inner.with_compression(level);
@@ -761,6 +808,7 @@ impl WasmStreamingEncoder {
     ///
     /// # Returns
     /// Error if encoding fails
+    #[cfg(feature = "wasm")]
     #[wasm_bindgen]
     pub fn push_samples(&mut self, samples: &[f32]) -> Result<(), JsValue> {
         self.inner.push_samples(samples).map_err(to_js_err)
@@ -773,6 +821,7 @@ impl WasmStreamingEncoder {
     ///
     /// # Returns
     /// Encoded frame object or null
+    #[cfg(feature = "wasm")]
     #[wasm_bindgen]
     pub fn next_frame(&mut self) -> JsValue {
         match self.inner.next_frame() {
@@ -797,6 +846,7 @@ impl WasmStreamingEncoder {
     ///
     /// # Returns
     /// Number of sample frames in buffer
+    #[cfg(feature = "wasm")]
     #[wasm_bindgen]
     pub fn pending_samples(&self) -> usize {
         self.inner.pending_samples()
@@ -806,6 +856,7 @@ impl WasmStreamingEncoder {
     ///
     /// # Returns
     /// Number of ready frames
+    #[cfg(feature = "wasm")]
     #[wasm_bindgen]
     pub fn pending_frames(&self) -> usize {
         self.inner.pending_frames()
@@ -818,6 +869,7 @@ impl WasmStreamingEncoder {
     ///
     /// # Returns
     /// Error if encoding fails
+    #[cfg(feature = "wasm")]
     #[wasm_bindgen]
     pub fn flush(&mut self) -> Result<(), JsValue> {
         self.inner.flush_into_frames().map_err(to_js_err)?;
@@ -834,6 +886,7 @@ impl WasmStreamingEncoder {
     ///
     /// # Returns
     /// Complete flo file as byte array
+    #[cfg(feature = "wasm")]
     #[wasm_bindgen]
     pub fn finalize(&mut self, metadata: Option<Vec<u8>>) -> Result<Vec<u8>, JsValue> {
         let meta = metadata.unwrap_or_default();
@@ -841,6 +894,7 @@ impl WasmStreamingEncoder {
     }
 }
 
+#[cfg(feature = "wasm")]
 impl Default for WasmStreamingEncoder {
     fn default() -> Self {
         Self {
@@ -858,6 +912,7 @@ impl Default for WasmStreamingEncoder {
 ///
 /// # Returns
 /// MessagePack bytes containing metadata
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn create_metadata(
     title: Option<String>,
@@ -876,6 +931,7 @@ pub fn create_metadata(
 ///
 /// # Returns
 /// MessagePack bytes containing metadata
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn create_metadata_from_object(obj: JsValue) -> Result<Vec<u8>, JsValue> {
     let meta: FloMetadata = serde_wasm_bindgen::from_value(obj)
@@ -891,6 +947,7 @@ pub fn create_metadata_from_object(obj: JsValue) -> Result<Vec<u8>, JsValue> {
 ///
 /// # Returns
 /// JavaScript object with metadata fields (or null if no metadata)
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn get_metadata(data: &[u8]) -> Result<JsValue, JsValue> {
     let reader = Reader::new();
@@ -914,6 +971,7 @@ pub fn get_metadata(data: &[u8]) -> Result<JsValue, JsValue> {
 ///
 /// # Returns
 /// Object with `mime_type` and `data` (Uint8Array) or null if no cover
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn get_cover_art(data: &[u8]) -> Result<JsValue, JsValue> {
     let reader = Reader::new();
@@ -956,6 +1014,7 @@ pub fn get_cover_art(data: &[u8]) -> Result<JsValue, JsValue> {
 ///
 /// # Returns
 /// Updated MessagePack metadata bytes
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn set_metadata_field(
     metadata: Option<Vec<u8>>,
@@ -1010,6 +1069,7 @@ pub fn set_metadata_field(
 ///
 /// # Returns
 /// Array of synced lyrics objects or null if none
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn get_synced_lyrics(data: &[u8]) -> Result<JsValue, JsValue> {
     let reader = Reader::new();
@@ -1034,6 +1094,7 @@ pub fn get_synced_lyrics(data: &[u8]) -> Result<JsValue, JsValue> {
 ///
 /// # Returns
 /// WaveformData object or null if not present
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn get_waveform_data(data: &[u8]) -> Result<JsValue, JsValue> {
     let reader = Reader::new();
@@ -1057,6 +1118,7 @@ pub fn get_waveform_data(data: &[u8]) -> Result<JsValue, JsValue> {
 ///
 /// # Returns
 /// Array of section markers or null if none
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn get_section_markers(data: &[u8]) -> Result<JsValue, JsValue> {
     let reader = Reader::new();
@@ -1087,6 +1149,7 @@ pub fn get_section_markers(data: &[u8]) -> Result<JsValue, JsValue> {
 ///
 /// # Returns
 /// New flo file with updated metadata
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn update_metadata(flo_data: &[u8], new_metadata: &[u8]) -> Result<Vec<u8>, JsValue> {
     update_metadata_bytes(flo_data, new_metadata).map_err(to_js_err)
@@ -1143,6 +1206,7 @@ pub fn update_metadata_bytes(flo_data: &[u8], new_metadata: &[u8]) -> FloResult<
 ///
 /// # Returns
 /// New flo file with updated metadata
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn set_metadata(flo_data: &[u8], metadata: JsValue) -> Result<Vec<u8>, JsValue> {
     let new_meta_bytes = create_metadata_from_object(metadata)?;
@@ -1167,6 +1231,7 @@ pub fn strip_metadata_bytes(flo_data: &[u8]) -> FloResult<Vec<u8>> {
 ///
 /// # Returns
 /// New flo file with no metadata
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn strip_metadata(flo_data: &[u8]) -> Result<Vec<u8>, JsValue> {
     strip_metadata_bytes(flo_data).map_err(to_js_err)
@@ -1179,6 +1244,7 @@ pub fn strip_metadata(flo_data: &[u8]) -> Result<Vec<u8>, JsValue> {
 ///
 /// # Returns
 /// Raw MessagePack metadata bytes (or empty array)
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn get_metadata_bytes(flo_data: &[u8]) -> Result<Vec<u8>, JsValue> {
     get_metadata_bytes_native(flo_data).map_err(to_js_err)
@@ -1203,8 +1269,14 @@ pub fn get_metadata_bytes_native(flo_data: &[u8]) -> FloResult<Vec<u8>> {
     Ok(file.metadata)
 }
 
-/// does the file have metadata?
-#[wasm_bindgen]
+/// does the file have metadata? (wasm binding)
+#[cfg(feature = "wasm")]
+#[wasm_bindgen(js_name = has_metadata)]
+pub fn has_metadata_wasm(flo_data: &[u8]) -> bool {
+    has_metadata(flo_data)
+}
+
+/// does the file have metadata? (native)
 pub fn has_metadata(flo_data: &[u8]) -> bool {
     if flo_data.len() < (HEADER_SIZE as usize) {
         return false;
@@ -1277,6 +1349,7 @@ pub fn extract_waveform_rms_to_struct(
 /// # Returns
 /// SpectralFingerprint object with frequency analysis
 #[cfg(target_arch = "wasm32")]
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn extract_spectral_fingerprint_wasm(
     samples: &[f32],
@@ -1294,6 +1367,7 @@ pub fn extract_spectral_fingerprint_wasm(
 
 /// Extract dominant frequencies from spectral fingerprint
 #[cfg(target_arch = "wasm32")]
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn extract_dominant_frequencies_wasm(
     fingerprint_js: JsValue,
@@ -1337,6 +1411,7 @@ pub fn extract_dominant_frequencies_to_vec(
 /// # Returns
 /// JavaScript array of arrays containing dominant frequencies (Hz) for each frame
 #[cfg(target_arch = "wasm32")]
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn extract_dominant_frequencies_from_samples_wasm(
     samples: &[f32],
@@ -1369,6 +1444,7 @@ pub fn extract_dominant_frequencies_from_samples_wasm(
 /// # Returns
 /// JavaScript array of arrays containing dominant frequencies (Hz) for each frame
 #[cfg(target_arch = "wasm32")]
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn extract_dominant_frequencies_from_fingerprint_wasm(
     fingerprint_js: JsValue,
@@ -1412,6 +1488,7 @@ pub fn spectral_similarity_score(
 /// # Returns
 /// Similarity score between 0.0 (completely different) and 1.0 (identical)
 #[cfg(target_arch = "wasm32")]
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn spectral_similarity(
     samples1: &[f32],
@@ -1440,6 +1517,7 @@ pub fn spectral_similarity(
 /// # Returns
 /// LoudnessMetrics object with integrated LUFS, loudness range LU, and true peak dBTP
 #[cfg(target_arch = "wasm32")]
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn compute_loudness_metrics(
     samples: &[f32],
@@ -1463,6 +1541,7 @@ pub fn compute_loudness_metrics(
 /// # Returns
 /// WaveformData object with extracted peaks
 #[cfg(target_arch = "wasm32")]
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn extract_waveform_peaks_wasm(
     samples: &[f32],
@@ -1485,6 +1564,8 @@ pub fn extract_waveform_peaks_wasm(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use alloc::vec;
+    use alloc::vec::Vec;
 
     #[test]
     fn test_frame_type_conversion() {
@@ -1497,6 +1578,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "wasm")]
     fn test_version() {
         assert_eq!(version(), "1.2");
     }

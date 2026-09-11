@@ -28,13 +28,10 @@ jobs:
         with:
           workspaces: Build/crates/libflo
 
-      - name: Install just
-        uses: taiki-e/install-action@v2
+      - name: Install cargo tools
+        uses: ./.github/actions/setup-rust-tools
         with:
-          tool: just
-
-      - name: Install wasm-pack
-        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+          tools: just wasm-pack
 
       - name: Build WASM
         run: just libflo wasm

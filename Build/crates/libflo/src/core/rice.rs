@@ -1,6 +1,7 @@
 // Rice coding implementation for residual compression
 
 use super::audio_constants::{f32_to_i32, i32_to_f32, I16_MAX_F64};
+use alloc::vec::Vec;
 
 /// Estimate optimal Rice parameter from float residuals
 /// Residuals are expected to be in -1.0 to 1.0 range and will be scaled to 16-bit
@@ -18,7 +19,7 @@ pub fn estimate_rice_parameter(residuals: &[f32]) -> u8 {
 
     if mean_abs > 1.0 {
         // Rice parameter k where 2^k approximates mean_abs
-        (mean_abs.log2().round() as u8).clamp(4, 14)
+        (libm::round(libm::log2(mean_abs)) as u8).clamp(4, 14)
     } else {
         4
     }

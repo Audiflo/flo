@@ -38,6 +38,7 @@ serde_bytes = { workspace = true }
 
 messagepack-serde = { workspace = true }
 num-complex = { workspace = true }
+libm = { workspace = true }
 rustfft = { workspace = true, optional = true }
 microfft = { workspace = true, optional = true }
 blake3 = { workspace = true }

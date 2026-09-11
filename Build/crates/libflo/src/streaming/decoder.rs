@@ -3,6 +3,9 @@ use crate::core::{rice, ChannelData, FloResult, Frame, FrameType, Header, TocEnt
 use crate::lossless::Decoder as LosslessDecoder;
 use crate::lossy::{deserialize_frame, TransformDecoder};
 use crate::{Reader, ResidualEncoding, MAGIC};
+use alloc::string::ToString;
+use alloc::vec;
+use alloc::vec::Vec;
 
 use super::types::{DecoderState, StreamingAudioInfo};
 

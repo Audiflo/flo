@@ -41,10 +41,10 @@ jobs:
         with:
           workspaces: Build
 
-      - name: Install just
-        uses: taiki-e/install-action@v2
+      - name: Install cargo tools
+        uses: ./.github/actions/setup-rust-tools
         with:
-          tool: just
+          tools: just
 
       - name: Build flo CLI (release)
         run: cargo build --manifest-path Build/Cargo.toml -p reflo-cli --release

@@ -1,0 +1,22 @@
+name: Setup Rust tools via cargo-binstall
+description: Bootstrap cargo-binstall and install Rust tools as prebuilt binaries
+
+inputs:
+  tools:
+    description: Space-separated list of tools to install via cargo-binstall
+    required: false
+    default: "just"
+
+runs:
+  using: composite
+  steps:
+    - name: Bootstrap cargo-binstall
+      shell: bash
+      run: |
+        if ! command -v cargo-binstall >/dev/null 2>&1; then
+          curl -LsSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
+        fi
+
+    - name: Install tools
+      shell: bash
+      run: cargo binstall --no-confirm --force ${{ inputs.tools }}

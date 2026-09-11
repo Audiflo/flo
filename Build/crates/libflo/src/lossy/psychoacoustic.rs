@@ -1,3 +1,6 @@
+use alloc::vec;
+use alloc::vec::Vec;
+
 /// Number of critical bands (Bark scale, 0-24 Bark for audio up to ~20kHz)
 pub const NUM_BARK_BANDS: usize = 25;
 
@@ -96,9 +99,9 @@ impl PsychoacousticModel {
 
         // Terhardt's formula (simplified)
         // ATH(f) = 3.64 * (f/1000)^-0.8 - 6.5 * exp(-0.6 * (f/1000 - 3.3)^2) + 10^-3 * (f/1000)^4
-        let term1 = 3.64 * f_khz.powf(-0.8);
-        let term2 = 6.5 * (-0.6 * (f_khz - 3.3).powi(2)).exp();
-        let term3 = 0.001 * f_khz.powi(4);
+        let term1 = 3.64 * libm::powf(f_khz, -0.8);
+        let term2 = 6.5 * libm::expf(-0.6 * (f_khz - 3.3) * (f_khz - 3.3));
+        let term3 = 0.001 * libm::powf(f_khz, 4.0);
 
         (term1 - term2 + term3).clamp(-10.0, 96.0)
     }
@@ -139,7 +142,7 @@ impl PsychoacousticModel {
                 };
 
                 // Convert dB to linear and clamp
-                spreading[i][j] = (10.0f32.powf(spread / 10.0)).min(1.0);
+                spreading[i][j] = libm::powf(10.0f32, spread / 10.0).min(1.0);
             }
         }
 
@@ -168,7 +171,7 @@ impl PsychoacousticModel {
             .zip(band_count.iter())
             .map(|(&e, &c)| {
                 if c > 0 && e > 1e-10 {
-                    10.0 * (e / c as f32).log10()
+                    10.0 * libm::log10f(e / c as f32)
                 } else {
                     -100.0
                 }
@@ -181,7 +184,7 @@ impl PsychoacousticModel {
         for i in 0..NUM_BARK_BANDS {
             for j in 0..NUM_BARK_BANDS {
                 // Masking from band j to band i
-                let masking = band_db[j] + 10.0 * self.spreading[j][i].log10();
+                let masking = band_db[j] + 10.0 * libm::log10f(self.spreading[j][i]);
                 spread_threshold[i] = spread_threshold[i].max(masking);
             }
         }
@@ -223,7 +226,7 @@ impl PsychoacousticModel {
             .zip(thresholds.iter())
             .map(|(&c, &t)| {
                 let signal_db = if c.abs() > 1e-10 {
-                    20.0 * c.abs().log10()
+                    20.0 * libm::log10f(c.abs())
                 } else {
                     -100.0
                 };
@@ -258,8 +261,9 @@ impl PsychoacousticModel {
             for (k, bits) in bits_per_coeff.iter_mut().enumerate() {
                 let band = self.bark_band[k];
                 let band_bits = if band_smr[band] > 0.0 {
-                    ((band_smr[band] / total_smr) * total_bits as f32 / band_count[band] as f32)
-                        .round() as u8
+                    libm::roundf(
+                        (band_smr[band] / total_smr) * total_bits as f32 / band_count[band] as f32,
+                    ) as u8
                 } else {
                     0
                 };

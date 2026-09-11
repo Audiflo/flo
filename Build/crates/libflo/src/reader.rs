@@ -2,6 +2,9 @@ use crate::core::{
     ChannelData, FloFile, FloResult, Frame, FrameType, Header, ResidualEncoding, TocEntry,
 };
 use crate::MAGIC;
+use alloc::string::ToString;
+use alloc::vec;
+use alloc::vec::Vec;
 
 /// binary reader for flo format
 pub struct Reader;

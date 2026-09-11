@@ -1,3 +1,4 @@
+use alloc::vec::Vec;
 use serde::{Deserialize, Serialize};
 
 pub type FloSample = f32;
@@ -62,9 +63,9 @@ impl KWeighting {
         let g_db = 3.999843853973347;
         let q = 0.7071752369554196;
 
-        let k = ((std::f64::consts::PI * f0) / sample_rate).tan();
-        let vh = (10.0_f64).powf(g_db / 20.0);
-        let vb = vh.powf(0.4996667741545416);
+        let k = libm::tan((core::f64::consts::PI * f0) / sample_rate);
+        let vh = libm::pow(10.0_f64, g_db / 20.0);
+        let vb = libm::pow(vh, 0.4996667741545416);
 
         let mut pb = [0.0; 3];
         let mut pa = [0.0; 3];
@@ -82,7 +83,7 @@ impl KWeighting {
         // High‑pass
         let f0_hp = 38.13547087602444;
         let q_hp = 0.5003270373238773;
-        let k_hp = ((std::f64::consts::PI * f0_hp) / sample_rate).tan();
+        let k_hp = libm::tan((core::f64::consts::PI * f0_hp) / sample_rate);
 
         let a0_hp = 1.0 + k_hp / q_hp + k_hp * k_hp;
         let a1_hp = (2.0 * (k_hp * k_hp - 1.0)) / a0_hp;
@@ -127,10 +128,10 @@ fn compute_true_peak(samples: &[FloSample], channels: u8, sample_rate: u32) -> f
         let sinc = if n.abs() < 1e-12 {
             (2.0 * cutoff) / oversample_rate
         } else {
-            ((2.0 * cutoff * n) / oversample_rate).sin() / (std::f64::consts::PI * n)
+            libm::sin((2.0 * cutoff * n) / oversample_rate) / (core::f64::consts::PI * n)
         };
-        let window =
-            0.5 * (1.0 - ((2.0 * std::f64::consts::PI * (i as f64)) / ((taps - 1) as f64)).cos());
+        let window = 0.5
+            * (1.0 - libm::cos((2.0 * core::f64::consts::PI * (i as f64)) / ((taps - 1) as f64)));
         coeffs.push(sinc * window);
     }
 
@@ -172,7 +173,7 @@ fn compute_true_peak(samples: &[FloSample], channels: u8, sample_rate: u32) -> f
     }
 
     if max_peak > 1e-9 {
-        20.0 * max_peak.log10()
+        20.0 * libm::log10(max_peak)
     } else {
         -150.0
     }
@@ -194,7 +195,7 @@ pub fn compute_ebu_r128_loudness(
     }
 
     let sr = sample_rate as f64;
-    let hop_100ms = (sr * 0.1).round() as usize; // 100 ms hop
+    let hop_100ms = libm::round(sr * 0.1) as usize; // 100 ms hop
     let block_400ms = hop_100ms * 4; // 400 ms window
 
     // De‑interleave
@@ -213,7 +214,7 @@ pub fn compute_ebu_r128_loudness(
     for ch in 0..channels as usize {
         let peak = per_channel[ch].iter().fold(0.0f64, |m, &x| m.max(x.abs()));
         if peak > 1e-6 {
-            sample_peak_dbfs = sample_peak_dbfs.max(20.0 * peak.log10());
+            sample_peak_dbfs = sample_peak_dbfs.max(20.0 * libm::log10(peak));
         }
     }
 
@@ -255,7 +256,7 @@ pub fn compute_ebu_r128_loudness(
 
         block_energies.push(energy);
         if energy > 0.0 {
-            block_loudness.push(-0.691 + 10.0 * energy.log10());
+            block_loudness.push(-0.691 + 10.0 * libm::log10(energy));
         } else {
             block_loudness.push(-150.0);
         }
@@ -278,7 +279,7 @@ pub fn compute_ebu_r128_loudness(
 
     // Absolute gate: −70 LUFS
     let abs_gate_lufs = -70.0;
-    let abs_gate_energy = (10.0_f64).powf((abs_gate_lufs + 0.691) / 10.0);
+    let abs_gate_energy = libm::pow(10.0_f64, (abs_gate_lufs + 0.691) / 10.0);
 
     let gated_indices: Vec<usize> = block_energies
         .iter()
@@ -299,11 +300,11 @@ pub fn compute_ebu_r128_loudness(
     // Ungated integrated loudness over abs‑gated blocks
     let sum_e: f64 = gated_indices.iter().map(|&i| block_energies[i]).sum();
     let mean_e = sum_e / (gated_indices.len() as f64);
-    let ungated_lufs = -0.691 + 10.0 * mean_e.log10();
+    let ungated_lufs = -0.691 + 10.0 * libm::log10(mean_e);
 
     // Relative gate: 10 LU below ungated
     let rel_gate_lufs = ungated_lufs - 10.0;
-    let rel_gate_energy = (10.0_f64).powf((rel_gate_lufs + 0.691) / 10.0);
+    let rel_gate_energy = libm::pow(10.0_f64, (rel_gate_lufs + 0.691) / 10.0);
 
     let final_indices: Vec<usize> = gated_indices
         .into_iter()
@@ -315,7 +316,7 @@ pub fn compute_ebu_r128_loudness(
     } else {
         let sum_e: f64 = final_indices.iter().map(|&i| block_energies[i]).sum();
         let mean_e = sum_e / (final_indices.len() as f64);
-        -0.691 + 10.0 * mean_e.log10()
+        -0.691 + 10.0 * libm::log10(mean_e)
     };
 
     // LRA: 10th–95th percentile of gated block loudness
@@ -330,7 +331,7 @@ pub fn compute_ebu_r128_loudness(
         let p95_pos = 0.95 * (n - 1.0);
 
         let interp = |pos: f64, v: &Vec<f64>| {
-            let i = pos.floor() as usize;
+            let i = libm::floor(pos) as usize;
             let frac = pos - (i as f64);
             if i + 1 < v.len() {
                 v[i] * (1.0 - frac) + v[i + 1] * frac

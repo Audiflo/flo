@@ -6,6 +6,9 @@
 extern crate alloc;
 
 use alloc::collections::BTreeMap;
+use alloc::string::{String, ToString};
+use alloc::vec;
+use alloc::vec::Vec;
 use serde::{Deserialize, Serialize};
 
 // ============================================================================
@@ -666,6 +669,7 @@ pub struct FloMetadata {
 
 // Helper for Option<Vec<u8>> serialization
 mod serde_bytes_option {
+    use alloc::vec::Vec;
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
     pub fn serialize<S>(data: &Option<Vec<u8>>, serializer: S) -> Result<S::Ok, S::Error>

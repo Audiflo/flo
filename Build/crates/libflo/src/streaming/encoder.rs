@@ -1,6 +1,9 @@
 use crate::core::{ChannelData, FloResult, FrameType, ResidualEncoding};
 use crate::lossless::Encoder;
 use crate::{compute_crc32, Reader, MAGIC};
+use alloc::string::ToString;
+use alloc::vec;
+use alloc::vec::Vec;
 
 pub struct StreamingEncoder {
     sample_rate: u32,

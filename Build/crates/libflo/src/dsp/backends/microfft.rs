@@ -24,7 +24,10 @@ pub struct MicroFft {
 
 impl Fft for MicroFft {
     fn process(&self, buffer: &mut [Complex32]) {
-        fn run<const N: usize>(transform: fn(&mut [Complex32; N]), buffer: &mut [Complex32]) {
+        fn run<const N: usize>(
+            transform: fn(&mut [Complex32; N]) -> &mut [Complex32; N],
+            buffer: &mut [Complex32],
+        ) {
             transform(
                 buffer
                     .try_into()

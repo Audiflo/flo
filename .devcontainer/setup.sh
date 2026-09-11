@@ -14,27 +14,25 @@ rustup component add rustfmt clippy
 
 has_bin() { command -v "$1" >/dev/null 2>&1; }
 
-if ! has_bin just; then
-  echo "==> installing just"
-  curl -LsSf https://just.systems/install.sh | sh -s -- --to "${HOME}/.local/bin"
+if ! has_bin cargo-binstall; then
+  echo "==> bootstrapping cargo-binstall"
+  curl -LsSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh \
+    | bash
+  if ! has_bin cargo-binstall; then
+    echo "cargo-binstall failed to install" >&2
+    exit 1
+  fi
 fi
 
-if ! has_bin cargo-deny; then
-  echo "==> installing cargo-deny"
-  curl -LsSf https://raw.githubusercontent.com/EmbarkStudios/cargo-deny/main/install-cargo-deny.sh \
-    | sh -s -- --to "${HOME}/.local/bin"
-fi
-
-if ! has_bin wasm-pack; then
-  echo "==> installing wasm-pack"
-  curl --fail --silent --show-error https://rustwasm.github.io/wasm-pack/installer/init.sh | sh
-fi
+echo "==> installing rust tools via cargo binstall"
+cargo binstall --no-confirm --force just cargo-nextest cargo-deny wasm-pack
 
 echo "==> toolchain versions"
 rustc --version
 cargo --version
 wasm-pack --version
 just --version
+cargo-nextest --version
 cargo-deny --version
 node --version
 python3 --version

@@ -2,6 +2,8 @@
 
 use crate::core::metadata::WaveformData;
 use crate::dsp::{Complex32, DefaultPlanner, FftDirection, FftPlanner};
+use alloc::vec;
+use alloc::vec::Vec;
 use serde::{Deserialize, Serialize};
 
 pub type FloSample = f32;
@@ -50,7 +52,7 @@ pub fn extract_waveform_peaks(
 
     let samples_per_peak = (sample_rate as f64) / (peaks_per_second as f64);
     let total_peaks =
-        ((samples.len() as f64) / (samples_per_peak * (channels as f64))).ceil() as usize;
+        libm::ceil((samples.len() as f64) / (samples_per_peak * (channels as f64))) as usize;
 
     let mut peaks = Vec::with_capacity(total_peaks);
 
@@ -136,7 +138,7 @@ pub fn extract_waveform_rms(
 
     let samples_per_peak = (sample_rate as f64) / (peaks_per_second as f64);
     let total_peaks =
-        ((samples.len() as f64) / (samples_per_peak * (channels as f64))).ceil() as usize;
+        libm::ceil((samples.len() as f64) / (samples_per_peak * (channels as f64))) as usize;
 
     let mut peaks = Vec::with_capacity(total_peaks);
 
@@ -156,9 +158,10 @@ pub fn extract_waveform_rms(
         match channels {
             1 => {
                 // Mono RMS
-                let rms = (window_samples.iter().map(|&s| (s * s) as f64).sum::<f64>()
-                    / (window_samples.len() as f64))
-                    .sqrt() as f32;
+                let rms = libm::sqrt(
+                    window_samples.iter().map(|&s| (s * s) as f64).sum::<f64>()
+                        / (window_samples.len() as f64),
+                ) as f32;
                 peaks.push(rms);
             }
             2 => {
@@ -175,23 +178,24 @@ pub fn extract_waveform_rms(
                 );
 
                 let count = count.max(1); // Avoid division by zero
-                let left_rms = (left_sum / (count as f64)).sqrt() as f32;
-                let right_rms = (right_sum / (count as f64)).sqrt() as f32;
+                let left_rms = libm::sqrt(left_sum / (count as f64)) as f32;
+                let right_rms = libm::sqrt(right_sum / (count as f64)) as f32;
 
                 // Combine stereo RMS
                 peaks.push((left_rms + right_rms) / 2.0);
             }
             _ => {
                 // Unsupported channel count: treat as mono
-                let rms = (window_samples
-                    .chunks(channels as usize)
-                    .map(|chunk| {
-                        let avg = chunk.iter().copied().sum::<f32>() / (chunk.len() as f32);
-                        (avg * avg) as f64
-                    })
-                    .sum::<f64>()
-                    / ((window_samples.len() / (channels as usize)) as f64))
-                    .sqrt() as f32;
+                let rms = libm::sqrt(
+                    window_samples
+                        .chunks(channels as usize)
+                        .map(|chunk| {
+                            let avg = chunk.iter().copied().sum::<f32>() / (chunk.len() as f32);
+                            (avg * avg) as f64
+                        })
+                        .sum::<f64>()
+                        / ((window_samples.len() / (channels as usize)) as f64),
+                ) as f32;
                 peaks.push(rms);
             }
         }
@@ -259,7 +263,7 @@ pub fn extract_spectral_fingerprint(
     // Hash samples in chunks to avoid memory issues
     for chunk in samples.chunks(1024) {
         let chunk_bytes = unsafe {
-            std::slice::from_raw_parts(chunk.as_ptr() as *const u8, std::mem::size_of_val(chunk))
+            core::slice::from_raw_parts(chunk.as_ptr() as *const u8, core::mem::size_of_val(chunk))
         };
         hasher.update(chunk_bytes);
     }
@@ -310,7 +314,7 @@ pub fn extract_spectral_fingerprint(
                     energy += fft_buffer[bin].re * fft_buffer[bin].re
                         + fft_buffer[bin].im * fft_buffer[bin].im;
                 }
-                frequency_bands[band] += energy.sqrt();
+                frequency_bands[band] += libm::sqrtf(energy);
             }
 
             // Track peak frequencies (8 bands)
@@ -322,9 +326,10 @@ pub fn extract_spectral_fingerprint(
                     .map(|bin| {
                         (
                             bin,
-                            (fft_buffer[bin].re * fft_buffer[bin].re
-                                + fft_buffer[bin].im * fft_buffer[bin].im)
-                                .sqrt(),
+                            libm::sqrtf(
+                                fft_buffer[bin].re * fft_buffer[bin].re
+                                    + fft_buffer[bin].im * fft_buffer[bin].im,
+                            ),
                         )
                     })
                     .max_by(|a, b| a.1.total_cmp(&b.1))
@@ -347,7 +352,7 @@ pub fn extract_spectral_fingerprint(
 
     // Compute average loudness (simplified RMS to LUFS conversion)
     let rms: f32 = samples.iter().map(|&s| s * s).sum::<f32>() / (samples.len() as f32);
-    let avg_loudness = ((-20.0 * (rms + 1e-10).log10()).clamp(-60.0, 0.0) + 60.0) as u8;
+    let avg_loudness = ((-20.0 * libm::log10f(rms + 1e-10)).clamp(-60.0, 0.0) + 60.0) as u8;
 
     SpectralFingerprint {
         hash,

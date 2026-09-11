@@ -27,7 +27,8 @@ def lint():
 
 
 def test():
-    run(["cargo", "test"], REFLO_DIR)
+    ensure_tool("cargo-nextest")
+    run(["cargo", "nextest", "run"], REFLO_DIR)
 
 
 def build():

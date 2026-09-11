@@ -20,7 +20,8 @@ def lint():
 
 
 def test():
-    run(["cargo", "test", "--release", "--all-features"], LIBFLO_DIR)
+    ensure_tool("cargo-nextest")
+    run(["cargo", "nextest", "run", "--release", "--all-features"], LIBFLO_DIR)
 
 
 def test_wasm():
@@ -29,6 +30,37 @@ def test_wasm():
     run(["npm", "install"], js_dir)
     esm_env = {"NODE_OPTIONS": "--experimental-vm-modules"}
     run(["npm", "test", "--", "--coverage"], js_dir, env=esm_env)
+
+
+def no_std():
+    run(
+        ["cargo", "check", "--no-default-features", "--features", "fft-rustfft"],
+        LIBFLO_DIR,
+    )
+    run(
+        [
+            "cargo",
+            "check",
+            "--no-default-features",
+            "--features",
+            "fft-microfft",
+            "--target",
+            "thumbv8m.main-none-eabihf",
+        ],
+        LIBFLO_DIR,
+    )
+    ensure_tool("cargo-nextest")
+    run(
+        [
+            "cargo",
+            "nextest",
+            "run",
+            "--no-default-features",
+            "--features",
+            "wasm,fft-microfft"
+        ],
+        LIBFLO_DIR,
+    )
 
 
 def build():
@@ -62,6 +94,7 @@ CMD_ALIASES = {
     "lint": lint,
     "test": test,
     "test_wasm": test_wasm,
+    "no_std": no_std,
     "wasm": wasm,
     "check": check_all,
     "clean": clean,

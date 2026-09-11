@@ -1,5 +1,9 @@
 //! common types for flo codec
 
+use alloc::string::String;
+use alloc::vec;
+use alloc::vec::Vec;
+
 // constants
 
 /// Magic number "FLO!"

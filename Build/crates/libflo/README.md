@@ -252,7 +252,7 @@ wasm-pack build --target web
 ## Testing
 
 ```bash
-cargo test
+cargo nextest run
 ```
 
 ## License

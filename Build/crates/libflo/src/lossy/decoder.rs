@@ -1,6 +1,8 @@
 use super::encoder::TransformFrame;
 use super::mdct::{BlockSize, Mdct, WindowType};
 use super::psychoacoustic::{PsychoacousticModel, NUM_BARK_BANDS};
+use alloc::vec;
+use alloc::vec::Vec;
 
 /// Transform lossy decoder
 pub struct TransformDecoder {
@@ -95,7 +97,7 @@ pub fn deserialize_frame(data: &[u8]) -> Option<TransformFrame> {
 
             // Decode from log scale: 2^((log_sf - 32768) / 256)
             if log_sf > 0 {
-                *s = 2.0f32.powf((log_sf as f32 - 32768.0) / 256.0);
+                *s = libm::powf(2.0f32, (log_sf as f32 - 32768.0) / 256.0);
             }
         }
         scale_factors.push(sf);

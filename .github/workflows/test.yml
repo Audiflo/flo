@@ -25,13 +25,35 @@ jobs:
         with:
           workspaces: Build/crates/libflo
 
-      - name: Install just
-        uses: taiki-e/install-action@v2
+      - name: Install cargo tools
+        uses: ./.github/actions/setup-rust-tools
         with:
-          tool: just
+          tools: just cargo-nextest
 
       - name: Run Rust tests
         run: just libflo test
+
+  test-no-std:
+    name: Test libflo (no_std / embedded)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install embedded target
+        run: rustup target add thumbv8m.main-none-eabihf
+
+      - name: Install cargo tools
+        uses: ./.github/actions/setup-rust-tools
+        with:
+          tools: just cargo-nextest
+
+      - name: Run no_std checks
+        run: just libflo no_std
+
 
   test-wasm:
     name: Test libflo (WASM/Jest)
@@ -63,13 +85,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-npm-
 
-      - name: Install just
-        uses: taiki-e/install-action@v2
+      - name: Install cargo tools
+        uses: ./.github/actions/setup-rust-tools
         with:
-          tool: just
-
-      - name: Install wasm-pack
-        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+          tools: just wasm-pack
 
       - name: Build WASM and run Jest tests
         run: just libflo test_wasm

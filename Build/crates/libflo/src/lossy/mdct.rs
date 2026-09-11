@@ -3,6 +3,8 @@
 
 use crate::dsp::{Complex32, DefaultPlanner, Fft, FftPlanner};
 use alloc::boxed::Box;
+use alloc::vec;
+use alloc::vec::Vec;
 use core::f32::consts::PI;
 
 /// Window types for MDCT
@@ -81,7 +83,7 @@ impl MdctTransform {
         let twiddle: Vec<Complex32> = (0..n4)
             .map(|k| {
                 let theta = PI / n2 as f32 * (k as f32 + 0.125);
-                Complex32::new(theta.cos(), theta.sin())
+                Complex32::new(libm::cosf(theta), libm::sinf(theta))
             })
             .collect();
 
@@ -98,7 +100,7 @@ impl MdctTransform {
     /// Sine window: w[n] = sin(π(n+0.5)/N)
     fn sine_window(n: usize) -> Vec<f32> {
         (0..n)
-            .map(|i| (PI * (i as f32 + 0.5) / n as f32).sin())
+            .map(|i| libm::sinf(PI * (i as f32 + 0.5) / n as f32))
             .collect()
     }
 
@@ -106,8 +108,8 @@ impl MdctTransform {
     fn vorbis_window(n: usize) -> Vec<f32> {
         (0..n)
             .map(|i| {
-                let x = (PI * (i as f32 + 0.5) / n as f32).sin();
-                (PI / 2.0 * x * x).sin()
+                let x = libm::sinf(PI * (i as f32 + 0.5) / n as f32);
+                libm::sinf(PI / 2.0 * x * x)
             })
             .collect()
     }
@@ -119,9 +121,8 @@ impl MdctTransform {
         // Compute Kaiser window for first half
         let kaiser: Vec<f32> = (0..=half)
             .map(|i| {
-                Self::bessel_i0(
-                    PI * alpha * (1.0 - (2.0 * i as f32 / half as f32 - 1.0).powi(2)).sqrt(),
-                )
+                let t = 2.0 * i as f32 / half as f32 - 1.0;
+                Self::bessel_i0(PI * alpha * libm::sqrtf(1.0 - t * t))
             })
             .collect();
 
@@ -136,7 +137,7 @@ impl MdctTransform {
         // Build KBD window
         let mut window = vec![0.0f32; n];
         for i in 0..half {
-            window[i] = (cumsum[i] / total).sqrt();
+            window[i] = libm::sqrtf(cumsum[i] / total);
             window[n - 1 - i] = window[i];
         }
 

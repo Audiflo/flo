@@ -1,6 +1,8 @@
 use crate::core::audio_constants::i32_to_f32;
 use crate::core::types::{ChannelData, FloFile};
 use crate::{core::rice, FloResult, Reader};
+use alloc::vec;
+use alloc::vec::Vec;
 
 /// audio decoder for flo format
 pub struct Decoder;

@@ -26,13 +26,10 @@ jobs:
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
 
-      - name: Install just
-        uses: taiki-e/install-action@v2
+      - name: Install cargo tools
+        uses: ./.github/actions/setup-rust-tools
         with:
-          tool: just
-
-      - name: Install wasm-pack
-        run: cargo install wasm-pack
+          tools: just wasm-pack
 
       - name: Build Web Demo
         run: just wasm

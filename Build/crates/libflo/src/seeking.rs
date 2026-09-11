@@ -2,6 +2,10 @@
 /// gives access to frames without fully decoding the entire file.
 use crate::core::{FloFile, FloResult, TocEntry};
 use crate::reader::Reader;
+use alloc::format;
+use alloc::string::ToString;
+use alloc::vec;
+use alloc::vec::Vec;
 
 /// Represents the result of a seek operation
 #[derive(Debug, Clone)]

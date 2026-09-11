@@ -3,5 +3,9 @@
 # WASM test runner: requires `cargo (b)install wasm-bindgen-cli`
 # Run with:  cargo test --workspace --target wasm32-unknown-unknown
 
+[alias]
+ntest = "nextest run"
+nt = "nextest run"
+
 [target.wasm32-unknown-unknown]
 runner = "wasm-bindgen-test-runner"
