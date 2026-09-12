@@ -1,7 +1,6 @@
 use crate::core::{ChannelData, FloResult, FrameType, ResidualEncoding};
 use crate::lossless::Encoder;
 use crate::{compute_crc32, Reader, MAGIC};
-use alloc::string::ToString;
 use alloc::vec;
 use alloc::vec::Vec;
 
@@ -232,7 +231,7 @@ impl StreamingEncoder {
         let file = reader.read(&temp_flo)?;
 
         if file.frames.is_empty() {
-            return Err("No frames encoded".to_string());
+            return Err("No frames encoded".into());
         }
 
         let frame = &file.frames[0];

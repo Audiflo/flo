@@ -3,7 +3,6 @@ use crate::core::{rice, ChannelData, FloResult, Frame, FrameType, Header, TocEnt
 use crate::lossless::Decoder as LosslessDecoder;
 use crate::lossy::{deserialize_frame, TransformDecoder};
 use crate::{Reader, ResidualEncoding, MAGIC};
-use alloc::string::ToString;
 use alloc::vec;
 use alloc::vec::Vec;
 
@@ -89,7 +88,7 @@ impl StreamingDecoder {
         let header = match self.header.as_ref() {
             Some(h) => h.clone(),
             None => {
-                return Err("No header".to_string());
+                return Err("No header".into());
             }
         };
 
@@ -99,16 +98,19 @@ impl StreamingDecoder {
         }
 
         let toc_entry = &self.toc[self.current_frame];
-        let frame_start = self
-            .data_offset
-            .checked_add(
-                usize::try_from(toc_entry.byte_offset)
-                    .map_err(|_| "Frame offset does not fit in memory".to_string())?,
-            )
-            .ok_or_else(|| "Frame offset overflows memory address space".to_string())?;
+        let frame_start =
+            self.data_offset
+                .checked_add(usize::try_from(toc_entry.byte_offset).map_err(|_| {
+                    crate::core::FloError::from("Frame offset does not fit in memory")
+                })?)
+                .ok_or_else(|| {
+                    crate::core::FloError::from("Frame offset overflows memory address space")
+                })?;
         let frame_end = frame_start
             .checked_add(toc_entry.frame_size as usize)
-            .ok_or_else(|| "Frame size overflows memory address space".to_string())?;
+            .ok_or_else(|| {
+                crate::core::FloError::from("Frame size overflows memory address space")
+            })?;
 
         if frame_end > self.buffer.len() {
             return Ok(None);
@@ -198,7 +200,7 @@ impl StreamingDecoder {
 
         if self.buffer[0..4] != MAGIC {
             self.state = DecoderState::Error;
-            return Err("Invalid flo file: bad magic".to_string());
+            return Err("Invalid flo file: bad magic".into());
         }
 
         let header = Header {
@@ -284,7 +286,7 @@ impl StreamingDecoder {
 
         if header.sample_rate == 0 || header.channels == 0 {
             self.state = DecoderState::Error;
-            return Err("Invalid audio format in header".to_string());
+            return Err("Invalid audio format in header".into());
         }
 
         self.is_lossy = (header.flags & 0x01) != 0;
@@ -300,10 +302,10 @@ impl StreamingDecoder {
         let header = self.header.as_ref().ok_or("No header")?;
         let toc_start: usize = 70;
         let toc_size = usize::try_from(header.toc_size)
-            .map_err(|_| "TOC size does not fit in memory".to_string())?;
-        let toc_end = toc_start
-            .checked_add(toc_size)
-            .ok_or_else(|| "TOC size overflows memory address space".to_string())?;
+            .map_err(|_| crate::core::FloError::from("TOC size does not fit in memory"))?;
+        let toc_end = toc_start.checked_add(toc_size).ok_or_else(|| {
+            crate::core::FloError::from("TOC size overflows memory address space")
+        })?;
 
         if self.buffer.len() < toc_end {
             return Ok(false);
@@ -318,14 +320,14 @@ impl StreamingDecoder {
             ]) as usize;
 
             if num_entries > 100_000 {
-                return Err("Invalid TOC: too many entries".to_string());
+                return Err("Invalid TOC: too many entries".into());
             }
 
-            let entries_size = num_entries
-                .checked_mul(20)
-                .ok_or_else(|| "TOC entry count overflows memory address space".to_string())?;
+            let entries_size = num_entries.checked_mul(20).ok_or_else(|| {
+                crate::core::FloError::from("TOC entry count overflows memory address space")
+            })?;
             if entries_size > toc_size - 4 {
-                return Err("TOC entries exceed TOC size".to_string());
+                return Err("TOC entries exceed TOC size".into());
             }
 
             let entries_start = toc_start + 4;
@@ -392,7 +394,7 @@ impl StreamingDecoder {
 
     fn parse_frame(&self, data: &[u8], channels: u8) -> FloResult<Frame> {
         if data.len() < 6 {
-            return Err("Frame too small".to_string());
+            return Err("Frame too small".into());
         }
 
         let frame_type_byte = data[0];
@@ -412,7 +414,7 @@ impl StreamingDecoder {
         let mut pos: usize = 6;
         for _ in 0..num_channels {
             if pos.checked_add(4).is_none_or(|end| end > data.len()) {
-                return Err("Frame truncated".to_string());
+                return Err("Frame truncated".into());
             }
 
             let ch_size =
@@ -420,11 +422,11 @@ impl StreamingDecoder {
                     as usize;
             pos += 4;
 
-            let channel_end = pos
-                .checked_add(ch_size)
-                .ok_or_else(|| "Channel size overflows memory address space".to_string())?;
+            let channel_end = pos.checked_add(ch_size).ok_or_else(|| {
+                crate::core::FloError::from("Channel size overflows memory address space")
+            })?;
             if channel_end > data.len() {
-                return Err("Channel data truncated".to_string());
+                return Err("Channel data truncated".into());
             }
 
             let ch_data = &data[pos..channel_end];
@@ -455,13 +457,13 @@ impl StreamingDecoder {
 
         let order = data[0] as usize;
         if order > 12 {
-            return Err("Invalid LPC order".to_string());
+            return Err("Invalid LPC order".into());
         }
 
         let coeff_bytes = order * 4;
         let min_size = 1 + coeff_bytes + 2; // order + coeffs + shift + encoding
         if data.len() < min_size {
-            return Err("ALPC channel too small".to_string());
+            return Err("ALPC channel too small".into());
         }
 
         // Read coefficients
@@ -491,7 +493,7 @@ impl StreamingDecoder {
         // Read rice parameter (only for Rice encoding)
         let rice_parameter = if residual_encoding == ResidualEncoding::Rice {
             if pos >= data.len() {
-                return Err("Missing rice parameter".to_string());
+                return Err("Missing rice parameter".into());
             }
             let rp = data[pos];
             pos += 1;

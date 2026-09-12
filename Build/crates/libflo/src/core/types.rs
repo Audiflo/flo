@@ -1,6 +1,5 @@
 //! common types for flo codec
 
-use alloc::string::String;
 use alloc::vec;
 use alloc::vec::Vec;
 
@@ -282,4 +281,5 @@ pub struct FloFile {
 }
 
 /// result type for flo stuff
-pub type FloResult<T> = Result<T, String>;
+/// errors carry a category + context message (and, under `std`, a source).
+pub use super::error::{FloError, FloErrorExt, FloErrorKind, FloResult};

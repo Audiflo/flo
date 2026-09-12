@@ -1,7 +1,6 @@
 use crate::core::audio_constants::f32_to_i32;
 use crate::core::{ChannelData, Frame, FrameType, ResidualEncoding};
 use crate::{core::rice, FloResult, Writer};
-use alloc::string::ToString;
 use alloc::vec;
 use alloc::vec::Vec;
 
@@ -34,13 +33,13 @@ impl Encoder {
     /// encode samples to flo format
     pub fn encode(&self, samples: &[f32], metadata: &[u8]) -> FloResult<Vec<u8>> {
         if self.sample_rate == 0 {
-            return Err("Sample rate must be greater than zero".to_string());
+            return Err("Sample rate must be greater than zero".into());
         }
         if self.channels == 0 {
-            return Err("Channel count must be greater than zero".to_string());
+            return Err("Channel count must be greater than zero".into());
         }
         if !samples.len().is_multiple_of(self.channels as usize) {
-            return Err("Interleaved samples must contain a complete final frame".to_string());
+            return Err("Interleaved samples must contain a complete final frame".into());
         }
 
         let samples_per_frame = self.sample_rate as usize;

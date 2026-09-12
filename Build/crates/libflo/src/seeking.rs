@@ -3,7 +3,6 @@
 use crate::core::{FloFile, FloResult, TocEntry};
 use crate::reader::Reader;
 use alloc::format;
-use alloc::string::ToString;
 use alloc::vec;
 use alloc::vec::Vec;
 
@@ -51,11 +50,11 @@ pub fn decode_frame_at(flo_data: &[u8], frame_index: u32) -> FloResult<Vec<f32>>
     let file = reader.read(flo_data)?;
 
     if (frame_index as usize) >= file.frames.len() {
-        return Err(format!(
+        return Err(crate::core::FloError::from(format!(
             "Frame index {} out of bounds (total frames: {})",
             frame_index,
             file.frames.len()
-        ));
+        )));
     }
 
     let frame = &file.frames[frame_index as usize];
@@ -85,10 +84,10 @@ pub fn seek_to_time(flo_data: &[u8], target_ms: u32) -> FloResult<SeekResult> {
     let file = reader.read(flo_data)?;
 
     if file.toc.is_empty() {
-        return Err("No TOC available for seeking".to_string());
+        return Err("No TOC available for seeking".into());
     }
     if file.frames.is_empty() {
-        return Err("TOC contains no decodable frames".to_string());
+        return Err("TOC contains no decodable frames".into());
     }
 
     // Binary search for the frame containing target_ms
@@ -183,7 +182,7 @@ fn decode_frame_lossy(file: &FloFile, frame_index: usize) -> FloResult<Vec<f32>>
     let frame = &file.frames[frame_index];
 
     if frame.channels.is_empty() {
-        return Err("Transform frame has no channel data".to_string());
+        return Err("Transform frame has no channel data".into());
     }
 
     // Transform data is in first channel's residuals
@@ -209,6 +208,6 @@ fn decode_frame_lossy(file: &FloFile, frame_index: usize) -> FloResult<Vec<f32>>
         // Now decode the target frame
         Ok(decoder.decode_frame(&transform_frame))
     } else {
-        Err("Failed to deserialize transform frame".to_string())
+        Err("Failed to deserialize transform frame".into())
     }
 }

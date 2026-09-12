@@ -7,6 +7,7 @@ extern crate alloc;
 use alloc::format;
 #[cfg(feature = "wasm")]
 use alloc::string::String;
+#[cfg(feature = "wasm")]
 use alloc::string::ToString;
 #[cfg(feature = "wasm")]
 use alloc::vec;
@@ -89,8 +90,8 @@ impl AudioInfo {
 
 /// turn an error into js
 #[cfg(feature = "wasm")]
-fn to_js_err(e: String) -> JsValue {
-    JsValue::from_str(&e)
+fn to_js_err(e: impl ::core::fmt::Display) -> JsValue {
+    JsValue::from_str(&e.to_string())
 }
 
 // api functions
@@ -398,7 +399,9 @@ fn decode_transform_file(file: &FloFile) -> FloResult<Vec<f32>> {
             }
             frame_count += 1;
         } else {
-            return Err("Failed to deserialize transform frame".to_string());
+            return Err(crate::core::FloError::from(
+                "Failed to deserialize transform frame",
+            ));
         }
     }
 
@@ -1159,12 +1162,14 @@ pub fn update_metadata(flo_data: &[u8], new_metadata: &[u8]) -> Result<Vec<u8>, 
 pub fn update_metadata_bytes(flo_data: &[u8], new_metadata: &[u8]) -> FloResult<Vec<u8>> {
     // basic checks
     if flo_data.len() < (HEADER_SIZE as usize) {
-        return Err("File too small to be valid flo".to_string());
+        return Err(crate::core::FloError::from(
+            "File too small to be valid flo",
+        ));
     }
 
     // check magic
     if flo_data[0..4] != MAGIC {
-        return Err("Invalid flo file: bad magic".to_string());
+        return Err(crate::core::FloError::from("Invalid flo file: bad magic"));
     }
 
     // read header for chunk sizes
@@ -1259,7 +1264,7 @@ pub fn get_metadata_bytes(flo_data: &[u8]) -> Result<Vec<u8>, JsValue> {
 /// Raw MessagePack metadata bytes (or empty array)
 pub fn get_metadata_bytes_native(flo_data: &[u8]) -> FloResult<Vec<u8>> {
     if flo_data.len() < (HEADER_SIZE as usize) {
-        return Err("File too small".to_string());
+        return Err(crate::core::FloError::from("File too small"));
     }
 
     // just read header for metadata location

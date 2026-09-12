@@ -2,7 +2,6 @@ use crate::core::{
     ChannelData, FloFile, FloResult, Frame, FrameType, Header, ResidualEncoding, TocEntry,
 };
 use crate::MAGIC;
-use alloc::string::ToString;
 use alloc::vec;
 use alloc::vec::Vec;
 
@@ -22,7 +21,7 @@ impl Reader {
         // magic
         let magic = cursor.read_bytes(4)?;
         if magic != MAGIC {
-            return Err("Invalid flo file: bad magic".to_string());
+            return Err("Invalid flo file: bad magic".into());
         }
 
         // header
@@ -30,13 +29,13 @@ impl Reader {
 
         // toc
         let toc_size = usize::try_from(header.toc_size)
-            .map_err(|_| "TOC size does not fit in memory".to_string())?;
+            .map_err(|_| crate::core::FloError::from("TOC size does not fit in memory"))?;
         let data_size = usize::try_from(header.data_size)
-            .map_err(|_| "DATA size does not fit in memory".to_string())?;
+            .map_err(|_| crate::core::FloError::from("DATA size does not fit in memory"))?;
         let extra_size = usize::try_from(header.extra_size)
-            .map_err(|_| "EXTRA size does not fit in memory".to_string())?;
+            .map_err(|_| crate::core::FloError::from("EXTRA size does not fit in memory"))?;
         let meta_size = usize::try_from(header.meta_size)
-            .map_err(|_| "META size does not fit in memory".to_string())?;
+            .map_err(|_| crate::core::FloError::from("META size does not fit in memory"))?;
 
         let toc = self.read_toc(&mut cursor, toc_size)?;
 
@@ -91,7 +90,7 @@ impl Reader {
         let num_entries = cursor.read_u32_le()? as usize;
 
         if num_entries > 100_000 {
-            return Err("Invalid TOC: too many entries".to_string());
+            return Err("Invalid TOC: too many entries".into());
         }
 
         let mut entries = Vec::with_capacity(num_entries);
@@ -106,7 +105,7 @@ impl Reader {
         }
 
         if cursor.pos > toc_end {
-            return Err("TOC entries exceed TOC size".to_string());
+            return Err("TOC entries exceed TOC size".into());
         }
         cursor.pos = toc_end;
 
@@ -126,22 +125,22 @@ impl Reader {
 
         for toc_entry in toc.iter() {
             let byte_offset = usize::try_from(toc_entry.byte_offset)
-                .map_err(|_| "Frame offset does not fit in memory".to_string())?;
-            let frame_start = data_start
-                .checked_add(byte_offset)
-                .ok_or_else(|| "Frame offset overflows memory address space".to_string())?;
+                .map_err(|_| crate::core::FloError::from("Frame offset does not fit in memory"))?;
+            let frame_start = data_start.checked_add(byte_offset).ok_or_else(|| {
+                crate::core::FloError::from("Frame offset overflows memory address space")
+            })?;
 
             if frame_start >= data_end {
-                return Err("Frame offset is outside DATA chunk".to_string());
+                return Err("Frame offset is outside DATA chunk".into());
             }
 
             cursor.pos = frame_start;
             let frame_size = toc_entry.frame_size as usize;
-            let frame_end = frame_start
-                .checked_add(frame_size)
-                .ok_or_else(|| "Frame size overflows memory address space".to_string())?;
+            let frame_end = frame_start.checked_add(frame_size).ok_or_else(|| {
+                crate::core::FloError::from("Frame size overflows memory address space")
+            })?;
             if frame_end > data_end {
-                return Err("Frame exceeds DATA chunk".to_string());
+                return Err("Frame exceeds DATA chunk".into());
             }
 
             let frame = self.read_frame(cursor, channels, frame_size)?;
@@ -154,11 +153,11 @@ impl Reader {
 
     fn read_frame(&self, cursor: &mut Cursor, channels: u8, frame_size: usize) -> FloResult<Frame> {
         let frame_start = cursor.pos;
-        let frame_end = frame_start
-            .checked_add(frame_size)
-            .ok_or_else(|| "Frame size overflows memory address space".to_string())?;
+        let frame_end = frame_start.checked_add(frame_size).ok_or_else(|| {
+            crate::core::FloError::from("Frame size overflows memory address space")
+        })?;
         if frame_end > cursor.data.len() {
-            return Err("Frame exceeds input data".to_string());
+            return Err("Frame exceeds input data".into());
         }
 
         // frame header: type(1) + samples(4) + flags(1)
@@ -181,12 +180,11 @@ impl Reader {
         for _ch_idx in 0..num_channels_to_read {
             // channel size
             let ch_size = cursor.read_u32_le()? as usize;
-            let ch_end = cursor
-                .pos
-                .checked_add(ch_size)
-                .ok_or_else(|| "Channel size overflows memory address space".to_string())?;
+            let ch_end = cursor.pos.checked_add(ch_size).ok_or_else(|| {
+                crate::core::FloError::from("Channel size overflows memory address space")
+            })?;
             if ch_end > frame_end {
-                return Err("Channel exceeds frame".to_string());
+                return Err("Channel exceeds frame".into());
             }
 
             let ch_data =
@@ -209,7 +207,7 @@ impl Reader {
         channel_end: usize,
     ) -> FloResult<ChannelData> {
         if frame_samples > 2_000_000 {
-            return Err("Invalid frame: too many samples".to_string());
+            return Err("Invalid frame: too many samples".into());
         }
 
         match frame_type {
@@ -246,7 +244,7 @@ impl Reader {
                 let order = cursor.read_u8()? as usize;
 
                 if order > 12 {
-                    return Err("Invalid LPC order".to_string());
+                    return Err("Invalid LPC order".into());
                 }
 
                 // predictor coeffs
@@ -317,7 +315,7 @@ impl<'a> Cursor<'a> {
     fn read_bytes(&mut self, count: usize) -> FloResult<Vec<u8>> {
         let end = self.checked_end(count)?;
         if end > self.data.len() {
-            return Err("Unexpected end of file".to_string());
+            return Err("Unexpected end of file".into());
         }
         let bytes = self.data[self.pos..end].to_vec();
         self.pos = end;
@@ -327,7 +325,7 @@ impl<'a> Cursor<'a> {
     fn skip(&mut self, count: usize) -> FloResult<()> {
         let end = self.checked_end(count)?;
         if end > self.data.len() {
-            return Err("Unexpected end of file".to_string());
+            return Err("Unexpected end of file".into());
         }
         self.pos = end;
         Ok(())
@@ -336,12 +334,12 @@ impl<'a> Cursor<'a> {
     fn checked_end(&self, count: usize) -> FloResult<usize> {
         self.pos
             .checked_add(count)
-            .ok_or_else(|| "Input range overflows memory address space".to_string())
+            .ok_or_else(|| "Input range overflows memory address space".into())
     }
 
     fn read_u8(&mut self) -> FloResult<u8> {
         if self.pos >= self.data.len() {
-            return Err("Unexpected end of file".to_string());
+            return Err("Unexpected end of file".into());
         }
         let val = self.data[self.pos];
         self.pos += 1;

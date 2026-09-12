@@ -2,6 +2,7 @@ pub mod analysis;
 pub mod audio_constants;
 pub mod crc32;
 pub mod ebu_r128;
+pub mod error;
 pub mod metadata;
 pub mod rice;
 pub mod types;
