@@ -63,6 +63,25 @@ def clean():
     run(["cargo", "clean"], REFLO_DIR)
 
 
+def no_std():
+    run(
+        ["cargo", "check", "--no-default-features", "--features", "fft-rustfft"],
+        REFLO_DIR,
+    )
+    run(
+        [
+            "cargo",
+            "check",
+            "--no-default-features",
+            "--features",
+            "fft-microfft",
+            "--target",
+            "thumbv8m.main-none-eabihf",
+        ],
+        REFLO_DIR,
+    )
+
+
 def check_all():
     fmt_check()
     lint()
@@ -79,6 +98,7 @@ CMD_ALIASES = {
     "install": install,
     "wasm": wasm,
     "examples": examples,
+    "no_std": no_std,
     "check": check_all,
     "clean": clean,
 }

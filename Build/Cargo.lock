@@ -215,10 +215,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "embedded-io"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9eb1aa714776b75c7e67e1da744b81a129b3ff919c8712b5e1b32252c1f07cc7"
+
+[[package]]
 name = "extended"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "af9673d8203fcb076b19dfd17e38b3d4ae9f44959416ea532ce72415a6020365"
+source = "git+https://github.com/depp/extended-rs/?rev=b7e205ca#b7e205cad01d59e522c118ee30a389c6c2717e8e"
 
 [[package]]
 name = "find-msvc-tools"
@@ -233,6 +238,12 @@ dependencies = [
  "anyhow",
  "reflo",
 ]
+
+[[package]]
+name = "foldhash"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "77ce24cb58228fbb8aa041425bb1050850ac19177686ea6e0f41a70416f56fdb"
 
 [[package]]
 name = "futures-core"
@@ -256,6 +267,16 @@ dependencies = [
  "futures-task",
  "pin-project-lite",
  "slab",
+]
+
+[[package]]
+name = "hashbrown"
+version = "0.17.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ed5909b6e89a2db4456e54cd5f673791d7eca6732202bbf2a9cc504fe2f9b84a"
+dependencies = [
+ "foldhash",
+ "rustc-std-workspace-alloc",
 ]
 
 [[package]]
@@ -310,12 +331,6 @@ dependencies = [
  "futures-util",
  "wasm-bindgen",
 ]
-
-[[package]]
-name = "lazy_static"
-version = "1.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
 
 [[package]]
 name = "libc"
@@ -417,6 +432,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "071dfc062690e90b734c0b2273ce72ad0ffa95f0c74596bc250dcfd960262841"
 dependencies = [
  "autocfg",
+ "libm",
 ]
 
 [[package]]
@@ -468,7 +484,6 @@ dependencies = [
 name = "reflo"
 version = "0.1.2"
 dependencies = [
- "anyhow",
  "chrono",
  "console_error_panic_hook",
  "js-sys",
@@ -493,10 +508,35 @@ dependencies = [
 ]
 
 [[package]]
-name = "regex-lite"
-version = "0.1.9"
+name = "regex"
+version = "1.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cab834c73d247e67f4fae452806d17d3c7501756d98c8808d7c9c7aa7d18f973"
+checksum = "f020237b6c8eed93db2e2cb53c00c60a8e1bc73da7d073199a1180401450218d"
+dependencies = [
+ "regex-automata",
+ "regex-syntax",
+]
+
+[[package]]
+name = "regex-automata"
+version = "0.4.18"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ad8553b9b26413251cbf30e620595c7a41b3887f03da04579c0e6b0d6a06b4b2"
+dependencies = [
+ "regex-syntax",
+]
+
+[[package]]
+name = "regex-syntax"
+version = "0.8.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
+
+[[package]]
+name = "rustc-std-workspace-alloc"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f9d441c3b2ebf55cebf796bfdc265d67fa09db17b7bb6bd4be75c509e1e8fec3"
 
 [[package]]
 name = "rustfft"
@@ -621,19 +661,16 @@ checksum = "7da8b5736845d9f2fcb837ea5d9e2628564b3b043a70948a3f0b778838c5fb4f"
 [[package]]
 name = "symphonia"
 version = "0.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a7edef6a96b696d4e0cab5ee9ebb7ca155ed95f30a6b45bbb8b97d2727f02424"
+source = "git+https://github.com/NellowTCS/Symphonia?branch=main#3cf66ff220b121c5583d96dd6b5c712107537f69"
 dependencies = [
- "lazy_static",
+ "once_cell",
  "symphonia-bundle-flac",
  "symphonia-bundle-mp3",
  "symphonia-codec-aac",
- "symphonia-codec-adpcm",
  "symphonia-codec-pcm",
  "symphonia-codec-vorbis",
  "symphonia-core",
  "symphonia-format-isomp4",
- "symphonia-format-mkv",
  "symphonia-format-ogg",
  "symphonia-format-riff",
  "symphonia-metadata",
@@ -642,8 +679,7 @@ dependencies = [
 [[package]]
 name = "symphonia-bundle-flac"
 version = "0.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6405d5c34ff6f8f7ca08a4101efe66d21e180f7322ef9359900a0e55698a7892"
+source = "git+https://github.com/NellowTCS/Symphonia?branch=main#3cf66ff220b121c5583d96dd6b5c712107537f69"
 dependencies = [
  "log",
  "symphonia-common",
@@ -654,41 +690,30 @@ dependencies = [
 [[package]]
 name = "symphonia-bundle-mp3"
 version = "0.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "98ea5ffc8716bff677dfb3b01b420c7b758de901a72b8c330bf2040ab74b4add"
+source = "git+https://github.com/NellowTCS/Symphonia?branch=main#3cf66ff220b121c5583d96dd6b5c712107537f69"
 dependencies = [
- "lazy_static",
  "log",
+ "num-traits",
+ "once_cell",
  "symphonia-core",
 ]
 
 [[package]]
 name = "symphonia-codec-aac"
 version = "0.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f5bf8e39552d34a3c4c98333370e62f48c92456d2e814f273b5c3ad7c4a5f45c"
+source = "git+https://github.com/NellowTCS/Symphonia?branch=main#3cf66ff220b121c5583d96dd6b5c712107537f69"
 dependencies = [
- "lazy_static",
  "log",
+ "num-traits",
+ "once_cell",
  "symphonia-common",
- "symphonia-core",
-]
-
-[[package]]
-name = "symphonia-codec-adpcm"
-version = "0.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "445932ecb0c59362fde9c082dd63a75380650c5077fdb8b80b8cac850442a74c"
-dependencies = [
- "log",
  "symphonia-core",
 ]
 
 [[package]]
 name = "symphonia-codec-pcm"
 version = "0.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e04ba75686acbe43542fdd374571195f0530c0b7785ca25cc6840e9c6c4b6eea"
+source = "git+https://github.com/NellowTCS/Symphonia?branch=main#3cf66ff220b121c5583d96dd6b5c712107537f69"
 dependencies = [
  "log",
  "symphonia-core",
@@ -697,10 +722,11 @@ dependencies = [
 [[package]]
 name = "symphonia-codec-vorbis"
 version = "0.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "73d90b4fcf796137cc683c538282804ff9629f8ad9dbfd881fcbba331ac4e986"
+source = "git+https://github.com/NellowTCS/Symphonia?branch=main#3cf66ff220b121c5583d96dd6b5c712107537f69"
 dependencies = [
+ "hashbrown",
  "log",
+ "num-traits",
  "symphonia-common",
  "symphonia-core",
 ]
@@ -708,35 +734,34 @@ dependencies = [
 [[package]]
 name = "symphonia-common"
 version = "0.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2acc3fcc18ec9b8cdd48614e259c4cf0d27b71d41e5d9b120b42c5adab12d7c4"
+source = "git+https://github.com/NellowTCS/Symphonia?branch=main#3cf66ff220b121c5583d96dd6b5c712107537f69"
 dependencies = [
  "log",
  "symphonia-core",
- "symphonia-metadata",
 ]
 
 [[package]]
 name = "symphonia-core"
 version = "0.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "01c412864d599d4750d0c3d684d7e093ec05e5309681ef5252cc1096a437f6e0"
+source = "git+https://github.com/NellowTCS/Symphonia?branch=main#3cf66ff220b121c5583d96dd6b5c712107537f69"
 dependencies = [
  "bitflags",
  "bytemuck",
- "lazy_static",
+ "embedded-io",
+ "hashbrown",
  "log",
  "num-complex",
- "rustfft",
+ "num-traits",
+ "once_cell",
  "smallvec",
 ]
 
 [[package]]
 name = "symphonia-format-isomp4"
 version = "0.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0e681a70e1870d34e02abf1dbc51e4267c3f1827801474e8870be8c689fc4dc3"
+source = "git+https://github.com/NellowTCS/Symphonia?branch=main#3cf66ff220b121c5583d96dd6b5c712107537f69"
 dependencies = [
+ "hashbrown",
  "log",
  "symphonia-common",
  "symphonia-core",
@@ -744,24 +769,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "symphonia-format-mkv"
-version = "0.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d015c5c0558864665894b3f4cbd95e10abb01b9c868e751c72670f326a56360e"
-dependencies = [
- "lazy_static",
- "log",
- "symphonia-common",
- "symphonia-core",
-]
-
-[[package]]
 name = "symphonia-format-ogg"
 version = "0.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0b5495e7f7e3c7035328d82b6d6e377eef289bb0c4105bdeb557fc93a833f994"
+source = "git+https://github.com/NellowTCS/Symphonia?branch=main#3cf66ff220b121c5583d96dd6b5c712107537f69"
 dependencies = [
  "log",
+ "num-traits",
  "symphonia-common",
  "symphonia-core",
  "symphonia-metadata",
@@ -770,10 +783,10 @@ dependencies = [
 [[package]]
 name = "symphonia-format-riff"
 version = "0.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1ff70929083a8c1a5f6cd7c904b6071c7914ad04739b510c2f7239dfc9b7dabe"
+source = "git+https://github.com/NellowTCS/Symphonia?branch=main#3cf66ff220b121c5583d96dd6b5c712107537f69"
 dependencies = [
  "extended",
+ "hashbrown",
  "log",
  "symphonia-core",
  "symphonia-metadata",
@@ -782,12 +795,12 @@ dependencies = [
 [[package]]
 name = "symphonia-metadata"
 version = "0.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "83713a97705d77bdef7cdbc0768fd6e5a54e4cd7e48d60a806ae85639e2c87c6"
+source = "git+https://github.com/NellowTCS/Symphonia?branch=main#3cf66ff220b121c5583d96dd6b5c712107537f69"
 dependencies = [
- "lazy_static",
+ "hashbrown",
  "log",
- "regex-lite",
+ "once_cell",
+ "regex",
  "smallvec",
  "symphonia-core",
 ]

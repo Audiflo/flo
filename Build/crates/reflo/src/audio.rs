@@ -1,34 +1,94 @@
 use crate::AudioMetadata;
-use anyhow::{Context, Result};
-use std::io::{Cursor, Write};
-use std::path::Path;
+use alloc::boxed::Box;
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::vec::Vec;
+use libflo_audio::{FloError, FloErrorKind, FloResult};
 use symphonia::core::audio::GenericAudioBufferRef;
 use symphonia::core::codecs::audio::{well_known, AudioDecoderOptions, CODEC_ID_NULL_AUDIO};
 use symphonia::core::common::Limit;
 use symphonia::core::formats::probe::Hint;
 use symphonia::core::formats::FormatOptions;
-use symphonia::core::io::MediaSourceStream;
+use symphonia::core::io::{MediaSource, MediaSourceStream, SeekFrom};
 use symphonia::core::meta::{MetadataOptions, StandardTag, StandardVisualKey};
+
+#[cfg(feature = "std")]
+use std::path::Path;
+
+/// Wrap a symphonia error with a codec context into a [`FloError`].
+fn codec_err(ctx: &str, e: impl core::fmt::Display) -> FloError {
+    FloError::new(FloErrorKind::Codec, alloc::format!("{ctx}: {e}"))
+}
+
+/// Wrap an I/O error with a context into a [`FloError`].
+#[cfg(feature = "std")]
+fn io_err(ctx: &str, e: impl core::fmt::Display) -> FloError {
+    FloError::new(FloErrorKind::Io, alloc::format!("{ctx}: {e}"))
+}
+
+struct ByteSource {
+    data: Vec<u8>,
+    pos: usize,
+}
+
+impl ByteSource {
+    fn new(data: Vec<u8>) -> Self {
+        ByteSource { data, pos: 0 }
+    }
+}
+
+impl MediaSource for ByteSource {
+    fn is_seekable(&self) -> bool {
+        true
+    }
+
+    fn byte_len(&self) -> Option<u64> {
+        Some(self.data.len() as u64)
+    }
+
+    fn read(&mut self, buf: &mut [u8]) -> Result<usize, symphonia::core::io::MediaError> {
+        let remaining = self.data.len() - self.pos;
+        let n = core::cmp::min(buf.len(), remaining);
+        buf[..n].copy_from_slice(&self.data[self.pos..self.pos + n]);
+        self.pos += n;
+        Ok(n)
+    }
+
+    fn seek(&mut self, pos: SeekFrom) -> Result<u64, symphonia::core::io::MediaError> {
+        let new_pos = match pos {
+            SeekFrom::Start(p) => p as usize,
+            SeekFrom::End(p) => (self.data.len() as i64 + p) as usize,
+            SeekFrom::Current(p) => (self.pos as i64 + p) as usize,
+        };
+        self.pos = new_pos.min(self.data.len());
+        Ok(self.pos as u64)
+    }
+}
 
 /// Read an audio file and return (samples, sample_rate, channels, metadata)
 /// Samples are interleaved f32 in range [-1.0, 1.0]
-pub fn read_audio_file_with_metadata(path: &Path) -> Result<(Vec<f32>, u32, usize, AudioMetadata)> {
-    let file = std::fs::File::open(path).context("Failed to open audio file")?;
-    let mss = MediaSourceStream::new(Box::new(file), Default::default());
-    read_from_source_with_metadata(mss, path.extension().and_then(|e| e.to_str()))
+#[cfg(feature = "std")]
+pub fn read_audio_file_with_metadata(
+    path: &Path,
+) -> FloResult<(Vec<f32>, u32, usize, AudioMetadata)> {
+    let bytes = std::fs::read(path).map_err(|e| io_err("Failed to open audio file", e))?;
+    read_audio_from_bytes(&bytes)
 }
 
 /// Read audio from bytes (for cross-platform/WASM support)
-pub fn read_audio_from_bytes(bytes: &[u8]) -> Result<(Vec<f32>, u32, usize, AudioMetadata)> {
-    let cursor = Cursor::new(bytes.to_vec());
-    let mss = MediaSourceStream::new(Box::new(cursor), Default::default());
+pub fn read_audio_from_bytes(bytes: &[u8]) -> FloResult<(Vec<f32>, u32, usize, AudioMetadata)> {
+    let mss = MediaSourceStream::new(
+        Box::new(ByteSource::new(bytes.to_vec())),
+        Default::default(),
+    );
     read_from_source_with_metadata(mss, None)
 }
 
 /// Read an audio file and return (samples, sample_rate, channels)
 /// Samples are interleaved f32 in range [-1.0, 1.0]
+#[cfg(feature = "std")]
 #[allow(dead_code)]
-pub fn read_audio_file(path: &Path) -> Result<(Vec<f32>, u32, usize)> {
+pub fn read_audio_file(path: &Path) -> FloResult<(Vec<f32>, u32, usize)> {
     let (samples, sample_rate, channels, _) = read_audio_file_with_metadata(path)?;
     Ok((samples, sample_rate, channels))
 }
@@ -36,7 +96,7 @@ pub fn read_audio_file(path: &Path) -> Result<(Vec<f32>, u32, usize)> {
 fn read_from_source_with_metadata(
     mss: MediaSourceStream,
     extension: Option<&str>,
-) -> Result<(Vec<f32>, u32, usize, AudioMetadata)> {
+) -> FloResult<(Vec<f32>, u32, usize, AudioMetadata)> {
     // Create hint from file extension
     let mut hint = Hint::new();
     if let Some(ext) = extension {
@@ -51,7 +111,7 @@ fn read_from_source_with_metadata(
     // Probe the format
     let mut format = symphonia::default::get_probe()
         .probe(&hint, mss, FormatOptions::default(), meta_opts)
-        .context("Unsupported audio format")?;
+        .map_err(|e| codec_err("Unsupported audio format", e))?;
 
     // Extract metadata
     let mut metadata = AudioMetadata {
@@ -74,14 +134,14 @@ fn read_from_source_with_metadata(
                 .and_then(|p| p.audio())
                 .is_some_and(|a| a.codec != CODEC_ID_NULL_AUDIO)
         })
-        .context("No audio track found")?;
+        .ok_or_else(|| FloError::new(FloErrorKind::Codec, "No audio track found"))?;
 
     let codec_params = track
         .codec_params
         .as_ref()
-        .context("No codec parameters")?
+        .ok_or_else(|| FloError::new(FloErrorKind::Codec, "No codec parameters"))?
         .audio()
-        .context("No audio codec")?;
+        .ok_or_else(|| FloError::new(FloErrorKind::Codec, "No audio codec"))?;
 
     // If we didn't get format from extension, try to detect from codec
     if metadata.source_format.is_none() {
@@ -100,17 +160,19 @@ fn read_from_source_with_metadata(
     }
 
     let track_id = track.id;
-    let sample_rate = codec_params.sample_rate.context("Unknown sample rate")?;
+    let sample_rate = codec_params
+        .sample_rate
+        .ok_or_else(|| FloError::new(FloErrorKind::Codec, "Unknown sample rate"))?;
     let channels = codec_params
         .channels
         .clone()
-        .context("Unknown channel count")?
+        .ok_or_else(|| FloError::new(FloErrorKind::Codec, "Unknown channel count"))?
         .count();
 
     // Create decoder
     let mut decoder = symphonia::default::get_codecs()
         .make_audio_decoder(codec_params, &AudioDecoderOptions::default())
-        .context("Failed to create decoder")?;
+        .map_err(|e| codec_err("Failed to create decoder", e))?;
 
     let mut samples = Vec::new();
 
@@ -120,11 +182,11 @@ fn read_from_source_with_metadata(
             Ok(Some(packet)) => packet,
             Ok(None) => break,
             Err(symphonia::core::errors::Error::IoError(e))
-                if e.kind() == std::io::ErrorKind::UnexpectedEof =>
+                if e.kind() == symphonia::core::io::MediaErrorKind::Eof =>
             {
                 break
             }
-            Err(e) => return Err(e).context("Error reading packet"),
+            Err(e) => return Err(codec_err("Error reading packet", e)),
         };
 
         if packet.track_id != track_id {
@@ -134,7 +196,7 @@ fn read_from_source_with_metadata(
         let decoded = match decoder.decode(&packet) {
             Ok(decoded) => decoded,
             Err(symphonia::core::errors::Error::DecodeError(_)) => continue,
-            Err(e) => return Err(e).context("Error decoding packet"),
+            Err(e) => return Err(codec_err("Error decoding packet", e)),
         };
 
         // Convert to f32
@@ -194,14 +256,15 @@ fn append_samples(decoded: &GenericAudioBufferRef, samples: &mut Vec<f32>) {
     samples.extend_from_slice(&frame);
 }
 
-/// Write samples to a WAV file using symphonia
-pub fn write_wav(path: &Path, samples: &[f32], sample_rate: u32, channels: usize) -> Result<()> {
-    let bytes = write_wav_to_bytes(samples, sample_rate, channels)?;
-    std::fs::write(path, bytes).context("Failed to write WAV file")
+/// Write samples to a WAV file
+#[cfg(feature = "std")]
+pub fn write_wav(path: &Path, samples: &[f32], sample_rate: u32, channels: usize) -> FloResult<()> {
+    let bytes = write_wav_to_bytes(samples, sample_rate, channels);
+    std::fs::write(path, bytes).map_err(|e| io_err("Failed to write WAV file", e))
 }
 
 /// Write samples to WAV format in memory (for cross-platform/WASM support)
-pub fn write_wav_to_bytes(samples: &[f32], sample_rate: u32, channels: usize) -> Result<Vec<u8>> {
+pub fn write_wav_to_bytes(samples: &[f32], sample_rate: u32, channels: usize) -> Vec<u8> {
     // WAV file format (RIFF)
     let mut buffer = Vec::new();
 
@@ -211,30 +274,30 @@ pub fn write_wav_to_bytes(samples: &[f32], sample_rate: u32, channels: usize) ->
     let file_size = 36 + data_size; // 44 byte header - 8 + data_size
 
     // RIFF header
-    buffer.write_all(b"RIFF")?;
-    buffer.write_all(&(file_size as u32).to_le_bytes())?;
-    buffer.write_all(b"WAVE")?;
+    buffer.extend_from_slice(b"RIFF");
+    buffer.extend_from_slice(&(file_size as u32).to_le_bytes());
+    buffer.extend_from_slice(b"WAVE");
 
     // fmt chunk
-    buffer.write_all(b"fmt ")?;
-    buffer.write_all(&16u32.to_le_bytes())?; // chunk size
-    buffer.write_all(&3u16.to_le_bytes())?; // format = IEEE float
-    buffer.write_all(&(channels as u16).to_le_bytes())?;
-    buffer.write_all(&sample_rate.to_le_bytes())?;
+    buffer.extend_from_slice(b"fmt ");
+    buffer.extend_from_slice(&16u32.to_le_bytes()); // chunk size
+    buffer.extend_from_slice(&3u16.to_le_bytes()); // format = IEEE float
+    buffer.extend_from_slice(&(channels as u16).to_le_bytes());
+    buffer.extend_from_slice(&sample_rate.to_le_bytes());
     let byte_rate = sample_rate * channels as u32 * bytes_per_sample as u32;
-    buffer.write_all(&byte_rate.to_le_bytes())?;
+    buffer.extend_from_slice(&byte_rate.to_le_bytes());
     let block_align = channels as u16 * bytes_per_sample as u16;
-    buffer.write_all(&block_align.to_le_bytes())?;
-    buffer.write_all(&32u16.to_le_bytes())?; // bits per sample
+    buffer.extend_from_slice(&block_align.to_le_bytes());
+    buffer.extend_from_slice(&32u16.to_le_bytes()); // bits per sample
 
     // data chunk
-    buffer.write_all(b"data")?;
-    buffer.write_all(&(data_size as u32).to_le_bytes())?;
+    buffer.extend_from_slice(b"data");
+    buffer.extend_from_slice(&(data_size as u32).to_le_bytes());
 
     // Write samples
     for &sample in samples {
-        buffer.write_all(&sample.to_le_bytes())?;
+        buffer.extend_from_slice(&sample.to_le_bytes());
     }
 
-    Ok(buffer)
+    buffer
 }

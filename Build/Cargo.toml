@@ -44,7 +44,7 @@ chrono = { version = "0.4", default-features = false, features = [
     "clock",
 ] }
 clap = { version = "4", features = ["derive"] }
-symphonia = { version = "0.6", features = [
+symphonia = { git = "https://github.com/NellowTCS/Symphonia", branch = "main", default-features = false, features = [
     "mp3",
     "flac",
     "ogg",
@@ -53,6 +53,7 @@ symphonia = { version = "0.6", features = [
     "isomp4",
     "pcm",
     "wav",
+    "all-meta",
 ] }
 
 # WASM

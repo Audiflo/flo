@@ -29,12 +29,21 @@ pub enum FloErrorKind {
 }
 
 /// The one error type for the flo workspace.
-#[derive(Clone)]
 pub struct FloError {
     kind: FloErrorKind,
     message: String,
-    #[cfg(feature = "std")]
-    source: Option<Box<dyn core::error::Error + 'static>>,
+    source: Option<Box<dyn core::error::Error + Send + Sync + 'static>>,
+}
+
+impl Clone for FloError {
+    fn clone(&self) -> Self {
+        Self {
+            kind: self.kind,
+            message: self.message.clone(),
+            // `Box<dyn Error>` is not cloneable; the source chain is not copied.
+            source: None,
+        }
+    }
 }
 
 impl FloError {
@@ -43,6 +52,7 @@ impl FloError {
         Self {
             kind,
             message: message.into(),
+            source: None,
         }
     }
 
@@ -67,8 +77,7 @@ impl FloError {
         self
     }
 
-    #[cfg(feature = "std")]
-    pub fn with_source(mut self, source: impl core::error::Error + 'static) -> Self {
+    pub fn with_source(mut self, source: impl core::error::Error + Send + Sync + 'static) -> Self {
         self.source = Some(Box::new(source));
         self
     }
@@ -95,9 +104,10 @@ impl fmt::Debug for FloError {
 }
 
 impl core::error::Error for FloError {
-    #[cfg(feature = "std")]
     fn source(&self) -> Option<&(dyn core::error::Error + 'static)> {
-        self.source.as_deref()
+        self.source
+            .as_deref()
+            .map(|e| e as &(dyn core::error::Error + 'static))
     }
 }
 

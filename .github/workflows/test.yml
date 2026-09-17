@@ -55,6 +55,28 @@ jobs:
         run: just libflo no_std
 
 
+  test-reflo-no-std:
+    name: Test reflo (no_std / embedded)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install embedded target
+        run: rustup target add thumbv8m.main-none-eabihf
+
+      - name: Install cargo tools
+        uses: ./.github/actions/setup-rust-tools
+        with:
+          tools: just cargo-nextest
+
+      - name: Run no_std checks
+        run: just reflo no_std
+
+
   test-wasm:
     name: Test libflo (WASM/Jest)
     runs-on: ubuntu-latest

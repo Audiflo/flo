@@ -29,8 +29,8 @@ mod writer;
 
 pub use core::{
     compute_crc32, compute_ebu_r128_loudness, extract_spectral_fingerprint, extract_waveform_peaks,
-    metadata::*, rice, ChannelData, FloFile, FloResult, FrameType, LoudnessMetrics,
-    ResidualEncoding, HEADER_SIZE, MAGIC, VERSION_MAJOR, VERSION_MINOR,
+    metadata::*, rice, ChannelData, FloError, FloErrorExt, FloErrorKind, FloFile, FloResult,
+    FrameType, LoudnessMetrics, ResidualEncoding, HEADER_SIZE, MAGIC, VERSION_MAJOR, VERSION_MINOR,
 };
 pub use lossless::{lpc, Decoder, Encoder};
 pub use lossy::{

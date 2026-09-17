@@ -167,7 +167,7 @@ fn write_fixture(
     examples: &Path,
     fixtures: &Path,
 ) -> Result<()> {
-    let wav = write_wav_to_bytes(samples, rate, channels).context("writing WAV bytes")?;
+    let wav = write_wav_to_bytes(samples, rate, channels);
     let flo = encode_from_samples(samples, rate, channels, AudioMetadata::default(), options)
         .with_context(|| format!("encoding {name}"))?;
 

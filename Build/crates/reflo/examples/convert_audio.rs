@@ -47,8 +47,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("\nWrote flo file to {}", output_path);
 
     // Get flo file info
-    let flo_info =
-        get_flo_info(&flo_bytes).map_err(|e| anyhow::anyhow!("Failed to get flo info: {:?}", e))?;
+    let flo_info = get_flo_info(&flo_bytes)?;
     println!("\nflo File Info:");
     println!("  Sample rate: {} Hz", flo_info.sample_rate);
     println!("  Channels: {}", flo_info.channels);

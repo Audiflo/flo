@@ -4,15 +4,24 @@
 //! It works on native targets and can be compiled to WebAssembly.
 //!
 
-#[cfg(feature = "audio-io")]
+#![cfg_attr(not(test), no_std)]
+
+extern crate alloc;
+#[cfg(feature = "std")]
+extern crate std;
+
+use alloc::format;
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::vec;
+use alloc::vec::Vec;
+
 pub mod audio;
 
 #[cfg(all(target_arch = "wasm32", feature = "wasm"))]
 pub mod wasm;
 
-#[cfg(feature = "audio-io")]
-use anyhow::Context;
-use anyhow::Result;
+use libflo_audio::{FloError, FloErrorExt, FloErrorKind, FloResult};
 
 /// Metadata collected from an input audio source.
 #[derive(Debug, Default)]
@@ -54,11 +63,9 @@ pub struct FloInfo {
 }
 
 /// Get information about a flo file
-pub fn get_flo_info(data: &[u8]) -> Result<FloInfo> {
+pub fn get_flo_info(data: &[u8]) -> FloResult<FloInfo> {
     let reader = libflo_audio::Reader::new();
-    let file = reader
-        .read(data)
-        .map_err(|e| anyhow::anyhow!("Failed to read flo file: {}", e))?;
+    let file = reader.read(data)?;
 
     // Use length_ms from metadata for duration
     let metadata = libflo_audio::FloMetadata::from_msgpack(&file.metadata).unwrap_or_default();
@@ -114,7 +121,7 @@ pub fn get_flo_info(data: &[u8]) -> Result<FloInfo> {
 }
 
 /// Validate a flo file
-pub fn validate_flo(data: &[u8]) -> Result<bool> {
+pub fn validate_flo(data: &[u8]) -> FloResult<bool> {
     let info = get_flo_info(data)?;
     Ok(info.crc_valid)
 }
@@ -203,8 +210,7 @@ pub struct AudioInfo {
 ///
 /// # Returns
 /// Raw bytes of the flo file
-#[cfg(feature = "audio-io")]
-pub fn encode_from_audio(audio_bytes: &[u8], options: EncodeOptions) -> Result<Vec<u8>> {
+pub fn encode_from_audio(audio_bytes: &[u8], options: EncodeOptions) -> FloResult<Vec<u8>> {
     // Read audio file
     let (samples, sample_rate, channels, source_meta) =
         audio::read_audio_from_bytes(audio_bytes).context("Failed to read audio file")?;
@@ -229,7 +235,7 @@ pub fn encode_from_samples(
     channels: usize,
     source_metadata: AudioMetadata,
     options: EncodeOptions,
-) -> Result<Vec<u8>> {
+) -> FloResult<Vec<u8>> {
     // Build metadata - options override source metadata
     let mut meta = options.metadata.unwrap_or_else(|| {
         let mut m = FloMetadata::new();
@@ -322,14 +328,14 @@ pub fn encode_from_samples(
             libflo_audio::LossyEncoder::new(sample_rate, channels as u8, quality_value);
         encoder
             .encode_to_flo(samples, &metadata_data)
-            .map_err(|e| anyhow::anyhow!("Encoding failed: {}", e))?
+            .context("Encoding failed")?
     } else {
         // Lossless encoding
         let encoder = libflo_audio::Encoder::new(sample_rate, channels as u8, 16)
             .with_compression(options.level);
         encoder
             .encode(samples, &metadata_data)
-            .map_err(|e| anyhow::anyhow!("Encoding failed: {}", e))?
+            .context("Encoding failed")?
     };
 
     Ok(flo_data)
@@ -342,12 +348,10 @@ pub fn encode_from_samples(
 ///
 /// # Returns
 /// Tuple of (samples, sample_rate, channels) where samples are interleaved f32
-pub fn decode_to_samples(flo_bytes: &[u8]) -> Result<(Vec<f32>, u32, usize)> {
+pub fn decode_to_samples(flo_bytes: &[u8]) -> FloResult<(Vec<f32>, u32, usize)> {
     // Read file using Reader
     let reader = libflo_audio::Reader::new();
-    let file = reader
-        .read(flo_bytes)
-        .map_err(|e| anyhow::anyhow!("Invalid flo file: {}", e))?;
+    let file = reader.read(flo_bytes)?;
 
     let sample_rate = file.header.sample_rate;
     let channels = file.header.channels as usize;
@@ -370,8 +374,9 @@ pub fn decode_to_samples(flo_bytes: &[u8]) -> Result<(Vec<f32>, u32, usize)> {
             let frame_data = &frame.channels[0].residuals;
 
             // Deserialize and decode
-            let transform_frame = libflo_audio::deserialize_frame(frame_data)
-                .ok_or_else(|| anyhow::anyhow!("Failed to deserialize lossy frame"))?;
+            let transform_frame = libflo_audio::deserialize_frame(frame_data).ok_or_else(|| {
+                FloError::new(FloErrorKind::Codec, "Failed to deserialize lossy frame")
+            })?;
 
             let frame_samples = decoder.decode_frame(&transform_frame);
 
@@ -387,7 +392,7 @@ pub fn decode_to_samples(flo_bytes: &[u8]) -> Result<(Vec<f32>, u32, usize)> {
         let decoder = libflo_audio::Decoder::new();
         decoder
             .decode_file(&file)
-            .map_err(|e| anyhow::anyhow!("Lossless decoding failed: {}", e))?
+            .context("Lossless decoding failed")?
     };
 
     Ok((samples, sample_rate, channels))
@@ -400,11 +405,10 @@ pub fn decode_to_samples(flo_bytes: &[u8]) -> Result<(Vec<f32>, u32, usize)> {
 ///
 /// # Returns
 /// Raw bytes of a WAV file
-#[cfg(feature = "audio-io")]
-pub fn decode_to_wav(flo_bytes: &[u8]) -> Result<Vec<u8>> {
+pub fn decode_to_wav(flo_bytes: &[u8]) -> FloResult<Vec<u8>> {
     let (samples, sample_rate, channels) = decode_to_samples(flo_bytes)?;
 
-    audio::write_wav_to_bytes(&samples, sample_rate, channels).context("Failed to write WAV data")
+    Ok(audio::write_wav_to_bytes(&samples, sample_rate, channels))
 }
 
 /// Get metadata from a flo file
@@ -414,18 +418,16 @@ pub fn decode_to_wav(flo_bytes: &[u8]) -> Result<Vec<u8>> {
 ///
 /// # Returns
 /// Metadata if present, or None
-pub fn get_metadata(flo_bytes: &[u8]) -> Result<Option<FloMetadata>> {
+pub fn get_metadata(flo_bytes: &[u8]) -> FloResult<Option<FloMetadata>> {
     let reader = libflo_audio::Reader::new();
-    let file = reader
-        .read(flo_bytes)
-        .map_err(|e| anyhow::anyhow!("Invalid flo file: {}", e))?;
+    let file = reader.read(flo_bytes)?;
 
     if file.metadata.is_empty() {
         return Ok(None);
     }
 
     let meta = FloMetadata::from_msgpack(&file.metadata)
-        .map_err(|e| anyhow::anyhow!("Invalid metadata: {}", e))?;
+        .map_err(|e| FloError::new(FloErrorKind::Metadata, format!("Invalid metadata: {}", e)))?;
 
     Ok(Some(meta))
 }
@@ -437,8 +439,7 @@ pub fn get_metadata(flo_bytes: &[u8]) -> Result<Option<FloMetadata>> {
 ///
 /// # Returns
 /// Audio information
-#[cfg(feature = "audio-io")]
-pub fn get_audio_info(audio_bytes: &[u8]) -> Result<AudioInfo> {
+pub fn get_audio_info(audio_bytes: &[u8]) -> FloResult<AudioInfo> {
     let (samples, sample_rate, channels, _) =
         audio::read_audio_from_bytes(audio_bytes).context("Failed to read audio file")?;
 
@@ -466,25 +467,28 @@ pub fn get_audio_info(audio_bytes: &[u8]) -> Result<AudioInfo> {
 pub fn update_metadata_no_reencode(
     flo_bytes: &[u8],
     metadata: wasm_bindgen::JsValue,
-) -> Result<Vec<u8>> {
+) -> FloResult<Vec<u8>> {
     // Convert JS object to FloMetadata
     let meta = metadata_from_js(metadata)?;
-    let meta_bytes = meta
-        .to_msgpack()
-        .map_err(|e| anyhow::anyhow!("Failed to serialize metadata: {}", e))?;
+    let meta_bytes = meta.to_msgpack().map_err(|e| {
+        FloError::new(
+            FloErrorKind::Metadata,
+            format!("Failed to serialize metadata: {}", e),
+        )
+    })?;
 
     update_metadata_bytes(flo_bytes, &meta_bytes)
 }
 
 /// Update metadata bytes in a flo file (internal implementation)
-pub fn update_metadata_bytes(flo_bytes: &[u8], new_metadata: &[u8]) -> Result<Vec<u8>> {
+pub fn update_metadata_bytes(flo_bytes: &[u8], new_metadata: &[u8]) -> FloResult<Vec<u8>> {
     // Use libflo's efficient update function
     libflo_audio::update_metadata_bytes(flo_bytes, new_metadata)
-        .map_err(|e| anyhow::anyhow!("Failed to update metadata: {}", e))
+        .context("Failed to update metadata")
 }
 
 /// Strip all metadata from a flo file WITHOUT re-encoding
-pub fn strip_metadata_no_reencode(flo_bytes: &[u8]) -> Result<Vec<u8>> {
+pub fn strip_metadata_no_reencode(flo_bytes: &[u8]) -> FloResult<Vec<u8>> {
     update_metadata_bytes(flo_bytes, &[])
 }
 
@@ -495,12 +499,12 @@ pub fn has_metadata(flo_bytes: &[u8]) -> bool {
 
 /// Convert JavaScript metadata object to FloMetadata
 #[cfg(target_arch = "wasm32")]
-fn metadata_from_js(metadata: wasm_bindgen::JsValue) -> Result<FloMetadata> {
+fn metadata_from_js(metadata: wasm_bindgen::JsValue) -> FloResult<FloMetadata> {
     use wasm_bindgen::JsCast;
 
     let obj = metadata
         .dyn_ref::<js_sys::Object>()
-        .ok_or_else(|| anyhow::anyhow!("Metadata must be an object"))?;
+        .ok_or_else(|| FloError::new(FloErrorKind::Metadata, "Metadata must be an object"))?;
 
     let mut meta = FloMetadata::default();
 

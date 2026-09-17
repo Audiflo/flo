@@ -26,13 +26,12 @@ name = "reflo_tests"
 path = "../../../Tests/reflo/encode_decode_tests.rs"
 
 [features]
-default = ["std", "audio-io", "fft-rustfft"]
+default = ["std", "fft-rustfft"]
 std = ["dep:chrono"]
-audio-io = ["std", "dep:symphonia"]
 fft-rustfft = ["libflo-audio/fft-rustfft"]
 fft-microfft = ["libflo-audio/fft-microfft"]
 wasm = [
-	"audio-io",
+	"std",
 	"fft-rustfft",
 	"libflo-audio/wasm",
 	"dep:wasm-bindgen",
@@ -47,9 +46,8 @@ libflo-audio = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 
-anyhow = { workspace = true, default-features = false }
 chrono = { workspace = true, optional = true }
-symphonia = { workspace = true, optional = true }
+symphonia = { workspace = true }
 
 # WASM
 wasm-bindgen = { workspace = true, optional = true }
