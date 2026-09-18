@@ -3,10 +3,10 @@ type: concept
 title: "CLI Reference"
 source: "https://audiflo.github.io/flo/cli-reference/"
 path: /cli-reference/
-updated: 2026-09-10
+updated: 2026-09-18
 okf:
   generated_by: "@docmd/plugin-okf"
-  generated_at: "2026-09-10T18:47:07.196Z"
+  generated_at: "2026-09-18T02:08:10.143Z"
 ---
 # CLI Reference
 

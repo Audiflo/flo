@@ -1,0 +1,36 @@
+{
+  "name": "@flo-audio/reflo",
+  "version": "0.1.2",
+  "description": "WebAssembly audio converter for the flo audio format",
+  "main": "reflo.js",
+  "types": "reflo.d.ts",
+  "files": [
+    "reflo_bg.wasm",
+    "reflo.js",
+    "reflo.d.ts"
+  ],
+  "keywords": [
+    "audio",
+    "codec",
+    "compression",
+    "wasm",
+    "webassembly",
+    "converter",
+    "encoder",
+    "decoder"
+  ],
+  "author": "NellowTCS",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/flo-audio/flo.git",
+    "directory": "reflo"
+  },
+  "homepage": "https://github.com/flo-audio/flo",
+  "bugs": {
+    "url": "https://github.com/flo-audio/flo/issues"
+  },
+  "sideEffects": [
+    "./reflo.js"
+  ]
+}
