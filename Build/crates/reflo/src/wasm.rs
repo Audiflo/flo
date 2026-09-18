@@ -1,5 +1,9 @@
+use alloc::boxed::Box;
+use alloc::format;
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::vec::Vec;
 use serde_wasm_bindgen::to_value;
-use std::io::Cursor;
 use symphonia::core::codecs::audio::CODEC_ID_NULL_AUDIO;
 use symphonia::core::formats::probe::Hint;
 use symphonia::core::formats::FormatOptions;
@@ -73,8 +77,10 @@ pub fn get_flo_info(flo_bytes: &[u8]) -> Result<JsValue, JsValue> {
 #[wasm_bindgen]
 pub fn get_audio_file_info(audio_bytes: &[u8]) -> Result<JsValue, JsValue> {
     let owned_bytes = audio_bytes.to_vec();
-    let cursor = Cursor::new(owned_bytes);
-    let mss = MediaSourceStream::new(Box::new(cursor), Default::default());
+    let mss = MediaSourceStream::new(
+        Box::new(crate::audio::ByteSource::new(owned_bytes)),
+        Default::default(),
+    );
 
     // Use the default probe which should have all formats registered
     let format = symphonia::default::get_probe()

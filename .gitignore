@@ -33,3 +33,4 @@ Tests/libflo/js/coverage/
 
 .codesandbox/
 .vscode/
+.DS_Store

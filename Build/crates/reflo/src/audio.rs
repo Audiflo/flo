@@ -26,13 +26,13 @@ fn io_err(ctx: &str, e: impl core::fmt::Display) -> FloError {
     FloError::new(FloErrorKind::Io, alloc::format!("{ctx}: {e}"))
 }
 
-struct ByteSource {
+pub(crate) struct ByteSource {
     data: Vec<u8>,
     pos: usize,
 }
 
 impl ByteSource {
-    fn new(data: Vec<u8>) -> Self {
+    pub(crate) fn new(data: Vec<u8>) -> Self {
         ByteSource { data, pos: 0 }
     }
 }
