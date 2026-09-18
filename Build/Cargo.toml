@@ -50,6 +50,7 @@ symphonia = { git = "https://github.com/NellowTCS/Symphonia", branch = "main", d
     "ogg",
     "vorbis",
     "aac",
+    "alac",
     "isomp4",
     "pcm",
     "wav",

@@ -667,6 +667,7 @@ dependencies = [
  "symphonia-bundle-flac",
  "symphonia-bundle-mp3",
  "symphonia-codec-aac",
+ "symphonia-codec-alac",
  "symphonia-codec-pcm",
  "symphonia-codec-vorbis",
  "symphonia-core",
@@ -706,6 +707,16 @@ dependencies = [
  "log",
  "num-traits",
  "once_cell",
+ "symphonia-common",
+ "symphonia-core",
+]
+
+[[package]]
+name = "symphonia-codec-alac"
+version = "0.6.1"
+source = "git+https://github.com/NellowTCS/Symphonia?branch=main#3cf66ff220b121c5583d96dd6b5c712107537f69"
+dependencies = [
+ "log",
  "symphonia-common",
  "symphonia-core",
 ]
