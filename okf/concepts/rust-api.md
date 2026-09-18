@@ -6,7 +6,7 @@ path: /rust-api/
 updated: 2026-09-18
 okf:
   generated_by: "@docmd/plugin-okf"
-  generated_at: "2026-09-18T02:08:10.146Z"
+  generated_at: "2026-09-18T06:09:59.955Z"
 ---
 # Rust API
 
