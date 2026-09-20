@@ -22,7 +22,7 @@
 ## Seeking & Playback
 
 - [x] Add TOC-based seeking for large files (without fully decoding)
-  - `get_toc(flo_data)` - Return TOC entries with timestamp_ms → byte_offset mapping
+  - `get_toc(flo_data)` - Return TOC entries with timestamp_ms -> byte_offset mapping
   - `decode_frame_at(flo_data, frame_index)` - Decode specific frame by index
   - `seek_to_time(flo_data, time_ms)` - Find frame and decode from position
 - [x] Streaming playback with on-demand frame decoding

@@ -116,8 +116,8 @@ impl Encoder {
         let mut all_raw = true;
 
         for ch_samples in &channel_data {
-            let (ch_data, order_used) = self.encode_channel_int(ch_samples, lpc_order);
-            if order_used > 0 {
+            let (ch_data, order_used, used_raw) = self.encode_channel_int(ch_samples, lpc_order);
+            if !used_raw || order_used > 0 {
                 all_raw = false;
             }
             encoded_channels.push(ch_data);
@@ -181,24 +181,35 @@ impl Encoder {
         (mid, side)
     }
 
-    /// Encode a single channel using integer LPC
-    fn encode_channel_int(&self, samples: &[i32], max_order: usize) -> (ChannelData, usize) {
+    /// Encode a single channel using integer LPC.
+    #[allow(clippy::type_complexity)]
+    fn encode_channel_int(&self, samples: &[i32], max_order: usize) -> (ChannelData, usize, bool) {
         if samples.is_empty() {
-            return (ChannelData::new_silence(), 0);
+            return (ChannelData::new_silence(), 0, false);
         }
 
         // Try different encoding strategies and pick the smallest
         let mut best_data: Option<ChannelData> = None;
         let mut best_size = usize::MAX;
         let mut best_order = 0;
+        let mut best_used_raw = false;
 
         // Strategy 1: Raw PCM (baseline)
-        let raw = self.encode_raw(samples);
-        let raw_size = raw.residuals.len();
-        if raw_size < best_size {
-            best_size = raw_size;
-            best_data = Some(raw);
-            best_order = 0;
+        // Raw stores 16-bit samples, so skip it when any sample exceeds i16 range.
+        // Mid-side transforms (mid = L + R) routinely push channels past +/-32767;
+        // casting those to i16 would wrap and silently corrupt data.
+        let raw_fits_i16 = samples
+            .iter()
+            .all(|&s| (i32::from(i16::MIN)..=i32::from(i16::MAX)).contains(&s));
+        if raw_fits_i16 {
+            let raw = self.encode_raw(samples);
+            let raw_size = raw.residuals.len();
+            if raw_size < best_size {
+                best_size = raw_size;
+                best_data = Some(raw);
+                best_order = 0;
+                best_used_raw = true;
+            }
         }
 
         // Strategy 2: Fixed predictors (order 0-4, very fast)
@@ -208,6 +219,7 @@ impl Encoder {
                     best_size = size;
                     best_data = Some(data);
                     best_order = order;
+                    best_used_raw = false;
                 }
             }
         }
@@ -220,12 +232,13 @@ impl Encoder {
                         best_size = size;
                         best_data = Some(data);
                         best_order = order;
+                        best_used_raw = false;
                     }
                 }
             }
         }
 
-        (best_data.unwrap(), best_order)
+        (best_data.unwrap(), best_order, best_used_raw)
     }
 
     /// Encode as raw PCM

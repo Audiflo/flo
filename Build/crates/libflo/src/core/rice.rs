@@ -94,7 +94,7 @@ pub fn encode_i32(residuals: &[i32], k: u8) -> Vec<u8> {
 
 fn encode_sample(bits: &mut BitWriter, sample: i32, k: u8) {
     // Zigzag encode: map signed to unsigned
-    // 0 → 0, -1 → 1, 1 → 2, -2 → 3, 2 → 4, ...
+    // 0 -> 0, -1 -> 1, 1 -> 2, -2 -> 3, 2 -> 4, ...
     let unsigned = ((sample << 1) ^ (sample >> 31)) as u32;
 
     // Rice coding: quotient and remainder
@@ -150,7 +150,7 @@ pub fn decode_i32(encoded: &[u8], k: u8, target_len: usize) -> Vec<i32> {
         let unsigned = (quotient << k) | remainder;
 
         // Zigzag decode
-        // 0 → 0, 1 → -1, 2 → 1, 3 → -2, 4 → 2, ...
+        // 0 -> 0, 1 -> -1, 2 -> 1, 3 -> -2, 4 -> 2, ...
         let signed = ((unsigned >> 1) as i32) ^ (-((unsigned & 1) as i32));
 
         residuals.push(signed);

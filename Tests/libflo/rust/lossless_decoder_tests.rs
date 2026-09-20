@@ -1,6 +1,6 @@
 //! Lossless decoder tests for libflo
 
-use libflo_audio::{decode, encode, Decoder};
+use libflo_audio::{decode, encode, Decoder, Encoder};
 
 // ============================================================================
 // Decoder API Tests
@@ -83,6 +83,79 @@ fn test_decoder_short_audio() {
     let decoded = decode(&flo_data).expect("Decoding failed");
 
     assert_eq!(decoded.len(), samples.len());
+}
+
+#[test]
+fn test_decoder_roundtrip_bit_exact_pcm_grid() {
+    // Every input sample sits exactly on the 16-bit PCM grid (i / 32768).
+    // The lossless codec must reproduce these sample-for-sample otherwise...
+    // we have *issues*
+    let sample_rate = 48000u32;
+    let mut samples: Vec<f32> = Vec::new();
+    for i in 0..(sample_rate as usize * 2) {
+        let raw = ((i * 2654435761) % 65536) as i32 - 32768;
+        samples.push((raw as f32) * (1.0 / 32768.0));
+    }
+
+    let flo_data = encode(&samples, sample_rate, 2, 16, None).expect("Encoding failed");
+    let decoded = decode(&flo_data).expect("Decoding failed");
+
+    assert_eq!(decoded.len(), samples.len());
+    for (idx, (orig, dec)) in samples.iter().zip(decoded.iter()).enumerate() {
+        assert_eq!(
+            (orig * 32768.0).round() as i32,
+            (dec * 32768.0).round() as i32,
+            "PCM grid mismatch at sample {}: orig={} dec={}",
+            idx,
+            orig,
+            dec
+        );
+    }
+}
+
+/// Deterministic xorshift64 noise in [-1, 1]
+fn grid_noise(amp: f32, n: usize, channels: usize, seed: u64) -> Vec<f32> {
+    let mut x = seed;
+    let mut xorshift = move || {
+        x ^= x << 13;
+        x ^= x >> 7;
+        x ^= x << 17;
+        (x >> 11) as f32 / (1u64 << 53) as f32 * 2.0 - 1.0
+    };
+    let mut out = Vec::with_capacity(n * channels);
+    for _ in 0..n {
+        let v = xorshift() * amp;
+        let q = (v * 32768.0).round().clamp(-32768.0, 32767.0) as i32 as f32 * (1.0 / 32768.0);
+        for _ in 0..channels {
+            out.push(q);
+        }
+    }
+    out
+}
+
+#[test]
+fn test_decoder_roundtrip_loud_identical_stereo_mid_side() {
+    let sample_rate = 48000u32;
+    let samples = grid_noise(0.8, sample_rate as usize, 2, 0x9E3779B97F4A7C15);
+
+    for level in 0..=9 {
+        let encoder = Encoder::new(sample_rate, 2, 16).with_compression(level);
+        let flo_data = encoder.encode(&samples, &[]).expect("Encoding failed");
+        let decoded = decode(&flo_data).expect("Decoding failed");
+
+        assert_eq!(decoded.len(), samples.len());
+        for (idx, (orig, dec)) in samples.iter().zip(decoded.iter()).enumerate() {
+            assert_eq!(
+                (orig * 32768.0).round() as i32,
+                (dec * 32768.0).round() as i32,
+                "PCM grid mismatch at sample {} (level {}): orig={} dec={}",
+                idx,
+                level,
+                orig,
+                dec
+            );
+        }
+    }
 }
 
 // ============================================================================

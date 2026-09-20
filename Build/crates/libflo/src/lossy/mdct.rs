@@ -332,7 +332,7 @@ impl Mdct {
         MdctTransform::vorbis_window(n)
     }
 
-    /// Forward MDCT: N time samples → N/2 frequency coefficients
+    /// Forward MDCT: N time samples -> N/2 frequency coefficients
     ///
     /// X[k] = Σ x[n] * w[n] * cos(π/N * (n + 0.5 + N/2) * (k + 0.5))
     pub fn forward(&self, samples: &[f32], block_size: BlockSize) -> Vec<f32> {
@@ -347,7 +347,7 @@ impl Mdct {
         transform.forward(&samples[..n])
     }
 
-    /// Inverse MDCT: N/2 frequency coefficients → N time samples
+    /// Inverse MDCT: N/2 frequency coefficients -> N time samples
     ///
     /// y[n] = 2/N * Σ(k=0 to N-1) X[k] * cos(π/N * (n + 0.5 + N/2) * (k + 0.5))
     pub fn inverse(&self, coeffs: &[f32], block_size: BlockSize) -> Vec<f32> {

@@ -4,18 +4,18 @@ This directory contains example `.flo` audio files demonstrating different use c
 
 ## Lossless Examples
 
-| File                      | Description                | Duration | Sample Rate | Channels | Size     |
-| ------------------------- | -------------------------- | -------- | ----------- | -------- | -------- |
-| `sine_440hz_mono.flo`     | Pure 440Hz A4 sine wave    | 2s       | 44.1kHz     | Mono     | 56KB     |
-| `chord_cmajor_stereo.flo` | C major chord (C4+E4+G4)   | 2s       | 44.1kHz     | Stereo   | 79KB     |
-| `sweep_20_20k.flo`        | Frequency sweep 20Hz→20kHz | 5s       | 44.1kHz     | Mono     | 229KB    |
-| `white_noise.flo`         | Random white noise         | 1s       | 44.1kHz     | Mono     | 81KB     |
-| `silence_1sec.flo`        | Complete silence           | 1s       | 44.1kHz     | Mono     | **125B** |
-| `click_track_120bpm.flo`  | Metronome at 120 BPM       | 4s       | 44.1kHz     | Mono     | 133KB    |
-| `multitone_stereo.flo`    | Different tones L/R        | 2s       | 44.1kHz     | Stereo   | 162KB    |
-| `dtmf_tones.flo`          | Phone dial tones 0-9       | 3s       | 44.1kHz     | Mono     | 138KB    |
-| `hires_96khz.flo`         | Hi-res 1kHz tone           | 1s       | 96kHz       | Mono     | 63KB     |
-| `telephone_8khz.flo`      | Telephone quality          | 1s       | 8kHz        | Mono     | 8KB      |
+| File                      | Description                 | Duration | Sample Rate | Channels | Size     |
+| ------------------------- | --------------------------- | -------- | ----------- | -------- | -------- |
+| `sine_440hz_mono.flo`     | Pure 440Hz A4 sine wave     | 2s       | 44.1kHz     | Mono     | 56KB     |
+| `chord_cmajor_stereo.flo` | C major chord (C4+E4+G4)    | 2s       | 44.1kHz     | Stereo   | 79KB     |
+| `sweep_20_20k.flo`        | Frequency sweep 20Hz->20kHz | 5s       | 44.1kHz     | Mono     | 229KB    |
+| `white_noise.flo`         | Random white noise          | 1s       | 44.1kHz     | Mono     | 81KB     |
+| `silence_1sec.flo`        | Complete silence            | 1s       | 44.1kHz     | Mono     | **125B** |
+| `click_track_120bpm.flo`  | Metronome at 120 BPM        | 4s       | 44.1kHz     | Mono     | 133KB    |
+| `multitone_stereo.flo`    | Different tones L/R         | 2s       | 44.1kHz     | Stereo   | 162KB    |
+| `dtmf_tones.flo`          | Phone dial tones 0-9        | 3s       | 44.1kHz     | Mono     | 138KB    |
+| `hires_96khz.flo`         | Hi-res 1kHz tone            | 1s       | 96kHz       | Mono     | 63KB     |
+| `telephone_8khz.flo`      | Telephone quality           | 1s       | 8kHz        | Mono     | 8KB      |
 
 ## Lossy Examples
 
