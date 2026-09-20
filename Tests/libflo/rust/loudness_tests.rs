@@ -225,3 +225,44 @@ fn test_ebu_r128_gating_threshold() {
     assert!(m.integrated_lufs <= -23.0);
     assert_eq!(m.loudness_range_lu, 0.0);
 }
+
+#[test]
+fn test_ebu_r128_incomplete_block_ignored() {
+    let sr = 44100;
+    let quiet = 0.05f32;
+    let loud = 0.9f32;
+
+    let sine = |n: usize, amp: f32| -> Vec<f32> {
+        (0..n)
+            .map(|i| amp * (2.0 * std::f32::consts::PI * 440.0 * i as f32 / sr as f32).sin())
+            .collect()
+    };
+
+    let block = (sr as f64 * 0.4).round() as usize;
+    let tail = (sr as f64 * 0.05).round() as usize;
+
+    let mut with_loud_tail = sine(block, quiet);
+    with_loud_tail.extend(sine(tail, loud));
+
+    // Reference: an all-quiet signal with identical usable block content.
+    let all_quiet = sine(block, quiet);
+
+    let m_quiet = compute_ebu_r128_loudness(&all_quiet, 1, sr);
+    let m_tail = compute_ebu_r128_loudness(&with_loud_tail, 1, sr);
+
+    assert!(
+        (m_quiet.integrated_lufs - m_tail.integrated_lufs).abs() < 0.05,
+        "loud partial block must be dropped (quiet={:.2}, tail={:.2})",
+        m_quiet.integrated_lufs,
+        m_tail.integrated_lufs
+    );
+
+    let tail_rms = sine(tail, loud).iter().map(|s| s * s).sum::<f32>() / tail as f32;
+    let body_rms = sine(block, quiet).iter().map(|s| s * s).sum::<f32>() / block as f32;
+    assert!(
+        tail_rms > body_rms * 100.0,
+        "tail RMS must dominate the body (body={}: tail={})",
+        body_rms,
+        tail_rms
+    );
+}

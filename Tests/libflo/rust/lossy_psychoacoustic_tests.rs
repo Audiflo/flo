@@ -57,4 +57,73 @@ mod psychoacoustic_tests {
             "Masking threshold should be higher near the masker"
         );
     }
+
+    #[test]
+    fn test_allocate_bits_prioritizes_high_smr_band() {
+        let mut model = PsychoacousticModel::new(44100, 2048);
+
+        let mut coeffs = vec![0.0f32; model.num_coefficients()];
+        let strong = (1000.0 / model.frequency_resolution()).round() as usize;
+        coeffs[strong] = 1.0;
+
+        let smr = model.calculate_smr(&coeffs);
+        let allocation = model.allocate_bits(&smr, 1000);
+
+        assert!(
+            allocation.iter().any(|&b| b == 0),
+            "masked bands should get no bits"
+        );
+        assert!(
+            allocation[strong] > 0,
+            "the audible tone band should get bits (got {})",
+            allocation[strong]
+        );
+
+        // Bits follow SMR, not position
+        let far = model.num_coefficients() - 1;
+        assert!(allocation[far] <= allocation[strong]);
+    }
+
+    #[test]
+    fn test_temporal_masking_decays_across_frames() {
+        let mut model = PsychoacousticModel::new(44100, 2048);
+
+        let band = 16; // 3150-3700 Hz
+        let mut coeffs = vec![0.0f32; model.num_coefficients()];
+        let mut tone = 0;
+        for (k, c) in coeffs.iter_mut().enumerate() {
+            if model.get_bark_band(k) == band {
+                *c = 3.0;
+                if tone == 0 {
+                    tone = k;
+                }
+            }
+        }
+        assert!(tone > 0, "band 16 should hold coefficients");
+
+        // Loud frame raises the band threshold via temporal (post-)masking.
+        model.calculate_masking_threshold(&coeffs);
+
+        // Silence after the loud frame: threshold decays ~3 dB/frame to the ATH floor.
+        let silence = vec![0.0f32; model.num_coefficients()];
+        let t1 = model.calculate_masking_threshold(&silence);
+        let t2 = model.calculate_masking_threshold(&silence);
+        let t3 = model.calculate_masking_threshold(&silence);
+
+        let mut baseline = PsychoacousticModel::new(44100, 2048);
+        let floor = baseline.calculate_masking_threshold(&silence)[tone];
+
+        assert!(
+            t1[tone] > floor + 0.1,
+            "temporal masking should lift above ATH (t1={:.1}, floor={:.1})",
+            t1[tone],
+            floor
+        );
+        assert!(t1[tone] > t2[tone], "mask should decay per frame");
+        assert!(
+            t3[tone] > floor - 0.1 && t3[tone] < floor + 0.1,
+            "mask should converge to the ATH floor (t3={:.1})",
+            t3[tone]
+        );
+    }
 }

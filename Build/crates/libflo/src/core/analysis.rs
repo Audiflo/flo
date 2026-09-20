@@ -222,7 +222,9 @@ pub fn extract_waveform_rms(
 /// * `samples` - Audio samples (interleaved if stereo)
 /// * `channels` - Number of audio channels (1 or 2)
 /// * `sample_rate` - Sample rate in Hz
-/// * `fft_size` - FFT window size (must be power of 2, default: 2048)
+/// * `fft_size` - FFT window size (must be power of 2, default: 2048).
+///   Rounded down to a power of two and clamped to the active FFT backend's
+///   maximum supported length (512 under `fft-microfft`).
 /// * `hop_size` - Hop size between frames (default: fft_size/2 for 50% overlap)
 ///
 /// # Returns
@@ -231,10 +233,10 @@ pub fn extract_spectral_fingerprint(
     samples: &[FloSample],
     channels: u8,
     sample_rate: u32,
-    _fft_size: Option<usize>,
-    _hop_size: Option<usize>,
+    fft_size: Option<usize>,
+    hop_size: Option<usize>,
 ) -> SpectralFingerprint {
-    if samples.is_empty() {
+    if samples.is_empty() || channels == 0 || sample_rate == 0 {
         return SpectralFingerprint {
             hash: [0; 32],
             duration_ms: 0,
@@ -245,6 +247,16 @@ pub fn extract_spectral_fingerprint(
             avg_loudness: 0,
         };
     }
+
+    let mut planner = DefaultPlanner::new();
+    let max_fft_len = planner.max_supported_len();
+
+    // Round the requested FFT size down to a supported power of two.
+    let fft_size = fft_size
+        .unwrap_or(2048)
+        .next_power_of_two()
+        .clamp(4, max_fft_len);
+    let hop_size = hop_size.unwrap_or(fft_size / 2).max(1);
 
     // Calculate duration - ensure at least 1ms for any non-zero samples
     let samples_per_channel = samples.len() / (channels as usize);
@@ -262,6 +274,9 @@ pub fn extract_spectral_fingerprint(
 
     // Hash samples in chunks to avoid memory issues
     for chunk in samples.chunks(1024) {
+        // SAFETY: f32 permits any bit pattern (including NaN), and `chunk` is a
+        // correctly aligned `[f32]`, so reinterpreting it as the same number of
+        // bytes is valid; we never mutate through this view.
         let chunk_bytes = unsafe {
             core::slice::from_raw_parts(chunk.as_ptr() as *const u8, core::mem::size_of_val(chunk))
         };
@@ -269,24 +284,30 @@ pub fn extract_spectral_fingerprint(
     }
     let hash = hasher.finalize().into();
 
-    // Compact spectral analysis using small FFT
-    let fft_size = 256; // Much smaller than before
-    let mut planner = DefaultPlanner::new();
+    // Compact spectral analysis using a Hann-windowed short FFT swept over the
+    // whole signal at the requested hop size.
     let fft = planner.plan_fft(fft_size, FftDirection::Forward);
     let mut fft_buffer = vec![Complex32 { re: 0.0, im: 0.0 }; fft_size];
 
-    // Take first and middle sections for analysis (quick sampling)
-    let analysis_points = [
-        samples_per_channel / 4,
-        samples_per_channel / 2,
-        (samples_per_channel * 3) / 4,
-    ];
+    // Hann window reduces spectral leakage between bins.
+    let window: Vec<f32> = (0..fft_size)
+        .map(|i| {
+            0.5 - 0.5
+                * libm::cosf((2.0 * core::f32::consts::PI * i as f32) / ((fft_size - 1) as f32))
+        })
+        .collect();
+
     let mut frequency_bands = [0.0f32; 16];
     let mut peak_bands = [0u8; 8];
 
-    for &sample_idx in &analysis_points {
-        if sample_idx + fft_size < samples_per_channel {
-            // Extract mono samples for this section
+    // Frame the signal into (samples_per_channel - fft_size) / hop + 1 windows.
+    if samples_per_channel >= fft_size {
+        let num_frames = (samples_per_channel - fft_size) / hop_size + 1;
+
+        for frame_idx in 0..num_frames {
+            let sample_idx = frame_idx * hop_size;
+
+            // Extract mono samples for this window
             for i in 0..fft_size {
                 let mut sample = 0.0;
                 for ch in 0..channels {
@@ -297,7 +318,7 @@ pub fn extract_spectral_fingerprint(
                 }
                 sample /= channels as f32;
                 fft_buffer[i] = Complex32 {
-                    re: sample,
+                    re: sample * window[i],
                     im: 0.0,
                 };
             }
@@ -350,9 +371,10 @@ pub fn extract_spectral_fingerprint(
         [0; 16]
     };
 
-    // Compute average loudness (simplified RMS to LUFS conversion)
+    // Average loudness: map RMS dBFS (0..-60) onto 0..255 where 255 is 0 dBFS.
     let rms: f32 = samples.iter().map(|&s| s * s).sum::<f32>() / (samples.len() as f32);
-    let avg_loudness = ((-20.0 * libm::log10f(rms + 1e-10)).clamp(-60.0, 0.0) + 60.0) as u8;
+    let avg_loudness_db = (20.0 * libm::log10f(rms + 1e-10)).clamp(-60.0, 0.0);
+    let avg_loudness = ((avg_loudness_db + 60.0) / 60.0 * 255.0) as u8;
 
     SpectralFingerprint {
         hash,

@@ -20,6 +20,12 @@ impl FftPlanner for RustFftPlanner {
         };
         Box::new(RustFft(fft))
     }
+
+    /// rustfft supports arbitrary lengths; cap at 65536 as a defensive thing
+    /// so callers cannot accidentally plan an OOM-sized transform (silly of them)
+    fn max_supported_len(&self) -> usize {
+        1 << 16
+    }
 }
 
 /// A `rustfft` plan behind the [`Fft`] trait.

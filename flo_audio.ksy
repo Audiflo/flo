@@ -61,11 +61,11 @@ types:
       
       - id: version_major
         type: u1
-        doc: Format major version (currently 1)
+        doc: Format major version
       
       - id: version_minor
         type: u1
-        doc: Format minor version (currently 2)
+        doc: Format minor version
       
       - id: flags
         type: u2

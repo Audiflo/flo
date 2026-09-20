@@ -30,6 +30,8 @@ pub trait FftPlanner {
     fn new() -> Self;
     /// Plan an FFT of `len` complex samples in the given direction.
     fn plan_fft(&mut self, len: usize, direction: FftDirection) -> Box<dyn Fft>;
+    /// Largest FFT length this backend can plan.
+    fn max_supported_len(&self) -> usize;
     /// Plan a forward FFT of `len` complex samples.
     fn plan_fft_forward(&mut self, len: usize) -> Box<dyn Fft> {
         self.plan_fft(len, FftDirection::Forward)

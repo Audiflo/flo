@@ -29,8 +29,9 @@ pub struct PsychoacousticModel {
     pub(crate) bark_band: Vec<usize>,
     /// Spreading function matrix (for masking)
     pub(crate) spreading: Vec<Vec<f32>>,
-    /// Previous frame's energy (for temporal masking)
-    pub(crate) prev_energy: Vec<f32>,
+    /// Previous frame's masking threshold per Bark band (dB), for temporal
+    /// (post-)masking
+    pub(crate) prev_threshold_db: Vec<f32>,
 }
 
 impl PsychoacousticModel {
@@ -58,8 +59,8 @@ impl PsychoacousticModel {
         // Pre-compute spreading function
         let spreading = Self::compute_spreading_function();
 
-        // Initialize previous energy
-        let prev_energy = vec![0.0f32; NUM_BARK_BANDS];
+        // Initialize previous threshold to silence
+        let prev_threshold_db = vec![-100.0f32; NUM_BARK_BANDS];
 
         Self {
             sample_rate,
@@ -69,7 +70,7 @@ impl PsychoacousticModel {
             ath,
             bark_band,
             spreading,
-            prev_energy,
+            prev_threshold_db,
         }
     }
 
@@ -197,12 +198,16 @@ impl PsychoacousticModel {
         }
 
         // Step 4: Temporal masking (post-masking)
-        // Previous frame's energy can still mask current frame
-        let temporal_decay = 0.7; // Decay factor per frame
+        let temporal_decay = 0.5; // linear energy decay factor per frame (~3 dB/frame)
         for i in 0..NUM_BARK_BANDS {
-            let temporal_mask = self.prev_energy[i] * temporal_decay;
-            spread_threshold[i] = spread_threshold[i].max(temporal_mask);
-            self.prev_energy[i] = spread_threshold[i];
+            let prev_linear = libm::powf(10.0f32, self.prev_threshold_db[i] / 10.0);
+            let temporal_mask_db = if prev_linear > 1e-10 {
+                10.0 * libm::log10f(prev_linear * temporal_decay)
+            } else {
+                -100.0
+            };
+            spread_threshold[i] = spread_threshold[i].max(temporal_mask_db);
+            self.prev_threshold_db[i] = spread_threshold[i];
         }
 
         // Step 5: Combine with ATH and map back to coefficients
@@ -239,10 +244,7 @@ impl PsychoacousticModel {
 
     /// Calculate bits needed per band based on SMR
     /// Higher SMR needs more bits to avoid audible quantization noise
-    pub fn allocate_bits(&mut self, coeffs: &[f32], total_bits: usize) -> Vec<u8> {
-        let smr = self.calculate_smr(coeffs);
-
-        // Calculate bits per band based on SMR
+    pub fn allocate_bits(&self, smr: &[f32], total_bits: usize) -> Vec<u8> {
         let mut band_smr = [0.0f32; NUM_BARK_BANDS];
         let mut band_count = [0usize; NUM_BARK_BANDS];
 
@@ -281,6 +283,6 @@ impl PsychoacousticModel {
 
     /// Reset temporal state (for seeking/discontinuities)
     pub fn reset(&mut self) {
-        self.prev_energy.fill(0.0);
+        self.prev_threshold_db.fill(-100.0);
     }
 }

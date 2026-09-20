@@ -92,8 +92,13 @@ impl TransformEncoder {
             // Psychoacoustic analysis
             let smr = self.psy_models[ch].calculate_smr(&coeffs);
 
+            // Bit budget grows with quality: 1..16 nominal bits per coefficient.
+            let bits_per_coeff = 1.0 + self.quality * 15.0;
+            let total_bits = (self.block_size.coefficients() as f32 * bits_per_coeff) as usize;
+            let allocation = self.psy_models[ch].allocate_bits(&smr, total_bits);
+
             // Quantize based on perceptual importance
-            let (quantized, scale_factors) = self.quantize_coefficients(&coeffs, &smr);
+            let (quantized, scale_factors) = self.quantize_coefficients(&coeffs, &smr, &allocation);
 
             all_coefficients.push(quantized);
             all_scale_factors.push(scale_factors);
@@ -107,8 +112,13 @@ impl TransformEncoder {
         }
     }
 
-    /// Quantize MDCT coefficients based on SMR
-    pub fn quantize_coefficients(&self, coeffs: &[f32], smr: &[f32]) -> (Vec<i16>, Vec<f32>) {
+    /// Quantize MDCT coefficients based on SMR and per-band bit allocation
+    pub fn quantize_coefficients(
+        &self,
+        coeffs: &[f32],
+        smr: &[f32],
+        allocation: &[u8],
+    ) -> (Vec<i16>, Vec<f32>) {
         // Calculate scale factors per Bark band
         let mut band_max = [0.0f32; NUM_BARK_BANDS];
         let freq_resolution = self.sample_rate as f32 / self.block_size.samples() as f32;
@@ -119,12 +129,30 @@ impl TransformEncoder {
             band_max[band] = band_max[band].max(c.abs());
         }
 
+        // Per-band bit allocation from the psychoacoustic model
+        let mut band_bits_max = [0u8; NUM_BARK_BANDS];
+        for (k, &bits) in allocation.iter().enumerate() {
+            let freq = (k as f32 + 0.5) * freq_resolution;
+            let band = PsychoacousticModel::freq_to_bark_band(freq);
+            band_bits_max[band] = band_bits_max[band].max(bits);
+        }
+        // The most-precisely-allocated band in this frame is the reference.
+        let max_bits = band_bits_max.iter().copied().max().unwrap_or(0);
+
         // Calculate scale factors (to fit i16 range without clipping)
         let mut scale_factors = vec![1.0f32; NUM_BARK_BANDS];
         for (sf, &max_val) in scale_factors.iter_mut().zip(band_max.iter()) {
             if max_val > 1e-10 {
                 // Use 30000 as max to leave some headroom
                 *sf = 30000.0 / max_val;
+            }
+        }
+
+        // Refine per-band precision
+        if max_bits > 0 {
+            for (sf, &bits) in scale_factors.iter_mut().zip(band_bits_max.iter()) {
+                let weight = 0.25 + 0.75 * (bits as f32 / max_bits as f32);
+                *sf *= weight;
             }
         }
 

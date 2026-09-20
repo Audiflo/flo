@@ -1,18 +1,15 @@
 # Release pre-checks
 
-- make sure version is updated everywhere:
-  - flo_audio.ksy
-  - getting-started.md
-  - rust-api.md
-  - Cargo.toml
-  - package.json.template
-  - README.md
-  - lib.rs
-    - top comment
-    - test_version
-  - types.rs
-  - encoder.rs
-  - integration_tests.rs
-  - Cargo.toml (reflo)
-  - main.rs
-    (i should lessen that amount haha)
+Bump to the new version and verify it is updated everywhere:
+
+- **Crate version** (semver):
+  - `Build/Cargo.toml` - workspace `version` key
+  - `Build/crates/libflo/package.json.template` and `Build/crates/reflo/package.json.template` - npm `"version"`; these are copied into each `pkg/` dir by `scripts/libflo.py` / `scripts/reflo.py`, then into `Demo/pkg-*`
+  - `Build/crates/reflo-cli/src/main.rs` - `#[command(version = "...")]`
+  - `Docs/docs/getting-started.md` and `Docs/docs/rust-api.md` - `libflo-audio = { version = "..." }` / `reflo = { version = "...", ... }` dependency examples
+  - update `CHANGELOG.md`
+
+- **Format version** (`VERSION_MAJOR`/`VERSION_MINOR`):
+  - `Build/crates/libflo/src/core/types.rs` - `VERSION_MAJOR` / `VERSION_MINOR` constants (authoritative)
+  - `Build/crates/libflo/src/lib.rs` - `test_version` assertion
+  - `Tests/libflo/rust/integration_tests.rs` - `test_version` assertion

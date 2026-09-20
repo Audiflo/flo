@@ -149,8 +149,10 @@ pub fn dequantize_coefficients(coeffs: &[i32], shift_bits: u8) -> Vec<f32> {
 }
 
 /// Check if LPC coefficients represent a stable filter
-/// A filter is stable if all poles are inside the unit circle.
-/// This approximation checks if the sum of absolute coefficients is reasonable.
+///
+/// A filter is stable iff all poles lie inside the unit circle, which is
+/// guaranteed by the |reflection coefficient| < 1 check enforced inside
+/// `levinson_durbin_int`.
 pub fn is_stable(coeffs: &[f32]) -> bool {
     if coeffs.is_empty() {
         return true;

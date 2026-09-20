@@ -109,7 +109,11 @@ impl KWeighting {
     }
 }
 
-/// Windowed‑sinc FIR oversampling for true peak (4×).
+/// Windowed-sinc FIR oversampling for true peak (4x).
+///
+/// True peak is measured with a 4x oversampled windowed-sinc (Hann basically lol) FIR
+/// (Referencing the very handy BS.1770 Annex 2, which allows a method
+/// giving similar or better results than its reference 4-phase filter)
 fn compute_true_peak(samples: &[FloSample], channels: u8, sample_rate: u32) -> f64 {
     if samples.is_empty() || channels == 0 {
         return -150.0;
@@ -231,16 +235,14 @@ pub fn compute_ebu_r128_loudness(
         kw.push(out);
     }
 
-    // Block energies (400 ms, 100 ms hop), summed across channels
+    // Block energies (400 ms, 100 ms hop), summed across channels.
+    // BS.1770 gating blocks are rectangular, 400 ms long, with 75% overlap
     let mut block_energies = Vec::<f64>::new();
     let mut block_loudness = Vec::<f64>::new();
 
     let mut start = 0usize;
-    while start < frames {
-        let end = (start + block_400ms).min(frames);
-        if end <= start {
-            break;
-        }
+    while start + block_400ms <= frames {
+        let end = start + block_400ms;
 
         let mut energy = 0.0f64;
         let len = end - start;
@@ -261,9 +263,6 @@ pub fn compute_ebu_r128_loudness(
             block_loudness.push(-150.0);
         }
 
-        if end == frames {
-            break;
-        }
         start += hop_100ms;
     }
 

@@ -67,7 +67,8 @@ fn test_extract_spectral_fingerprint_power_of_two() {
     let samples = vec![0.5; 1000];
     let fingerprint = extract_spectral_fingerprint(&samples, 1, 44100, Some(1000), Some(500));
 
-    // Should produce valid fingerprint regardless of FFT size parameter (now ignored)
+    // Non-power-of-two FFT size is rounded down to the nearest power of two (here 512)
+    // and must still produce a valid fingerprint.
     assert_eq!(fingerprint.channels, 1);
     assert_eq!(fingerprint.sample_rate, 44100);
     assert!(fingerprint.duration_ms > 0);
@@ -245,4 +246,58 @@ fn test_fingerprint_duration_accuracy() {
     let fp_2sec =
         extract_spectral_fingerprint(&samples_2sec_stereo, 2, sample_rate as u32, None, None);
     assert!((fp_2sec.duration_ms as i32 - 2000).abs() < 50); // Within 50ms
+}
+
+#[test]
+fn test_spectral_fingerprint_honors_hop_size() {
+    let sr = 44100u32;
+    // A single transient: with a 64-sample hop the sweep frames it; with a large
+    // hop the analysis windows step over it entirely.
+    let mut samples = vec![0.0f32; 60000];
+    samples[2000] = 0.9;
+
+    let dense = extract_spectral_fingerprint(&samples, 1, sr, Some(512), Some(64));
+    let sparse = extract_spectral_fingerprint(&samples, 1, sr, Some(512), Some(4096));
+
+    let dense_energy: u32 = dense.energy_profile.iter().map(|&e| e as u32).sum();
+    let sparse_energy: u32 = sparse.energy_profile.iter().map(|&e| e as u32).sum();
+
+    assert!(
+        dense_energy > sparse_energy,
+        "dense sweep should catch the transient (dense={}, sparse={})",
+        dense_energy,
+        sparse_energy
+    );
+}
+
+#[test]
+fn test_avg_loudness_scale() {
+    let sr = 44100u32;
+    let two_pi = 2.0 * std::f32::consts::PI;
+
+    // Silence maps to the bottom of the 0..255 scale.
+    let silence = vec![0.0f32; 4096];
+    let fp = extract_spectral_fingerprint(&silence, 1, sr, Some(512), Some(256));
+    assert_eq!(fp.avg_loudness, 0);
+
+    // Full-scale sine: RMS is ~0.707 (-3 dBFS), so loudness sits near the top.
+    let sine = |amp: f32| -> Vec<f32> {
+        (0..4096)
+            .map(|i| amp * (two_pi * 440.0 * i as f32 / sr as f32).sin())
+            .collect()
+    };
+    let loud = extract_spectral_fingerprint(&sine(1.0), 1, sr, Some(512), Some(256));
+    assert!(
+        loud.avg_loudness > 220,
+        "full-scale sine should be loud (got {})",
+        loud.avg_loudness
+    );
+
+    // -60 dBFS lands at the floor of the scale.
+    let quiet = extract_spectral_fingerprint(&sine(0.001), 1, sr, Some(512), Some(256));
+    assert!(
+        quiet.avg_loudness < 10,
+        "-60 dBFS should be near silent (got {})",
+        quiet.avg_loudness
+    );
 }

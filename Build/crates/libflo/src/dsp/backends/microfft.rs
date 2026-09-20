@@ -14,6 +14,11 @@ impl FftPlanner for MicroFftPlanner {
     fn plan_fft(&mut self, len: usize, direction: FftDirection) -> Box<dyn Fft> {
         Box::new(MicroFft { len, direction })
     }
+
+    /// microfft ships fixed-length transforms for 4..=512 only.
+    fn max_supported_len(&self) -> usize {
+        512
+    }
 }
 
 /// A microfft plan behind the [`Fft`] trait.

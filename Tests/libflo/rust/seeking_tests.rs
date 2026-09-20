@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod seeking_tests {
     use libflo_audio::seeking;
-    use libflo_audio::{encode, encode_lossy, info};
+    use libflo_audio::{decode, encode, encode_lossy, info};
 
     /// Helper: Create test audio with known pattern
     fn create_test_audio(sample_rate: u32, channels: u8, duration_secs: f64) -> Vec<f32> {
@@ -409,5 +409,35 @@ mod seeking_tests {
 
         let result = seeking::seek_to_time(&flo_data, 500).expect("Failed to seek");
         assert_eq!(result.frame_index, 0);
+    }
+
+    #[test]
+    fn test_lossy_frame_matches_full_decode_segment() {
+        let samples = create_test_audio(48000, 2, 4.0);
+        let flo_data =
+            encode_lossy(&samples, 48000, 2, 16, 2, None).expect("Failed to encode lossy");
+
+        let full = decode(&flo_data).expect("Failed to decode full");
+        let toc = seeking::get_toc(&flo_data).expect("Failed to get TOC");
+
+        let hop = 1024; // Long block hop = num_coeffs
+        let channels = 2usize;
+        let frame_len = hop * channels;
+
+        for (i, entry) in toc.iter().enumerate().skip(1) {
+            let seg = seeking::decode_frame_at(&flo_data, entry.frame_index)
+                .expect("Failed to decode frame");
+
+            let start = (i - 1) * frame_len;
+            let end = start + frame_len;
+            let reference = &full[start..end];
+
+            assert_eq!(seg.len(), frame_len, "frame {} segment", i);
+            assert_eq!(seg.len(), reference.len(), "frame {} length", i);
+
+            for (a, b) in seg.iter().zip(reference.iter()) {
+                assert_eq!(a.to_bits(), b.to_bits(), "frame {} sample mismatch", i);
+            }
+        }
     }
 }

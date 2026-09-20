@@ -192,16 +192,15 @@ fn decode_frame_lossy(file: &FloFile, frame_index: usize) -> FloResult<Vec<f32>>
         let mut decoder =
             crate::lossy::TransformDecoder::new(file.header.sample_rate, file.header.channels);
 
-        // For lossy frames, we need to maintain decoder state across frames
-        // Skip frames before the target to maintain state
-        for i in 0..frame_index {
-            let f = &file.frames[i];
-            if f.channels.is_empty() {
-                continue;
-            }
-            let ch_data = &f.channels[0].residuals;
-            if let Some(tf) = crate::lossy::deserialize_frame(ch_data) {
-                let _ = decoder.decode_frame(&tf);
+        // The MDCT decoder's only state is the overlap buffer, which is the
+        // immediately preceding frame's IMDCT second half
+        if frame_index > 0 {
+            let prev = &file.frames[frame_index - 1];
+            if !prev.channels.is_empty() {
+                let ch_data = &prev.channels[0].residuals;
+                if let Some(tf) = crate::lossy::deserialize_frame(ch_data) {
+                    let _ = decoder.decode_frame(&tf);
+                }
             }
         }
 
