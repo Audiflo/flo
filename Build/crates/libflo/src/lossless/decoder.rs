@@ -22,6 +22,7 @@ impl Decoder {
     /// decode from parsed file
     pub fn decode_file(&self, file: &FloFile) -> FloResult<Vec<f32>> {
         let channels = file.header.channels as usize;
+        let halved_mid_side = file.header.version_minor >= 2;
         let mut all_samples: Vec<Vec<i32>> = vec![vec![]; channels];
 
         for frame in &file.frames {
@@ -36,7 +37,8 @@ impl Decoder {
 
             // mid-side to left-right
             if use_mid_side && frame_channels.len() == 2 {
-                let (left, right) = self.decode_mid_side(&frame_channels[0], &frame_channels[1]);
+                let (left, right) =
+                    self.decode_mid_side(&frame_channels[0], &frame_channels[1], halved_mid_side);
                 all_samples[0].extend(left);
                 all_samples[1].extend(right);
             } else {
@@ -74,20 +76,32 @@ impl Decoder {
     }
 
     /// Convert mid-side back to left-right
-    fn decode_mid_side(&self, mid: &[i32], side: &[i32]) -> (Vec<i32>, Vec<i32>) {
-        // FLAC-style: mid = L + R, side = L - R
-        // So: L = (mid + side) / 2, R = (mid - side) / 2
-        let left: Vec<i32> = mid
-            .iter()
-            .zip(side.iter())
-            .map(|(&m, &s)| (m + s) / 2)
-            .collect();
-        let right: Vec<i32> = mid
-            .iter()
-            .zip(side.iter())
-            .map(|(&m, &s)| (m - s) / 2)
-            .collect();
-        (left, right)
+    fn decode_mid_side(&self, mid: &[i32], side: &[i32], halved: bool) -> (Vec<i32>, Vec<i32>) {
+        if halved {
+            let left: Vec<i32> = mid
+                .iter()
+                .zip(side.iter())
+                .map(|(&m, &s)| m + ((s + (s & 1)) >> 1))
+                .collect();
+            let right: Vec<i32> = mid
+                .iter()
+                .zip(side.iter())
+                .map(|(&m, &s)| m - (s >> 1))
+                .collect();
+            (left, right)
+        } else {
+            let left: Vec<i32> = mid
+                .iter()
+                .zip(side.iter())
+                .map(|(&m, &s)| (m + s) / 2)
+                .collect();
+            let right: Vec<i32> = mid
+                .iter()
+                .zip(side.iter())
+                .map(|(&m, &s)| (m - s) / 2)
+                .collect();
+            (left, right)
+        }
     }
 
     /// Decode a single channel to integers

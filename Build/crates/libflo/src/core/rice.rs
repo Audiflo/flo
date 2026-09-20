@@ -71,14 +71,8 @@ pub fn estimate_rice_parameter_i32(residuals: &[i32]) -> u8 {
 
 /// Rice encode float residuals (quantizes to 16-bit)
 pub fn encode(residuals: &[f32], k: u8) -> Vec<u8> {
-    let mut bits = BitWriter::new();
-
-    for &residual in residuals {
-        let sample = f32_to_i32(residual);
-        encode_sample(&mut bits, sample, k);
-    }
-
-    bits.into_bytes()
+    let samples: Vec<i32> = residuals.iter().map(|&r| f32_to_i32(r)).collect();
+    encode_i32(&samples, k)
 }
 
 /// Rice encode integer residuals directly
@@ -101,9 +95,12 @@ fn encode_sample(bits: &mut BitWriter, sample: i32, k: u8) {
     let quotient = unsigned >> k;
     let remainder = unsigned & ((1 << k) - 1);
 
-    // Unary code for quotient (capped to prevent huge outputs)
-    let q_capped = quotient.min(255);
-    for _ in 0..q_capped {
+    // Unary code for quotient.
+    assert!(
+        quotient <= 255,
+        "rice quotient {quotient} exceeds 255 (k={k}): residuals exceed the k range, re-encode with a larger k"
+    );
+    for _ in 0..quotient {
         bits.write_bit(1);
     }
     bits.write_bit(0);

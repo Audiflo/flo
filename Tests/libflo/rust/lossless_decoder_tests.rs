@@ -1,6 +1,7 @@
 //! Lossless decoder tests for libflo
 
-use libflo_audio::{decode, encode, Decoder, Encoder};
+use libflo_audio::core::{ChannelData, Frame, FrameType};
+use libflo_audio::{decode, encode, Decoder, Encoder, Reader, Writer};
 
 // ============================================================================
 // Decoder API Tests
@@ -133,6 +134,27 @@ fn grid_noise(amp: f32, n: usize, channels: usize, seed: u64) -> Vec<f32> {
     out
 }
 
+fn grid_noise_channels(amp: f32, n: usize, channels: usize, seed: u64) -> Vec<f32> {
+    let mut streams: Vec<u64> = (0..channels as u64)
+        .map(|c| seed ^ c.rotate_left(17) ^ 0xD1B54A32D192ED03)
+        .collect();
+    let mut out = Vec::with_capacity(n * channels);
+    for _ in 0..n {
+        for ch in 0..channels {
+            let mut x = streams[ch];
+            x ^= x << 13;
+            x ^= x >> 7;
+            x ^= x << 17;
+            streams[ch] = x;
+            let v = (x >> 11) as f32 / (1u64 << 53) as f32 * 2.0 - 1.0;
+            let q = (v * amp * 32768.0).round().clamp(-32768.0, 32767.0) as i32 as f32
+                * (1.0 / 32768.0);
+            out.push(q);
+        }
+    }
+    out
+}
+
 #[test]
 fn test_decoder_roundtrip_loud_identical_stereo_mid_side() {
     let sample_rate = 48000u32;
@@ -155,6 +177,90 @@ fn test_decoder_roundtrip_loud_identical_stereo_mid_side() {
                 dec
             );
         }
+    }
+}
+
+#[test]
+fn test_decoder_roundtrip_loud_independent_stereo_mid_side() {
+    let sample_rate = 48000u32;
+    let samples = grid_noise_channels(0.8, sample_rate as usize, 2, 0x9E3779B97F4A7C15);
+
+    for level in 0..=9 {
+        let encoder = Encoder::new(sample_rate, 2, 16).with_compression(level);
+        let flo_data = encoder.encode(&samples, &[]).expect("Encoding failed");
+        let decoded = decode(&flo_data).expect("Decoding failed");
+
+        assert_eq!(decoded.len(), samples.len());
+        for (idx, (orig, dec)) in samples.iter().zip(decoded.iter()).enumerate() {
+            assert_eq!(
+                (orig * 32768.0).round() as i32,
+                (dec * 32768.0).round() as i32,
+                "PCM grid mismatch at sample {} (level {}): orig={} dec={}",
+                idx,
+                level,
+                orig,
+                dec
+            );
+        }
+    }
+}
+
+#[test]
+fn test_stereo_encode_writes_minor2_halved_mid_side() {
+    let sample_rate = 48000u32;
+    let samples = grid_noise(0.8, sample_rate as usize / 2, 2, 0xABCDEF12);
+    let flo_data = encode(&samples, sample_rate, 2, 16, None).expect("Encoding failed");
+    let file = Reader::new().read(&flo_data).expect("Reading failed");
+    assert!(file.header.version_minor >= 2);
+}
+
+#[test]
+fn test_decoder_legacy_minor1_mid_side_still_decodes() {
+    let sample_rate = 48000u32;
+    let seed: u64 = 0x1234_5678_9ABC_DEF0;
+    let mut x = seed;
+    let mut n = 512usize;
+    let mut mid_raw = Vec::with_capacity(n * 2);
+    let mut side_raw = Vec::with_capacity(n * 2);
+    let mut expected_l = Vec::with_capacity(n);
+    let mut expected_r = Vec::with_capacity(n);
+
+    // Deterministic L/R in [-16000, 16000] so released-1.1 mid = L + R fits i16.
+    while n > 0 {
+        x ^= x << 13;
+        x ^= x >> 7;
+        x ^= x << 17;
+        let l = (((x & 0xFFFF) as i32) % 32001) - 16000;
+        let r = ((((x >> 17) & 0xFFFF) as i32) % 32001) - 16000;
+        mid_raw.extend(((l + r) as i16).to_le_bytes());
+        side_raw.extend(((l - r) as i16).to_le_bytes());
+        expected_l.push(l);
+        expected_r.push(r);
+        n -= 1;
+    }
+
+    let frame = Frame {
+        frame_type: FrameType::Raw as u8,
+        frame_samples: expected_l.len() as u32,
+        flags: 0x01, // mid-side
+        channels: vec![
+            ChannelData::new_raw(mid_raw),
+            ChannelData::new_raw(side_raw),
+        ],
+    };
+    let mut bytes = Writer::new()
+        .write(sample_rate, 2, 16, 5, &[frame], &[])
+        .expect("Writing failed");
+    // Stored major/minor live at header offsets 4 and 5. Minor 1 is the only
+    // released format (tag v0.1.2); it coded mid = L + R.
+    bytes[4] = 1;
+    bytes[5] = 1;
+
+    let decoded = decode(&bytes).expect("Decoding failed");
+    assert_eq!(decoded.len(), expected_l.len() * 2);
+    for (i, (&l, &r)) in expected_l.iter().zip(expected_r.iter()).enumerate() {
+        assert_eq!((decoded[i * 2] * 32768.0).round() as i32, l);
+        assert_eq!((decoded[i * 2 + 1] * 32768.0).round() as i32, r);
     }
 }
 

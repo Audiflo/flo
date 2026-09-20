@@ -26,6 +26,14 @@ mod rice_tests {
     }
 
     #[test]
+    #[should_panic(expected = "exceeds 255")]
+    fn test_rice_undersized_k_panics_instead_of_corrupting() {
+        // A k far below the max residual violates the losslessnessness
+        let residuals: Vec<i32> = vec![1_000_000];
+        let _ = encode_i32(&residuals, 1);
+    }
+
+    #[test]
     fn test_zigzag() {
         // Test zigzag encoding/decoding
         let values = vec![0, 1, -1, 2, -2, 100, -100];

@@ -106,36 +106,28 @@ pub fn reconstruct_samples(coeffs: &[f32], residuals: &[f32], target_len: usize)
     samples
 }
 
-/// Quantize floating-point coefficients to integers
-pub fn quantize_coefficients(coeffs: &[f32]) -> (Vec<i32>, u8) {
-    if coeffs.is_empty() {
-        return (vec![], 0);
+/// Fixed-point quantization contract shared by every LPC coefficient path.
+fn quantize_fixed(coeffs: &[f64]) -> (Vec<i32>, u8) {
+    let max_val = coeffs.iter().map(|&c| c.abs()).fold(0.0f64, f64::max);
+    if max_val == 0.0 || !max_val.is_finite() {
+        return (vec![0; coeffs.len()], 0);
     }
 
-    let max_val = coeffs.iter().map(|&c| c.abs()).fold(0.0f32, f32::max);
+    let shift = (libm::floor(libm::log2((1u32 << 30) as f64 / max_val)) as i32).clamp(0, 15) as u8;
+    let scale = (1i64 << shift) as f64;
 
-    let shift_bits = if max_val > 0.0 && max_val.is_finite() {
-        let ratio = 2147483647.0f32 / max_val;
-        if ratio > 1.0 {
-            (libm::floorf(libm::log2f(ratio)) as i32).clamp(0, 28) as u8
-        } else {
-            0
-        }
-    } else {
-        15
-    };
-
-    let scale = if shift_bits < 31 {
-        (1u32 << shift_bits) as f32
-    } else {
-        2147483648.0
-    };
     let quantized: Vec<i32> = coeffs
         .iter()
-        .map(|&c| libm::roundf(c * scale) as i32)
+        .map(|&c| libm::round(c * scale) as i32)
         .collect();
 
-    (quantized, shift_bits)
+    (quantized, shift)
+}
+
+/// Quantize floating-point coefficients to integers
+pub fn quantize_coefficients(coeffs: &[f32]) -> (Vec<i32>, u8) {
+    let f64_coeffs: Vec<f64> = coeffs.iter().map(|&c| c as f64).collect();
+    quantize_fixed(&f64_coeffs)
 }
 
 /// Dequantize integer coefficients back to floats
@@ -266,22 +258,12 @@ pub fn levinson_durbin_int(autocorr: &[i64], order: usize) -> Option<(Vec<i32>, 
         error *= 1.0 - gamma * gamma;
     }
 
-    // Convert to fixed-point
-    // Find appropriate shift to maximize precision
+    // Convert to fixed-point with the shared quantizer contract
     let max_coeff = coeffs.iter().map(|&c| c.abs()).fold(0.0f64, f64::max);
     if max_coeff == 0.0 || !max_coeff.is_finite() {
         return None;
     }
-
-    // Use shift that keeps coefficients in i32 range with good precision
-    let shift = libm::floor(libm::log2((1 << 30) as f64 / max_coeff)) as u8;
-    let shift = shift.min(15); // Cap at 15 bits
-    let scale = (1i64 << shift) as f64;
-
-    let coeffs_fp: Vec<i32> = coeffs
-        .iter()
-        .map(|&c| libm::round(c * scale) as i32)
-        .collect();
+    let (coeffs_fp, shift) = quantize_fixed(&coeffs);
 
     Some((coeffs_fp, shift))
 }

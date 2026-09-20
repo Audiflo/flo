@@ -166,12 +166,10 @@ impl Encoder {
 
     /// Convert stereo to mid-side
     fn to_mid_side(&self, left: &[i32], right: &[i32]) -> (Vec<i32>, Vec<i32>) {
-        // FLAC-style: mid = L + R, side = L - R
-        // This preserves all bits - no rounding
         let mid: Vec<i32> = left
             .iter()
             .zip(right.iter())
-            .map(|(&l, &r)| l + r)
+            .map(|(&l, &r)| (l + r) >> 1)
             .collect();
         let side: Vec<i32> = left
             .iter()
@@ -195,9 +193,10 @@ impl Encoder {
         let mut best_used_raw = false;
 
         // Strategy 1: Raw PCM (baseline)
-        // Raw stores 16-bit samples, so skip it when any sample exceeds i16 range.
-        // Mid-side transforms (mid = L + R) routinely push channels past +/-32767;
-        // casting those to i16 would wrap and silently corrupt data.
+        // Raw stores 16-bit samples, so skip it when any sample exceeds i16.
+        // The halved mid always fits i16, but the side channel (L - R) reaches
+        // +/-65535 on full-scale stereo; casting that to i16 would wrap and
+        // silently corrupt data.
         let raw_fits_i16 = samples
             .iter()
             .all(|&s| (i32::from(i16::MIN)..=i32::from(i16::MAX)).contains(&s));

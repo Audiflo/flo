@@ -556,7 +556,11 @@ impl StreamingDecoder {
         // Convert mid-side back to left-right if needed
         let mut all_samples: Vec<Vec<i32>> = vec![vec![]; channels];
         if use_mid_side && frame_channels.len() == 2 {
-            let (left, right) = self.decode_mid_side(&frame_channels[0], &frame_channels[1]);
+            let (left, right) = self.decode_mid_side(
+                &frame_channels[0],
+                &frame_channels[1],
+                header.version_minor >= 2,
+            );
             all_samples[0] = left;
             all_samples[1] = right;
         } else {
@@ -653,18 +657,32 @@ impl StreamingDecoder {
     }
 
     /// Convert mid-side back to left-right
-    fn decode_mid_side(&self, mid: &[i32], side: &[i32]) -> (Vec<i32>, Vec<i32>) {
-        let left: Vec<i32> = mid
-            .iter()
-            .zip(side.iter())
-            .map(|(&m, &s)| (m + s) / 2)
-            .collect();
-        let right: Vec<i32> = mid
-            .iter()
-            .zip(side.iter())
-            .map(|(&m, &s)| (m - s) / 2)
-            .collect();
-        (left, right)
+    fn decode_mid_side(&self, mid: &[i32], side: &[i32], halved: bool) -> (Vec<i32>, Vec<i32>) {
+        if halved {
+            let left: Vec<i32> = mid
+                .iter()
+                .zip(side.iter())
+                .map(|(&m, &s)| m + ((s + (s & 1)) >> 1))
+                .collect();
+            let right: Vec<i32> = mid
+                .iter()
+                .zip(side.iter())
+                .map(|(&m, &s)| m - (s >> 1))
+                .collect();
+            (left, right)
+        } else {
+            let left: Vec<i32> = mid
+                .iter()
+                .zip(side.iter())
+                .map(|(&m, &s)| (m + s) / 2)
+                .collect();
+            let right: Vec<i32> = mid
+                .iter()
+                .zip(side.iter())
+                .map(|(&m, &s)| (m - s) / 2)
+                .collect();
+            (left, right)
+        }
     }
 
     /// Reconstruct from LPC prediction
