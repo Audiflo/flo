@@ -3,10 +3,10 @@ type: concept
 title: "No-std and WebAssembly"
 source: "https://audiflo.github.io/flo/no-std/"
 path: /no-std/
-updated: 2026-09-18
+updated: 2026-09-20
 okf:
   generated_by: "@docmd/plugin-okf"
-  generated_at: "2026-09-18T06:09:59.954Z"
+  generated_at: "2026-09-20T01:55:47.527Z"
 ---
 # No-std and WebAssembly
 

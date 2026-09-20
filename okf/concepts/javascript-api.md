@@ -3,10 +3,10 @@ type: concept
 title: "JavaScript API"
 source: "https://audiflo.github.io/flo/javascript-api/"
 path: /javascript-api/
-updated: 2026-09-18
+updated: 2026-09-20
 okf:
   generated_by: "@docmd/plugin-okf"
-  generated_at: "2026-09-18T06:09:59.953Z"
+  generated_at: "2026-09-20T01:55:47.526Z"
 ---
 # JavaScript API
 
@@ -51,16 +51,16 @@ await init();
 Encode audio samples to lossless flo format.
 
 ```javascript
-encode(samples, sampleRate, channels, bitDepth, metadata) → Uint8Array
+encode(samples, sampleRate, channels, bitDepth, metadata) -> Uint8Array
 ```
 
-| Parameter | Type | Description |
-| ----------- | ------ | ------------- |
-| `samples` | `Float32Array` | Interleaved audio samples (-1.0 to 1.0) |
-| `sampleRate` | `number` | Sample rate (e.g., 44100, 48000) |
-| `channels` | `number` | Number of channels (1 or 2) |
-| `bitDepth` | `number` | Bit depth (16, 24, or 32) |
-| `metadata` | `Uint8Array \| null` | Optional MessagePack metadata |
+| Parameter    | Type           | Description                             |                               |
+| ------------ | -------------- | --------------------------------------- |                               |
+| `samples`    | `Float32Array` | Interleaved audio samples (-1.0 to 1.0) |                               |
+| `sampleRate` | `number`       | Sample rate (e.g., 44100, 48000)        |                               |
+| `channels`   | `number`       | Number of channels (1 or 2)             |                               |
+| `bitDepth`   | `number`       | Bit depth (16, 24, or 32)               |                               |
+| `metadata`   | `Uint8Array \  | null`                                   | Optional MessagePack metadata |
 
 **Returns:** `Uint8Array` - Encoded flo data
 
@@ -76,12 +76,12 @@ const floData = encode(samples, 44100, 2, 16, null);
 Encode audio with lossy compression using quality presets.
 
 ```javascript
-encode_lossy(samples, sampleRate, channels, bitDepth, quality, metadata) → Uint8Array
+encode_lossy(samples, sampleRate, channels, bitDepth, quality, metadata) -> Uint8Array
 ```
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `quality` | `number` | Quality level: 0=Low, 1=Medium, 2=High, 3=VeryHigh, 4=Transparent |
+| Parameter   | Type     | Description                                                       |
+| ----------- | -------- | ----------------------------------------------------------------- |
+| `quality`   | `number` | Quality level: 0=Low, 1=Medium, 2=High, 3=VeryHigh, 4=Transparent |
 
 ```javascript
 // High quality lossy encoding
@@ -95,12 +95,12 @@ const floData = encode_lossy(samples, 44100, 2, 16, 2, null);
 Encode with continuous quality control (0.0 to 1.0).
 
 ```javascript
-encode_transform(samples, sampleRate, channels, bitDepth, quality, metadata) → Uint8Array
+encode_transform(samples, sampleRate, channels, bitDepth, quality, metadata) -> Uint8Array
 ```
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `quality` | `number` | Quality from 0.0 (lowest) to 1.0 (highest) |
+| Parameter   | Type     | Description                                |
+| ----------- | -------- | ------------------------------------------ |
+| `quality`   | `number` | Quality from 0.0 (lowest) to 1.0 (highest) |
 
 ```javascript
 // 55% quality (roughly "high")
@@ -114,11 +114,11 @@ const floData = encode_transform(samples, 44100, 2, 16, 0.55, null);
 Encode targeting a specific bitrate.
 
 ```javascript
-encode_with_bitrate(samples, sampleRate, channels, bitDepth, bitrateKbps, metadata) → Uint8Array
+encode_with_bitrate(samples, sampleRate, channels, bitDepth, bitrateKbps, metadata) -> Uint8Array
 ```
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
+| Parameter     | Type     | Description                                  |
+| ------------- | -------- | -------------------------------------------- |
 | `bitrateKbps` | `number` | Target bitrate in kbps (e.g., 128, 192, 320) |
 
 ```javascript
@@ -133,12 +133,12 @@ const floData = encode_with_bitrate(samples, 44100, 2, 16, 192, null);
 Decode flo data to audio samples. Auto-detects lossless vs lossy.
 
 ```javascript
-decode(data) → Float32Array
+decode(data) -> Float32Array
 ```
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `data` | `Uint8Array` | flo file data |
+| Parameter   | Type         | Description   |
+| ----------- | ------------ | ------------- |
+| `data`      | `Uint8Array` | flo file data |
 
 **Returns:** `Float32Array` - Interleaved audio samples
 
@@ -154,7 +154,7 @@ const samples = decode(floData);
 Get file information without decoding.
 
 ```javascript
-info(data) → Object
+info(data) -> Object
 ```
 
 **Returns:**
@@ -183,7 +183,7 @@ console.log(`${fileInfo.duration_secs}s, ${fileInfo.is_lossy ? 'lossy' : 'lossle
 Verify file integrity using CRC32.
 
 ```javascript
-validate(data) → boolean
+validate(data) -> boolean
 ```
 
 ```javascript
@@ -203,7 +203,7 @@ if (validate(floData)) {
 Extract metadata as a JavaScript object.
 
 ```javascript
-get_metadata(data) → Object | null
+get_metadata(data) -> Object | null
 ```
 
 ```javascript
@@ -220,7 +220,7 @@ if (meta) {
 Extract cover art image.
 
 ```javascript
-get_cover_art(data) → Object | null
+get_cover_art(data) -> Object | null
 ```
 
 **Returns:**
@@ -248,7 +248,7 @@ if (cover) {
 Extract synchronized lyrics.
 
 ```javascript
-get_synced_lyrics(data) → Array | null
+get_synced_lyrics(data) -> Array | null
 ```
 
 **Returns:**
@@ -268,7 +268,7 @@ get_synced_lyrics(data) → Array | null
 Create metadata bytes from a JavaScript object.
 
 ```javascript
-create_metadata_from_object(obj) → Uint8Array
+create_metadata_from_object(obj) -> Uint8Array
 ```
 
 ```javascript
