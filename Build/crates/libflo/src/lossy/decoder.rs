@@ -1,5 +1,5 @@
 use super::encoder::TransformFrame;
-use super::mdct::{BlockSize, Mdct, WindowType};
+use super::mdct::{BlockSize, Mdct, WindowType, LONG_BLOCK_SIZE, SHORT_BLOCK_SIZE};
 use super::psychoacoustic::{PsychoacousticModel, NUM_BARK_BANDS};
 use alloc::vec;
 use alloc::vec::Vec;
@@ -29,8 +29,26 @@ impl TransformDecoder {
     /// Decode a frame
     /// Returns interleaved samples
     pub fn decode_frame(&mut self, frame: &TransformFrame) -> Vec<f32> {
-        let freq_resolution = self.sample_rate as f32 / frame.block_size.samples() as f32;
+        if frame.block_size.is_short_group() {
+            // A short group carries SHORTS_PER_GROUP windows of 128 coefficients
+            // each at 256-sample frequency resolution.
+            let freq_resolution = self.sample_rate as f32 / SHORT_BLOCK_SIZE as f32;
+            let coeffs_per_window = SHORT_BLOCK_SIZE / 2;
+            self.decode_frame_inner(frame, coeffs_per_window, freq_resolution)
+        } else {
+            let freq_resolution = self.sample_rate as f32 / LONG_BLOCK_SIZE as f32;
+            let coeffs_per_window = LONG_BLOCK_SIZE / 2;
+            self.decode_frame_inner(frame, coeffs_per_window, freq_resolution)
+        }
+    }
 
+    /// Dequantize and synthesize a frame with the given coefficient-to-frequency mapping
+    fn decode_frame_inner(
+        &mut self,
+        frame: &TransformFrame,
+        coeffs_per_window: usize,
+        freq_resolution: f32,
+    ) -> Vec<f32> {
         // Dequantize coefficients
         let mut dequantized: Vec<Vec<f32>> = Vec::with_capacity(self.channels as usize);
 
@@ -38,7 +56,8 @@ impl TransformDecoder {
             let mut coeffs = vec![0.0f32; quantized.len()];
 
             for (k, (&q, c)) in quantized.iter().zip(coeffs.iter_mut()).enumerate() {
-                let freq = (k as f32 + 0.5) * freq_resolution;
+                let bin = k % coeffs_per_window;
+                let freq = (bin as f32 + 0.5) * freq_resolution;
                 let band = PsychoacousticModel::freq_to_bark_band(freq);
 
                 if frame.scale_factors[ch][band] > 0.0 {
@@ -78,7 +97,7 @@ pub fn deserialize_frame(data: &[u8]) -> Option<TransformFrame> {
     pos += 1;
 
     // Derive num_coeffs from block size
-    let num_coeffs = block_size.coefficients();
+    let num_coeffs = block_size.frame_coefficients();
 
     // Number of channels
     let num_channels = data[pos] as usize;
@@ -128,7 +147,7 @@ pub fn deserialize_frame(data: &[u8]) -> Option<TransformFrame> {
         coefficients,
         scale_factors,
         block_size,
-        num_samples: block_size.coefficients(),
+        num_samples: block_size.frame_coefficients(),
     })
 }
 

@@ -36,6 +36,7 @@ pub use lossless::{lpc, Decoder, Encoder};
 pub use lossy::{
     deserialize_frame, serialize_frame, BlockSize, Mdct, PsychoacousticModel, QualityPreset,
     TransformDecoder as LossyDecoder, TransformEncoder as LossyEncoder, TransformFrame, WindowType,
+    FRAME_COEFFICIENTS, LONG_BLOCK_SIZE, SHORTS_PER_GROUP, SHORT_BLOCK_SIZE, SHORT_GROUP_OFFSET,
 };
 pub use reader::Reader;
 pub use streaming::{

@@ -131,16 +131,130 @@ mod mdct_tests {
     }
 
     #[test]
-    fn test_short_blocks() {
+    fn test_short_group_blocks() {
         let mdct = Mdct::new(1, WindowType::Sine);
 
-        let samples: Vec<f32> = (0..256).map(|i| ((i as f32) * 0.1).sin()).collect();
+        // A short group operates on the full 2048-sample grid
+        let samples: Vec<f32> = (0..2048).map(|i| ((i as f32) * 0.1).sin()).collect();
 
         let coeffs = mdct.forward(&samples, BlockSize::Short);
-        assert_eq!(coeffs.len(), 128);
+        assert_eq!(coeffs.len(), 1024);
 
         let reconstructed = mdct.inverse(&coeffs, BlockSize::Short);
-        assert_eq!(reconstructed.len(), 256);
+        assert_eq!(reconstructed.len(), 2048);
+    }
+
+    #[test]
+    fn test_start_stop_window_shapes() {
+        let long_win = Mdct::vorbis_window(2048);
+        let short_win = Mdct::vorbis_window(256);
+        let start = Mdct::start_window(&long_win, &short_win);
+        let stop = Mdct::stop_window(&long_win, &short_win);
+
+        assert_eq!(start.len(), 2048);
+        assert_eq!(stop.len(), 2048);
+
+        // Start: long rise [0,1024), flat [1024,1472), short fall [1472,1600), zeros [1600,2048)
+        for i in 0..1024 {
+            assert!((start[i] - long_win[i]).abs() < 1e-6, "start rise at {}", i);
+        }
+        for i in 1024..1472 {
+            assert!((start[i] - 1.0).abs() < 1e-6, "start flat at {}", i);
+        }
+        for i in 1472..1600 {
+            assert!(
+                (start[i] - short_win[128 + (i - 1472)]).abs() < 1e-6,
+                "start fall at {}",
+                i
+            );
+        }
+        for i in 1600..2048 {
+            assert!((start[i]).abs() < 1e-6, "start zero at {}", i);
+        }
+        // Start's short fall must complement the first short window's rise
+        for i in 0..128 {
+            let sum = start[1472 + i].powi(2) + short_win[i].powi(2);
+            assert!((sum - 1.0).abs() < 1e-4, "start/short complement at {}", i);
+        }
+
+        // Stop: zeros [0,448), short rise [448,576), flat [576,1024), long fall [1024,2048)
+        for i in 0..448 {
+            assert!((stop[i]).abs() < 1e-6, "stop zero at {}", i);
+        }
+        for i in 448..576 {
+            assert!(
+                (stop[i] - short_win[i - 448]).abs() < 1e-6,
+                "stop rise at {}",
+                i
+            );
+        }
+        for i in 576..1024 {
+            assert!((stop[i] - 1.0).abs() < 1e-6, "stop flat at {}", i);
+        }
+        // Stop's long fall must complement the following long window's rise
+        for i in 0..1024 {
+            let sum = stop[1024 + i].powi(2) + long_win[i].powi(2);
+            assert!((sum - 1.0).abs() < 1e-4, "stop/long complement at {}", i);
+        }
+        // Stop's short rise must complement the preceding short run's last fall
+        for i in 0..128 {
+            let sum = stop[448 + i].powi(2) + short_win[128 + i].powi(2);
+            assert!((sum - 1.0).abs() < 1e-4, "stop/short complement at {}", i);
+        }
+    }
+
+    #[test]
+    fn test_block_switching_perfect_reconstruction() {
+        let mut mdct = Mdct::new(1, WindowType::Vorbis);
+
+        // Deterministic broadband signal so all transition tiles are exercised.
+        // Every hop reads signal[1024*h .. 1024*h+2048]; the chain below has 9
+        // blocks, so the last hop (h=8) needs the signal to extend to 1024+9216.
+        let signal_len = 1024 * 10;
+        let mut state = 0x12345678u32;
+        let signal: Vec<f32> = (0..signal_len)
+            .map(|i| {
+                state = state.wrapping_mul(1664525).wrapping_add(1013904223);
+                let noise = ((state >> 8) as f32 / (1u32 << 24) as f32) - 0.5;
+                noise * 0.3 + ((i as f32) * 0.02).sin() * 0.5
+            })
+            .collect();
+
+        // Mixed chain crosses every block-type transition twice
+        let chain = [
+            BlockSize::Long,
+            BlockSize::Long,
+            BlockSize::Start,
+            BlockSize::Short,
+            BlockSize::Short,
+            BlockSize::Short,
+            BlockSize::Stop,
+            BlockSize::Long,
+            BlockSize::Long,
+        ];
+
+        let mut max_error = 0.0f32;
+        for (h, &block_type) in chain.iter().enumerate() {
+            let grid_start = h * 1024;
+            let (_, output) =
+                mdct.process_frame(&signal[grid_start..grid_start + 2048], 0, block_type);
+
+            if h == 0 {
+                continue; // priming frame, no prior stored tile yet
+            }
+
+            for i in 0..1024 {
+                let expected = signal[grid_start + i];
+                let err = (expected - output[i]).abs();
+                max_error = max_error.max(err);
+            }
+        }
+
+        assert!(
+            max_error < 1e-3,
+            "Mixed block switching PR failed: max error = {}",
+            max_error
+        );
     }
 
     #[test]

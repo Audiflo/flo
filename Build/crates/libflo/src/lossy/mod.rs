@@ -11,7 +11,10 @@ pub mod psychoacoustic;
 // Re-export main types
 pub use decoder::{deserialize_frame, deserialize_sparse, TransformDecoder};
 pub use encoder::{serialize_frame, serialize_sparse, TransformEncoder, TransformFrame};
-pub use mdct::{BlockSize, Mdct, WindowType};
+pub use mdct::{
+    BlockSize, Mdct, WindowType, FRAME_COEFFICIENTS, LONG_BLOCK_SIZE, SHORTS_PER_GROUP,
+    SHORT_BLOCK_SIZE, SHORT_GROUP_OFFSET,
+};
 pub use psychoacoustic::{PsychoacousticModel, BARK_BAND_EDGES, NUM_BARK_BANDS};
 
 /// Quality presets for lossy encoding

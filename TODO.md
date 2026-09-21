@@ -1,4 +1,4 @@
-`# Todo
+# Todo
 
 ## Analysis Functions
 
@@ -10,6 +10,7 @@
   - `extract_spectral_fingerprint_wasm(samples, channels, sample_rate, fft_size, hop_size)`
   - `compute_loudness_metrics(samples, channels, sample_rate)`
   - `extract_waveform_peaks_wasm(samples, channels, sample_rate, peaks_per_second)`
+- [ ] Transient block switching
 
 ## Demo Improvements
 

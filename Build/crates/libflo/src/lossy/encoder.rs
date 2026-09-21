@@ -1,8 +1,20 @@
-use super::mdct::{BlockSize, Mdct, WindowType};
+use super::mdct::{
+    BlockSize, Mdct, WindowType, LONG_BLOCK_SIZE, SHORTS_PER_GROUP, SHORT_BLOCK_SIZE,
+    SHORT_GROUP_OFFSET,
+};
 use super::psychoacoustic::{PsychoacousticModel, NUM_BARK_BANDS};
 use crate::core::{ChannelData, Frame, FrameType, ResidualEncoding, I16_MAX_F32, I16_MIN_F32};
 use alloc::vec;
 use alloc::vec::Vec;
+
+/// Loudness spike threshold (energy ratio) between adjacent short windows that
+/// marks a transient.
+const ATTACK_RATIO: f32 = 8.0;
+/// Relative floor for the transient detector baseline: short-window energy must
+/// clear a fraction of the frame's average energy to count as an attack.
+const DETECTOR_FLOOR_FRACTION: f32 = 0.05;
+/// Hop size in samples between frames (LONG_BLOCK_SIZE/2, the frame cadence)
+const HOP_SIZE: usize = LONG_BLOCK_SIZE / 2;
 
 /// Transform lossy encoder
 pub struct TransformEncoder {
@@ -12,12 +24,12 @@ pub struct TransformEncoder {
     channels: u8,
     /// MDCT processor
     mdct: Mdct,
-    /// Psychoacoustic model (one per channel)
+    /// Psychoacoustic model for long blocks (one per channel)
     psy_models: Vec<PsychoacousticModel>,
+    /// Psychoacoustic model for short blocks (one per channel)
+    short_psy_models: Vec<PsychoacousticModel>,
     /// Quality setting (0.0 = lowest, 1.0 = transparent)
     quality: f32,
-    /// Block size
-    block_size: BlockSize,
 }
 
 /// Encoded frame data
@@ -36,12 +48,12 @@ pub struct TransformFrame {
 impl TransformEncoder {
     /// Create a new transform encoder
     pub fn new(sample_rate: u32, channels: u8, quality: f32) -> Self {
-        let block_size = BlockSize::Long; // 2048 samples
-        let fft_size = block_size.samples();
-
         let mdct = Mdct::new(channels as usize, WindowType::Vorbis);
         let psy_models: Vec<_> = (0..channels)
-            .map(|_| PsychoacousticModel::new(sample_rate, fft_size))
+            .map(|_| PsychoacousticModel::new(sample_rate, LONG_BLOCK_SIZE))
+            .collect();
+        let short_psy_models: Vec<_> = (0..channels)
+            .map(|_| PsychoacousticModel::new(sample_rate, SHORT_BLOCK_SIZE))
             .collect();
 
         Self {
@@ -49,8 +61,8 @@ impl TransformEncoder {
             channels,
             mdct,
             psy_models,
+            short_psy_models,
             quality: quality.clamp(0.0, 1.0),
-            block_size,
         }
     }
 
@@ -60,12 +72,10 @@ impl TransformEncoder {
     }
 
     /// Encode a frame of audio
-    /// Input: interleaved samples for one frame (block_size * channels)
+    /// Input: interleaved samples covering one frame grid (block_size * channels)
     /// Returns encoded frame
-    pub fn encode_frame(&mut self, samples: &[f32]) -> TransformFrame {
-        let block_samples = self.block_size.samples();
-        let num_coeffs = self.block_size.coefficients();
-        let hop_size = num_coeffs; // 50% overlap
+    pub fn encode_frame(&mut self, samples: &[f32], block_size: BlockSize) -> TransformFrame {
+        let frame_input = block_size.frame_input_size();
 
         // Deinterleave channels
         let mut channel_data: Vec<Vec<f32>> = (0..self.channels as usize)
@@ -80,25 +90,21 @@ impl TransformEncoder {
         let mut all_scale_factors = Vec::with_capacity(self.channels as usize);
 
         for (ch, data) in channel_data.iter().enumerate() {
-            // Pad to block size if needed
+            // Pad to the frame grid if needed
             let mut frame_data = data.clone();
-            if frame_data.len() < block_samples {
-                frame_data.resize(block_samples, 0.0);
+            if frame_data.len() < frame_input {
+                frame_data.resize(frame_input, 0.0);
             }
 
             // MDCT transform
-            let coeffs = self.mdct.forward(&frame_data, self.block_size);
-
-            // Psychoacoustic analysis
-            let smr = self.psy_models[ch].calculate_smr(&coeffs);
-
-            // Bit budget grows with quality: 1..16 nominal bits per coefficient.
-            let bits_per_coeff = 1.0 + self.quality * 15.0;
-            let total_bits = (self.block_size.coefficients() as f32 * bits_per_coeff) as usize;
-            let allocation = self.psy_models[ch].allocate_bits(&smr, total_bits);
+            let coeffs = self.mdct.forward(&frame_data, block_size);
 
             // Quantize based on perceptual importance
-            let (quantized, scale_factors) = self.quantize_coefficients(&coeffs, &smr, &allocation);
+            let (quantized, scale_factors) = if block_size.is_short_group() {
+                self.quantize_short_group(&coeffs, ch)
+            } else {
+                self.quantize_long_block(&coeffs, ch)
+            };
 
             all_coefficients.push(quantized);
             all_scale_factors.push(scale_factors);
@@ -107,9 +113,59 @@ impl TransformEncoder {
         TransformFrame {
             coefficients: all_coefficients,
             scale_factors: all_scale_factors,
-            block_size: self.block_size,
-            num_samples: hop_size,
+            block_size,
+            num_samples: block_size.frame_coefficients(),
         }
+    }
+
+    /// Quantize a long-block coefficient set (Long/Start/Stop) per channel
+    fn quantize_long_block(&mut self, coeffs: &[f32], ch: usize) -> (Vec<i16>, Vec<f32>) {
+        // Psychoacoustic analysis
+        let smr = self.psy_models[ch].calculate_smr(coeffs);
+
+        // Bit budget grows with quality: 1..16 nominal bits per coefficient.
+        let bits_per_coeff = 1.0 + self.quality * 15.0;
+        let total_bits = (coeffs.len() as f32 * bits_per_coeff) as usize;
+        let allocation = self.psy_models[ch].allocate_bits(&smr, total_bits);
+
+        self.quantize_coefficients(coeffs, &smr, &allocation)
+    }
+
+    /// Quantize a short-group frame (8 short blocks) with a shared scale-factor set.
+    fn quantize_short_group(&mut self, coeffs: &[f32], ch: usize) -> (Vec<i16>, Vec<f32>) {
+        let coeffs_per_window = SHORT_BLOCK_SIZE / 2;
+        let bits_per_coeff = 1.0 + self.quality * 15.0;
+        let per_window_bits = (coeffs_per_window as f32 * bits_per_coeff) as usize;
+
+        let mut smr = Vec::with_capacity(coeffs.len());
+        let mut allocation = Vec::with_capacity(coeffs.len());
+        for w in 0..SHORTS_PER_GROUP {
+            let window_coeffs = &coeffs[w * coeffs_per_window..(w + 1) * coeffs_per_window];
+            let model = &mut self.short_psy_models[ch];
+            let window_smr = model.calculate_smr(window_coeffs);
+            smr.extend(window_smr.iter());
+            let window_allocation = model.allocate_bits(&window_smr, per_window_bits);
+            allocation.extend(window_allocation.iter());
+        }
+
+        let freq_resolution = self.sample_rate as f32 / SHORT_BLOCK_SIZE as f32;
+        let scale_factors = self.compute_band_scale_factors(
+            coeffs,
+            &allocation,
+            coeffs_per_window,
+            freq_resolution,
+        );
+        let smr_threshold = self.smr_threshold();
+        let quantized = self.quantize_with_scale(
+            coeffs,
+            &smr,
+            &scale_factors,
+            coeffs_per_window,
+            freq_resolution,
+            smr_threshold,
+        );
+
+        (quantized, scale_factors)
     }
 
     /// Quantize MDCT coefficients based on SMR and per-band bit allocation
@@ -119,12 +175,46 @@ impl TransformEncoder {
         smr: &[f32],
         allocation: &[u8],
     ) -> (Vec<i16>, Vec<f32>) {
+        let freq_resolution = self.sample_rate as f32 / LONG_BLOCK_SIZE as f32;
+        let scale_factors = self.compute_band_scale_factors(
+            coeffs,
+            allocation,
+            LONG_BLOCK_SIZE / 2,
+            freq_resolution,
+        );
+        let smr_threshold = self.smr_threshold();
+        let quantized = self.quantize_with_scale(
+            coeffs,
+            smr,
+            &scale_factors,
+            LONG_BLOCK_SIZE / 2,
+            freq_resolution,
+            smr_threshold,
+        );
+
+        (quantized, scale_factors)
+    }
+
+    /// Frequency of MDCT coefficient `k` when a frame holds `coeffs_per_window`
+    /// coefficients per analysis window.
+    fn freq_for_coeff(k: usize, coeffs_per_window: usize, freq_resolution: f32) -> f32 {
+        let bin = k % coeffs_per_window;
+        (bin as f32 + 0.5) * freq_resolution
+    }
+
+    /// Per-band scale factors computed from coefficient magnitudes and the
+    /// per-coefficient bit allocation
+    fn compute_band_scale_factors(
+        &self,
+        coeffs: &[f32],
+        allocation: &[u8],
+        coeffs_per_window: usize,
+        freq_resolution: f32,
+    ) -> Vec<f32> {
         // Calculate scale factors per Bark band
         let mut band_max = [0.0f32; NUM_BARK_BANDS];
-        let freq_resolution = self.sample_rate as f32 / self.block_size.samples() as f32;
-
         for (k, &c) in coeffs.iter().enumerate() {
-            let freq = (k as f32 + 0.5) * freq_resolution;
+            let freq = Self::freq_for_coeff(k, coeffs_per_window, freq_resolution);
             let band = PsychoacousticModel::freq_to_bark_band(freq);
             band_max[band] = band_max[band].max(c.abs());
         }
@@ -132,7 +222,7 @@ impl TransformEncoder {
         // Per-band bit allocation from the psychoacoustic model
         let mut band_bits_max = [0u8; NUM_BARK_BANDS];
         for (k, &bits) in allocation.iter().enumerate() {
-            let freq = (k as f32 + 0.5) * freq_resolution;
+            let freq = Self::freq_for_coeff(k, coeffs_per_window, freq_resolution);
             let band = PsychoacousticModel::freq_to_bark_band(freq);
             band_bits_max[band] = band_bits_max[band].max(bits);
         }
@@ -156,20 +246,34 @@ impl TransformEncoder {
             }
         }
 
-        // Quality-dependent masking threshold
-        let smr_threshold = if self.quality >= 0.99 {
-            -100.0 // At max quality, keep essentially everything
+        scale_factors
+    }
+
+    /// Quality-dependent masking threshold (dB). At max quality keep everything.
+    fn smr_threshold(&self) -> f32 {
+        if self.quality >= 0.99 {
+            -100.0
         } else {
             // Exponential decay from 0 dB at quality=0 to -60 dB at quality=1
             let t = (1.0 - self.quality).max(0.001);
             -60.0 * (1.0 - libm::powf(t, 0.5))
-        };
+        }
+    }
 
-        // Quantize
+    /// Quantize coefficients above the masking threshold against per-band scale factors
+    fn quantize_with_scale(
+        &self,
+        coeffs: &[f32],
+        smr: &[f32],
+        scale_factors: &[f32],
+        coeffs_per_window: usize,
+        freq_resolution: f32,
+        smr_threshold: f32,
+    ) -> Vec<i16> {
         let mut quantized = vec![0i16; coeffs.len()];
 
         for (k, (q, &c)) in quantized.iter_mut().zip(coeffs.iter()).enumerate() {
-            let freq = (k as f32 + 0.5) * freq_resolution;
+            let freq = Self::freq_for_coeff(k, coeffs_per_window, freq_resolution);
             let band = PsychoacousticModel::freq_to_bark_band(freq);
 
             if smr[k] > smr_threshold {
@@ -180,7 +284,7 @@ impl TransformEncoder {
             // else: below threshold, leave as 0
         }
 
-        (quantized, scale_factors)
+        quantized
     }
 
     /// Reset encoder state
@@ -189,14 +293,86 @@ impl TransformEncoder {
         for model in &mut self.psy_models {
             model.reset();
         }
+        for model in &mut self.short_psy_models {
+            model.reset();
+        }
+    }
+
+    /// Detect transient hops and build the BlockSize plan for an entire buffer.
+    fn plan_block_types(&self, mono: &[f32], num_hops: usize) -> Vec<BlockSize> {
+        let mut plan = vec![BlockSize::Long; num_hops];
+
+        for h in 1..num_hops {
+            // Hop 0 is always Long
+            if self.hop_has_transient(mono, h) {
+                plan[h] = BlockSize::Short;
+            }
+        }
+
+        // Merge short runs and insert Start/Stop transitions.
+        let mut h = 0;
+        while h < num_hops {
+            if plan[h] == BlockSize::Short {
+                let mut run_end = h;
+                while run_end + 1 < num_hops && plan[run_end + 1] == BlockSize::Short {
+                    run_end += 1;
+                }
+                // The frame before the first short group transitions with a
+                // Start window
+                if h > 0 {
+                    plan[h - 1] = BlockSize::Start;
+                    plan[run_end] = BlockSize::Stop;
+                }
+                h = run_end + 1;
+            } else {
+                h += 1;
+            }
+        }
+
+        plan
+    }
+
+    /// Whether an attack sits in hop `h`'s short-window guard region.
+    fn hop_has_transient(&self, mono: &[f32], h: usize) -> bool {
+        let grid_start = h * HOP_SIZE;
+
+        // Per-window RMS energy over the guard region
+        let mut window_energy = [0.0f32; SHORTS_PER_GROUP];
+        for w in 0..SHORTS_PER_GROUP {
+            let off = grid_start + SHORT_GROUP_OFFSET + w * (SHORT_BLOCK_SIZE / 2);
+            let mut sum = 0.0f32;
+            for i in 0..SHORT_BLOCK_SIZE {
+                let v = mono[off + i];
+                sum += v * v;
+            }
+            window_energy[w] = sum / SHORT_BLOCK_SIZE as f32;
+        }
+
+        // Baseline floor derived from the whole grid's average energy
+        let mut grid_sum = 0.0f32;
+        for i in 0..LONG_BLOCK_SIZE {
+            let v = mono[grid_start + i];
+            grid_sum += v * v;
+        }
+        let floor = grid_sum / LONG_BLOCK_SIZE as f32 * DETECTOR_FLOOR_FRACTION;
+
+        // An attack is a window whose energy jumps well above its predecessor
+        for w in 0..SHORTS_PER_GROUP {
+            let baseline = window_energy[w.saturating_sub(1)].max(floor);
+            if window_energy[w] > ATTACK_RATIO * baseline {
+                return true;
+            }
+        }
+
+        false
     }
 
     /// Encode audio samples to flo file format
     ///
     /// This produces a complete flo file with transform-based frames
     pub fn encode_to_flo(&mut self, samples: &[f32], metadata: &[u8]) -> crate::FloResult<Vec<u8>> {
-        let block_samples = self.block_size.samples();
-        let hop_size = self.block_size.coefficients(); // 50% overlap (N = block_samples/2)
+        let block_samples = LONG_BLOCK_SIZE;
+        let hop_size = HOP_SIZE;
 
         // For proper MDCT overlap-add reconstruction, we need:
         // - A priming frame at the start (silence) to initialize overlap buffer
@@ -223,6 +399,20 @@ impl TransformEncoder {
             }
         }
 
+        // Mono mix for transient detection over the whole buffer
+        let mono: Vec<f32> = (0..total_samples_needed)
+            .map(|i| {
+                let mut sum = 0.0f32;
+                for ch in 0..self.channels as usize {
+                    sum += padded[i * self.channels as usize + ch];
+                }
+                sum / self.channels as f32
+            })
+            .collect();
+
+        // Block-switching plan with look-ahead over the whole buffer
+        let plan = self.plan_block_types(&mono, num_hops);
+
         // Encode frames
         let mut encoded_frames: Vec<Frame> = Vec::new();
 
@@ -236,7 +426,7 @@ impl TransformEncoder {
             }
 
             let frame_samples = &padded[start..end];
-            let transform_frame = self.encode_frame(frame_samples);
+            let transform_frame = self.encode_frame(frame_samples, plan[hop_idx]);
 
             // Serialize the transform frame
             let frame_data = serialize_frame(&transform_frame);

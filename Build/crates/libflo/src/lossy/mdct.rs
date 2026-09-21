@@ -1,5 +1,5 @@
 // Full disclosure, this code is inspired by Symphonia's MDCT implementation,
-// and part's of ffmpeg's as well.
+// and parts of FFmpeg as well.
 
 use crate::dsp::{Complex32, DefaultPlanner, Fft, FftPlanner};
 use alloc::boxed::Box;
@@ -18,6 +18,17 @@ pub enum WindowType {
     Vorbis,
 }
 
+/// Long block window size in samples
+pub const LONG_BLOCK_SIZE: usize = 2048;
+/// Short block window size in samples
+pub const SHORT_BLOCK_SIZE: usize = 256;
+/// Number of short windows grouped into one short-block sequence
+pub const SHORTS_PER_GROUP: usize = 8;
+/// Offset of the first short window within the 2048-sample analysis grid.
+pub const SHORT_GROUP_OFFSET: usize = 448;
+/// Number of MDCT coefficients carried by one frame for every block size.
+pub const FRAME_COEFFICIENTS: usize = LONG_BLOCK_SIZE / 2;
+
 /// MDCT block sizes
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BlockSize {
@@ -32,17 +43,35 @@ pub enum BlockSize {
 }
 
 impl BlockSize {
-    /// Get the number of samples for this block size
+    /// Get the number of samples for the underlying transform window
     pub fn samples(self) -> usize {
         match self {
-            BlockSize::Long | BlockSize::Start | BlockSize::Stop => 2048,
-            BlockSize::Short => 256,
+            BlockSize::Long | BlockSize::Start | BlockSize::Stop => LONG_BLOCK_SIZE,
+            BlockSize::Short => SHORT_BLOCK_SIZE,
         }
     }
 
-    /// Get the number of MDCT coefficients (N/2)
+    /// Get the number of MDCT coefficients for the underlying window (N/2)
     pub fn coefficients(self) -> usize {
         self.samples() / 2
+    }
+
+    /// Get the number of input samples analyzed per frame.
+    pub fn frame_input_size(self) -> usize {
+        LONG_BLOCK_SIZE
+    }
+
+    /// Get the number of MDCT coefficients serialized per frame
+    pub fn frame_coefficients(self) -> usize {
+        match self {
+            BlockSize::Short => SHORTS_PER_GROUP * (SHORT_BLOCK_SIZE / 2),
+            _ => LONG_BLOCK_SIZE / 2,
+        }
+    }
+
+    /// Whether this block type represents a group of short windows
+    pub fn is_short_group(self) -> bool {
+        matches!(self, BlockSize::Short)
     }
 }
 
@@ -64,16 +93,24 @@ struct MdctTransform {
 
 impl MdctTransform {
     fn new(window_size: usize, window_type: WindowType) -> Self {
-        let n = window_size;
-        let n2 = n / 2;
-        let n4 = n / 4;
+        let window = Self::build_window(window_size, window_type);
+        Self::from_window(window_size, window)
+    }
 
-        // Create window
-        let window = match window_type {
+    /// Build the window table for a given window type and size
+    fn build_window(n: usize, window_type: WindowType) -> Vec<f32> {
+        match window_type {
             WindowType::Sine => Self::sine_window(n),
             WindowType::KaiserBesselDerived => Self::kbd_window(n, 4.0),
             WindowType::Vorbis => Self::vorbis_window(n),
-        };
+        }
+    }
+
+    /// Create a transform with an explicit window table
+    fn from_window(window_size: usize, window: Vec<f32>) -> Self {
+        let n = window_size;
+        let n2 = n / 2;
+        let n4 = n / 4;
 
         // Create FFT planner
         let mut planner = DefaultPlanner::new();
@@ -293,12 +330,17 @@ impl MdctTransform {
 
 /// MDCT processor with pre-computed windows and FFT plans
 ///
-/// Provides O(N log N) MDCT/IMDCT transforms using FFT acceleration.
+/// Provides O(N log N) MDCT/IMDCT transforms using FFT acceleration, plus
+/// overlap-add synthesis across long, short-group, Start, and Stop blocks.
 pub struct Mdct {
     /// Long block transform (2048 samples)
     long_transform: MdctTransform,
     /// Short block transform (256 samples)
     short_transform: MdctTransform,
+    /// Start-block transform (2048 samples with the long-to-short window)
+    start_transform: MdctTransform,
+    /// Stop-block transform (2048 samples with the short-to-long window)
+    stop_transform: MdctTransform,
     /// Previous frame's windowed samples for overlap-add (per channel)
     overlap_buffer: Vec<Vec<f32>>,
     /// Number of channels
@@ -308,18 +350,56 @@ pub struct Mdct {
 impl Mdct {
     /// Create a new MDCT processor
     pub fn new(channels: usize, window_type: WindowType) -> Self {
-        let long_transform = MdctTransform::new(2048, window_type);
-        let short_transform = MdctTransform::new(256, window_type);
+        let long_window = MdctTransform::build_window(LONG_BLOCK_SIZE, window_type);
+        let short_window = MdctTransform::build_window(SHORT_BLOCK_SIZE, window_type);
 
-        // Initialize overlap buffers (N/2 samples per channel for long blocks)
-        let overlap_buffer = vec![vec![0.0f32; 1024]; channels];
+        let start_transform = MdctTransform::from_window(
+            LONG_BLOCK_SIZE,
+            Self::start_window(&long_window, &short_window),
+        );
+        let stop_transform = MdctTransform::from_window(
+            LONG_BLOCK_SIZE,
+            Self::stop_window(&long_window, &short_window),
+        );
+
+        // Initialize overlap buffers (N/2 samples per channel)
+        let overlap_buffer = vec![vec![0.0f32; LONG_BLOCK_SIZE / 2]; channels];
 
         Self {
-            long_transform,
-            short_transform,
+            long_transform: MdctTransform::from_window(LONG_BLOCK_SIZE, long_window),
+            short_transform: MdctTransform::from_window(SHORT_BLOCK_SIZE, short_window),
+            start_transform,
+            stop_transform,
             overlap_buffer,
             channels,
         }
+    }
+
+    /// Build the long-to-short (Start) window from the base windows.
+    pub fn start_window(long_win: &[f32], short_win: &[f32]) -> Vec<f32> {
+        debug_assert_eq!(long_win.len(), LONG_BLOCK_SIZE);
+        debug_assert_eq!(short_win.len(), SHORT_BLOCK_SIZE);
+        let mut w = vec![0.0f32; LONG_BLOCK_SIZE];
+        w[..LONG_BLOCK_SIZE / 2].copy_from_slice(&long_win[..LONG_BLOCK_SIZE / 2]);
+        w[LONG_BLOCK_SIZE / 2..1472].fill(1.0);
+        for i in 0..SHORT_BLOCK_SIZE / 2 {
+            w[1472 + i] = short_win[SHORT_BLOCK_SIZE / 2 + i];
+        }
+        w
+    }
+
+    /// Build the short-to-long (Stop) window from the base windows.
+    pub fn stop_window(long_win: &[f32], short_win: &[f32]) -> Vec<f32> {
+        debug_assert_eq!(long_win.len(), LONG_BLOCK_SIZE);
+        debug_assert_eq!(short_win.len(), SHORT_BLOCK_SIZE);
+        let mut w = vec![0.0f32; LONG_BLOCK_SIZE];
+        w[SHORT_GROUP_OFFSET..SHORT_GROUP_OFFSET + SHORT_BLOCK_SIZE / 2]
+            .copy_from_slice(&short_win[..SHORT_BLOCK_SIZE / 2]);
+        w[576..LONG_BLOCK_SIZE / 2].fill(1.0);
+        for i in 0..LONG_BLOCK_SIZE / 2 {
+            w[LONG_BLOCK_SIZE / 2 + i] = long_win[1023 - i];
+        }
+        w
     }
 
     /// Sine window: w[n] = sin(π(n+0.5)/N)
@@ -336,43 +416,87 @@ impl Mdct {
     ///
     /// X[k] = Σ x[n] * w[n] * cos(π/N * (n + 0.5 + N/2) * (k + 0.5))
     pub fn forward(&self, samples: &[f32], block_size: BlockSize) -> Vec<f32> {
-        let n = block_size.samples();
-        assert!(samples.len() >= n, "Not enough samples for MDCT");
+        assert!(
+            samples.len() >= block_size.frame_input_size(),
+            "Not enough samples for MDCT"
+        );
 
-        let transform = match block_size {
-            BlockSize::Long | BlockSize::Start | BlockSize::Stop => &self.long_transform,
-            BlockSize::Short => &self.short_transform,
-        };
-
-        transform.forward(&samples[..n])
+        match block_size {
+            BlockSize::Long => self.long_transform.forward(&samples[..LONG_BLOCK_SIZE]),
+            BlockSize::Start => self.start_transform.forward(&samples[..LONG_BLOCK_SIZE]),
+            BlockSize::Stop => self.stop_transform.forward(&samples[..LONG_BLOCK_SIZE]),
+            BlockSize::Short => {
+                // The short group analyzes eight windows tiled across the grid's
+                // guard region, producing SHORTS_PER_GROUP short MDCT blocks.
+                let mut coeffs = Vec::with_capacity(FRAME_COEFFICIENTS);
+                for w in 0..SHORTS_PER_GROUP {
+                    let start = SHORT_GROUP_OFFSET + w * (SHORT_BLOCK_SIZE / 2);
+                    coeffs.extend(
+                        self.short_transform
+                            .forward(&samples[start..start + SHORT_BLOCK_SIZE]),
+                    );
+                }
+                coeffs
+            }
+        }
     }
 
     /// Inverse MDCT: N/2 frequency coefficients -> N time samples
     ///
     /// y[n] = 2/N * Σ(k=0 to N-1) X[k] * cos(π/N * (n + 0.5 + N/2) * (k + 0.5))
     pub fn inverse(&self, coeffs: &[f32], block_size: BlockSize) -> Vec<f32> {
-        let n2 = block_size.coefficients();
-        assert!(coeffs.len() >= n2, "Not enough coefficients for IMDCT");
-
-        let transform = match block_size {
-            BlockSize::Long | BlockSize::Start | BlockSize::Stop => &self.long_transform,
-            BlockSize::Short => &self.short_transform,
-        };
-
-        transform.inverse(&coeffs[..n2])
+        match block_size {
+            BlockSize::Long => {
+                assert!(
+                    coeffs.len() >= LONG_BLOCK_SIZE / 2,
+                    "Not enough coefficients for IMDCT"
+                );
+                self.long_transform.inverse(&coeffs[..LONG_BLOCK_SIZE / 2])
+            }
+            BlockSize::Start => {
+                assert!(
+                    coeffs.len() >= LONG_BLOCK_SIZE / 2,
+                    "Not enough coefficients for IMDCT"
+                );
+                self.start_transform.inverse(&coeffs[..LONG_BLOCK_SIZE / 2])
+            }
+            BlockSize::Stop => {
+                assert!(
+                    coeffs.len() >= LONG_BLOCK_SIZE / 2,
+                    "Not enough coefficients for IMDCT"
+                );
+                self.stop_transform.inverse(&coeffs[..LONG_BLOCK_SIZE / 2])
+            }
+            BlockSize::Short => {
+                // Each group frame synthesizes onto the full 2048 grid by
+                // summing the eight overlapping short windows at their offsets.
+                assert!(
+                    coeffs.len() >= SHORTS_PER_GROUP * (SHORT_BLOCK_SIZE / 2),
+                    "Not enough coefficients for IMDCT"
+                );
+                let mut time = vec![0.0f32; LONG_BLOCK_SIZE];
+                for w in 0..SHORTS_PER_GROUP {
+                    let off = SHORT_GROUP_OFFSET + w * (SHORT_BLOCK_SIZE / 2);
+                    let blk = self.short_transform.inverse(
+                        &coeffs[w * (SHORT_BLOCK_SIZE / 2)..(w + 1) * (SHORT_BLOCK_SIZE / 2)],
+                    );
+                    for (j, &v) in blk.iter().enumerate() {
+                        time[off + j] += v;
+                    }
+                }
+                time
+            }
+        }
     }
 
-    /// Process a frame with overlap-add for perfect reconstruction
-    /// Returns N/2 output samples (the middle half after overlap-add)
+    /// Process a frame with overlap-add for perfect reconstruction.
+    /// Returns N/2 output samples.
     pub fn process_frame(
         &mut self,
         samples: &[f32],
         channel: usize,
         block_size: BlockSize,
     ) -> (Vec<f32>, Vec<f32>) {
-        let n = block_size.samples();
-        let n2 = n / 2;
-
         // Forward MDCT
         let coeffs = self.forward(samples, block_size);
 
@@ -380,6 +504,7 @@ impl Mdct {
         let reconstructed = self.inverse(&coeffs, block_size);
 
         // Overlap-add with previous frame
+        let n2 = LONG_BLOCK_SIZE / 2;
         let mut output = vec![0.0f32; n2];
         for i in 0..n2 {
             output[i] = reconstructed[i] + self.overlap_buffer[channel][i];
@@ -402,7 +527,7 @@ impl Mdct {
     /// Input: interleaved samples [L, R, L, R, ...]
     /// Output: MDCT coefficients per channel
     pub fn analyze(&mut self, samples: &[f32], block_size: BlockSize) -> Vec<Vec<f32>> {
-        let n = block_size.samples();
+        let n = block_size.frame_input_size();
         let samples_per_channel = samples.len() / self.channels;
 
         // Deinterleave
@@ -414,19 +539,13 @@ impl Mdct {
             channel_data[i % self.channels].push(s);
         }
 
-        // MDCT each channel
+        // MDCT each channel (pad to the full grid when needed)
         let mut all_coeffs = Vec::with_capacity(self.channels);
         for data in &channel_data {
-            if data.len() >= n {
-                let coeffs = self.forward(data, block_size);
-                all_coeffs.push(coeffs);
-            } else {
-                // Pad with zeros if not enough samples
-                let mut padded = data.clone();
-                padded.resize(n, 0.0);
-                let coeffs = self.forward(&padded, block_size);
-                all_coeffs.push(coeffs);
-            }
+            let mut padded = data.clone();
+            padded.resize(n, 0.0);
+            let coeffs = self.forward(&padded, block_size);
+            all_coeffs.push(coeffs);
         }
 
         all_coeffs
@@ -436,8 +555,7 @@ impl Mdct {
     /// Input: MDCT coefficients per channel
     /// Output: interleaved samples
     pub fn synthesize(&mut self, coeffs: &[Vec<f32>], block_size: BlockSize) -> Vec<f32> {
-        let n = block_size.samples();
-        let n2 = n / 2;
+        let n2 = LONG_BLOCK_SIZE / 2;
 
         // IMDCT + overlap-add for each channel
         let mut channel_outputs: Vec<Vec<f32>> = Vec::with_capacity(self.channels);
