@@ -3,10 +3,10 @@ type: concept
 title: "Getting Started"
 source: "https://audiflo.github.io/flo/getting-started/"
 path: /getting-started/
-updated: 2026-09-20
+updated: 2026-09-21
 okf:
   generated_by: "@docmd/plugin-okf"
-  generated_at: "2026-09-20T01:55:47.524Z"
+  generated_at: "2026-09-21T18:51:55.068Z"
 ---
 # Getting Started
 

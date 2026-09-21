@@ -3,10 +3,10 @@ type: concept
 title: "File Format Specification"
 source: "https://audiflo.github.io/flo/file-format/"
 path: /file-format/
-updated: 2026-09-20
+updated: 2026-09-21
 okf:
   generated_by: "@docmd/plugin-okf"
-  generated_at: "2026-09-20T01:55:47.524Z"
+  generated_at: "2026-09-21T18:51:55.067Z"
 ---
 # File Format Specification
 
@@ -57,7 +57,7 @@ flo (Fast Layered Object) is a chunked audio format supporting both lossless and
 | ------ | ---- | ------------------- | ---------------------------------------------- |
 | 0      | 4    | `magic`             | `FLO!` (0x464C4F21)                            |
 | 4      | 1    | `version_major`     | Format version (1)                             |
-| 5      | 1    | `version_minor`     | Minor version (1)                              |
+| 5      | 1    | `version_minor`     | Minor version (2: halved mid-side)             |
 | 6      | 2    | `flags`             | Bit flags (see below)                          |
 | 8      | 4    | `sample_rate`       | Hz (44100, 48000, etc.)                        |
 | 12     | 1    | `channels`          | 1=mono, 2=stereo                               |
@@ -118,6 +118,9 @@ Contains compressed audio frames.
 | `frame_samples` | 4        | Sample count              |
 | `flags`         | 1        | Per-frame flags           |
 | `channels`      | variable | Channel data array        |
+
+When `flags` bit 0 is set on a 2-channel frame, channels are stored mid/side:
+mid = (L + R) >> 1, side = L - R (version minor 2+).
 
 ### Frame Types
 
