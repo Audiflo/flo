@@ -1,46 +1,26 @@
 # Todo
 
-## Analysis Functions
-
-- [x] Add spectrum fingerprint analysis function to libflo
-- [x] Add EBU R128 loudness metrics to libflo (integrated loudness LUFS, loudness range LU, true peak dBTP)
-- [x] Add waveform peaks extraction to libflo/reflo (peaks per second, channels)
-- [x] Auto-add these to metadata on encode
-- [x] Export standalone analysis functions to WASM/JS interface for on-demand use
-  - `extract_spectral_fingerprint_wasm(samples, channels, sample_rate, fft_size, hop_size)`
-  - `compute_loudness_metrics(samples, channels, sample_rate)`
-  - `extract_waveform_peaks_wasm(samples, channels, sample_rate, peaks_per_second)`
-- [ ] Transient block switching
-
-## Demo Improvements
-
-- [x] Add audio analysis panel with EBU R128 loudness visualization
-- [x] Add frequency spectrum bar chart
-- [x] Loudness meter with color-coded zones
-- [x] Live visualizer using Web Audio AnalyserNode for real-time FFT during playback
-- [x] Display File & Encoding Info (encoder version, encoding time, source format, etc.)
-
-## Seeking & Playback
-
-- [x] Add TOC-based seeking for large files (without fully decoding)
-  - `get_toc(flo_data)` - Return TOC entries with timestamp_ms -> byte_offset mapping
-  - `decode_frame_at(flo_data, frame_index)` - Decode specific frame by index
-  - `seek_to_time(flo_data, time_ms)` - Find frame and decode from position
-- [x] Streaming playback with on-demand frame decoding
-
-## QoL
-
-- [x] Add CLI tool for file inspection (info, metadata, analysis)
-- [ ] Add bulk converter to reflo + web demo (possibly separate page)
-- [x] Add streaming encode support (currently only decode streams) (To clarify, it does exist but needs to be implemented into the web demo and exported to WASM)
+- [x] Add OIDC trusted publishing to flo CI for both crates.io (cargo publish) and npm (npm publish), no stored CI tokens (borrow Saikuro's release workflows)
+- [x] Add cargo audit + build provenance to CI
 - [ ] Add streaming encode to web demo
-- [ ] Test parity between Rust and Jest and more reflo tests
+
+- [ ] Add bulk converter to reflo + web demo (possibly separate page)
+- [ ] More reflo tests
 - [ ] Add file comparison view (compare original vs encoded)
-
-# Bugs
-
-- [x] Investigate: some example .flo files may have invalid total_frames (audio_lossless.flo shows total_frames=1)
-  - Changed `total_frames` to `total_samples` and it stores the actual sample count
-  - Made `length_ms` always written to metadata during encode
-  - Reader now uses `length_ms` for duration (with fallback to calculation for older files)
-- [x] fix bug with lossy encoded files having broken duration (1:50:00 ish)
+- [ ] Replace hand-rolled WASM/JSON-serialization analysis wrapper functions with typed, directly-exportable analysis functions (no duplicated `*_wasm` fns; one serde-typed signature shared by Rust, WASM)
+- [ ] Port flo's tests into a shared test suite compiled twice (native + wasm) so the SAME tests run against both targets (borrow Saikuro's `Tests/tests/shared` pattern lol)
+- [ ] Drop the separate Jest toolchain and Jest tests once the shared native+wasm suite exists
+- [ ] Add a golden corpus + Criterion benches + proptest round-trip (`decode(encode(x))==x`) + fuzz the parser/decoder
+- [ ] CRC32 required on ALL chunks (current only data blocks; extend to header, metadata, embedded picture/artwork, comments/custom tags, chapters, lyrics)
+- [ ] Optional SHA-256 Merkle root over data blocks for tamper-evidence (CRC32 is detection, not security); verified on decode and surfaced in demo File Info
+- [ ] Better lossless compression ratio (predictor/context model)
+- [ ] Better lossy compression (perceptual bit allocation, noise shaping/dithering)
+- [ ] Compression presets / level (speed/ratio knob, FLAC/zstd-style)
+- [ ] VBR via loudness-bounded quality (use the EBU R128 loudness we already compute; target LU/LUFS, not bitrate)
+- [ ] Faster encode/decode ((fearless_simd) SIMD the K-weight biquads + 4x true-peak oversampler hot path; parallel block encode/decode)
+- [ ] Add metadata/tag editor UI + typed WASM metadata CRUD exports (setters exist Rust-side; expose to WASM)
+- [ ] Add toc navigation + toc-based seeking (TOC already available via `get_toc`)
+- [ ] Add synced-lyrics display during playback (flo stores synced lyrics; surface timed to playback)
+- [ ] Show front-cover artwork + picture in File Info card (metadata stores picture; expose read to WASM)
+- [ ] Add integrity/analysis recompute-on-open toggle in web demo (reuse cached metadata on open; recompute only on explicit request)
+- [ ] Add metadata auto-add on encode stays required (analysis/loudness/fingerprint/waveform already added on encode, kept)

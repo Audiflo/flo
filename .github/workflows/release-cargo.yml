@@ -1,0 +1,58 @@
+name: Release crates.io
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Run cargo publish with --dry-run'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+      packages:
+        description: 'Which crates to publish (for retrying individual packages)'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - 'all'
+          - 'libflo-audio'
+          - 'reflo'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      # On a release event only, publish every crate.
+      DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run == 'true' || false }}
+      DO_LIBFLO: ${{ github.event_name != 'workflow_dispatch' || inputs.packages == 'all' || inputs.packages == 'libflo-audio' }}
+      DO_REFLO: ${{ github.event_name != 'workflow_dispatch' || inputs.packages == 'all' || inputs.packages == 'reflo' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Authenticate with crates.io
+        id: auth
+        uses: rust-lang/crates-io-auth-action@v1
+
+      - name: Publish libflo-audio
+        if: env.DO_LIBFLO == 'true'
+        run: cargo publish --manifest-path Build/crates/libflo/Cargo.toml ${{ env.DRY_RUN == 'true' && '--dry-run' || '' }}
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+
+      - name: Publish reflo
+        if: env.DO_REFLO == 'true'
+        run: cargo publish --manifest-path Build/crates/reflo/Cargo.toml ${{ env.DRY_RUN == 'true' && '--dry-run' || '' }}
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}

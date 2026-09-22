@@ -18,6 +18,13 @@ on:
     # Run weekly on Mondays at 07:00 UTC
     - cron: "0 7 * * 1"
 
+permissions:
+  contents: read
+
+concurrency:
+  group: security-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   cargo-audit:
     name: cargo audit
