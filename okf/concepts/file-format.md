@@ -3,10 +3,10 @@ type: concept
 title: "File Format Specification"
 source: "https://audiflo.github.io/flo/file-format/"
 path: /file-format/
-updated: 2026-09-21
+updated: 2026-09-22
 okf:
   generated_by: "@docmd/plugin-okf"
-  generated_at: "2026-09-21T18:51:55.067Z"
+  generated_at: "2026-09-22T23:11:45.460Z"
 ---
 # File Format Specification
 

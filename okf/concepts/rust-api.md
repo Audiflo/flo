@@ -3,10 +3,10 @@ type: concept
 title: "Rust API"
 source: "https://audiflo.github.io/flo/rust-api/"
 path: /rust-api/
-updated: 2026-09-21
+updated: 2026-09-22
 okf:
   generated_by: "@docmd/plugin-okf"
-  generated_at: "2026-09-21T18:51:55.070Z"
+  generated_at: "2026-09-22T23:11:45.464Z"
 ---
 # Rust API
 
