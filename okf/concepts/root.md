@@ -3,10 +3,10 @@ type: concept
 title: "flo Documentation"
 source: "https://audiflo.github.io/flo/"
 path: /
-updated: 2026-09-22
+updated: 2026-09-23
 okf:
   generated_by: "@docmd/plugin-okf"
-  generated_at: "2026-09-22T23:11:45.462Z"
+  generated_at: "2026-09-23T00:29:31.945Z"
 ---
 # flo Documentation
 

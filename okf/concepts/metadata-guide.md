@@ -3,10 +3,10 @@ type: concept
 title: "Metadata Guide"
 source: "https://audiflo.github.io/flo/metadata-guide/"
 path: /metadata-guide/
-updated: 2026-09-22
+updated: 2026-09-23
 okf:
   generated_by: "@docmd/plugin-okf"
-  generated_at: "2026-09-22T23:11:45.463Z"
+  generated_at: "2026-09-23T00:29:31.946Z"
 ---
 # Metadata Guide
 
@@ -31,7 +31,7 @@ reflo encode song.mp3 song.flo \
 ### JavaScript
 
 ```javascript
-import { create_metadata_from_object, encode } from '@flo-audio/libflo';
+import { create_metadata_from_object, encode } from '@audiflo/libflo';
 
 const metadata = create_metadata_from_object({
   title: "My Song",
@@ -148,7 +148,7 @@ const metadata = create_metadata_from_object({
 ### Reading Cover Art
 
 ```javascript
-import { get_cover_art } from '@flo-audio/libflo';
+import { get_cover_art } from '@audiflo/libflo';
 
 const cover = get_cover_art(floData);
 if (cover) {
@@ -252,7 +252,7 @@ const metadata = create_metadata_from_object({
 **Reading synced lyrics:**
 
 ```javascript
-import { get_synced_lyrics } from '@flo-audio/libflo';
+import { get_synced_lyrics } from '@audiflo/libflo';
 
 const lyrics = get_synced_lyrics(floData);
 if (lyrics) {
@@ -343,7 +343,7 @@ const metadata = create_metadata_from_object({
 ### JavaScript
 
 ```javascript
-import { get_metadata, get_cover_art, get_synced_lyrics } from '@flo-audio/libflo';
+import { get_metadata, get_cover_art, get_synced_lyrics } from '@audiflo/libflo';
 
 // Get all metadata
 const meta = get_metadata(floData);

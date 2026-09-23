@@ -3,10 +3,10 @@ type: concept
 title: "JavaScript API"
 source: "https://audiflo.github.io/flo/javascript-api/"
 path: /javascript-api/
-updated: 2026-09-22
+updated: 2026-09-23
 okf:
   generated_by: "@docmd/plugin-okf"
-  generated_at: "2026-09-22T23:11:45.462Z"
+  generated_at: "2026-09-23T00:29:31.945Z"
 ---
 # JavaScript API
 
@@ -17,7 +17,7 @@ The libflo WASM module provides full encoding, decoding, and metadata support fo
 ### npm
 
 ```bash
-npm install @flo-audio/libflo
+npm install @audiflo/libflo
 ```
 
 ### CDN / Direct
@@ -36,7 +36,7 @@ npm install @flo-audio/libflo
 Always call `init()` before using any functions:
 
 ```javascript
-import init, { encode, decode } from '@flo-audio/libflo';
+import init, { encode, decode } from '@audiflo/libflo';
 
 await init();
 // Now you can use the API
@@ -296,7 +296,7 @@ const floData = encode(samples, 44100, 2, 16, metadata);
 For real-time playback and progressive loading. See [Streaming Guide](streaming.md) for details.
 
 ```javascript
-import { WasmStreamingDecoder } from '@flo-audio/libflo';
+import { WasmStreamingDecoder } from '@audiflo/libflo';
 
 const decoder = new WasmStreamingDecoder();
 

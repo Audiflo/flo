@@ -3,10 +3,10 @@ type: concept
 title: "Streaming Decoder"
 source: "https://audiflo.github.io/flo/streaming/"
 path: /streaming/
-updated: 2026-09-22
+updated: 2026-09-23
 okf:
   generated_by: "@docmd/plugin-okf"
-  generated_at: "2026-09-22T23:11:45.464Z"
+  generated_at: "2026-09-23T00:29:31.946Z"
 ---
 # Streaming Decoder
 
@@ -28,7 +28,7 @@ The streaming decoder enables real-time playback and progressive loading of flo 
 ### Basic Usage
 
 ```javascript
-import init, { WasmStreamingDecoder } from "@flo-audio/libflo";
+import init, { WasmStreamingDecoder } from "@audiflo/libflo";
 
 await init();
 
