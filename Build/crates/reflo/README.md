@@ -1,7 +1,11 @@
 # reflo
 
+[![crates.io](https://img.shields.io/crates/v/reflo.svg?style=flat-square)](https://crates.io/crates/reflo)
+[![docs.rs](https://img.shields.io/docsrs/reflo?style=flat-square)](https://docs.rs/reflo)
+[![npm](https://img.shields.io/npm/v/@audiflo/reflo.svg?style=flat-square)](https://www.npmjs.com/package/@audiflo/reflo)
+
 Audio format converter for the flo audio format.
-Available on crates.io! <https://crates.io/crates/reflo>
+Available on crates.io: <https://crates.io/crates/reflo> and npm: <https://www.npmjs.com/package/@audiflo/reflo>.
 
 ## Features
 

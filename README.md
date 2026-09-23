@@ -1,5 +1,16 @@
 # flo
 
+<p align="center">
+  <a href="https://crates.io/crates/libflo-audio"><img src="https://img.shields.io/crates/v/libflo-audio.svg?style=flat-square" alt="libflo-audio on crates.io"></a>
+  <a href="https://docs.rs/libflo-audio"><img src="https://img.shields.io/docsrs/libflo-audio?style=flat-square" alt="libflo-audio docs"></a>
+  <a href="https://www.npmjs.com/package/@audiflo/libflo"><img src="https://img.shields.io/npm/v/@audiflo/libflo.svg?style=flat-square" alt="@audiflo/libflo on npm"></a>
+  <a href="https://crates.io/crates/reflo"><img src="https://img.shields.io/crates/v/reflo.svg?style=flat-square" alt="reflo on crates.io"></a>
+  <a href="https://docs.rs/reflo"><img src="https://img.shields.io/docsrs/reflo?style=flat-square" alt="reflo docs"></a>
+  <a href="https://www.npmjs.com/package/@audiflo/reflo"><img src="https://img.shields.io/npm/v/@audiflo/reflo.svg?style=flat-square" alt="@audiflo/reflo on npm"></a>
+  <a href="https://crates.io/crates/reflo-cli"><img src="https://img.shields.io/crates/v/reflo-cli.svg?style=flat-square" alt="reflo-cli on crates.io"></a>
+  <a href="https://docs.rs/reflo-cli"><img src="https://img.shields.io/docsrs/reflo-cli?style=flat-square" alt="reflo-cli docs"></a>
+</p>
+
 A modern audio codec supporting both **lossless** and **lossy** compression.
 
 - **Lossless mode**: Adaptive Linear Predictive Coding (ALPC) with Rice encoding (~2-3x compression)

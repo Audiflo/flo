@@ -1,7 +1,11 @@
 # libflo
 
+[![crates.io](https://img.shields.io/crates/v/libflo-audio.svg?style=flat-square)](https://crates.io/crates/libflo-audio)
+[![docs.rs](https://img.shields.io/docsrs/libflo-audio?style=flat-square)](https://docs.rs/libflo-audio)
+[![npm](https://img.shields.io/npm/v/@audiflo/libflo.svg?style=flat-square)](https://www.npmjs.com/package/@audiflo/libflo)
+
 A Rust library for encoding and decoding flo audio files with WASM support.
-Available on crates.io! <https://crates.io/crates/libflo-audio>
+Available on crates.io: <https://crates.io/crates/libflo-audio> and npm: <https://www.npmjs.com/package/@audiflo/libflo>.
 
 ## Features
 

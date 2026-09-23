@@ -37,7 +37,7 @@ flo (Fast Layered Object) is a modern audio codec supporting both **lossless** a
 
 The core Rust library. Handles encoding, decoding, and metadata.
 
-- Available as Rust crate and WASM module
+- [crates.io: libflo-audio](https://crates.io/crates/libflo-audio) / [docs.rs](https://docs.rs/libflo-audio) / [npm: @audiflo/libflo](https://www.npmjs.com/package/@audiflo/libflo)
 - Pure Rust (uses `rustfft` for transforms)
 
 ### reflo and reflo-cli
@@ -45,6 +45,8 @@ The core Rust library. Handles encoding, decoding, and metadata.
 `reflo` is the reusable conversion facade. `reflo-cli` provides the `flo`
 command-line converter and owns filesystem/audio-container support.
 
+- [crates.io: reflo](https://crates.io/crates/reflo) / [docs.rs](https://docs.rs/reflo) / [npm: @audiflo/reflo](https://www.npmjs.com/package/@audiflo/reflo)
+- [crates.io: reflo-cli](https://crates.io/crates/reflo-cli) / [docs.rs](https://docs.rs/reflo-cli)
 - Converts common formats to flo
 - Also available as WASM for browser-based conversion
 

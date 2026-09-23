@@ -1,7 +1,10 @@
 # reflo-cli
 
+[![crates.io](https://img.shields.io/crates/v/reflo-cli.svg?style=flat-square)](https://crates.io/crates/reflo-cli)
+[![docs.rs](https://img.shields.io/docsrs/reflo-cli?style=flat-square)](https://docs.rs/reflo-cli)
+
 Command-line converter for the flo audio format.
-Available on crates.io! <https://crates.io/crates/reflo-cli>
+Available on crates.io: <https://crates.io/crates/reflo-cli>.
 
 Installs the `flo` binary.
 
