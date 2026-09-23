@@ -8,9 +8,8 @@ repository.workspace = true
 description = "Command-line audio converter for the flo audio format"
 keywords = ["audio", "compression", "converter"]
 categories = ["multimedia::audio", "command-line-utilities"]
-readme = "../reflo/README.md"
+readme = "README.md"
 homepage = "https://github.com/Audiflo/flo"
-publish = false
 
 [[bin]]
 name = "flo"

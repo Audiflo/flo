@@ -92,11 +92,6 @@ struct MdctTransform {
 }
 
 impl MdctTransform {
-    fn new(window_size: usize, window_type: WindowType) -> Self {
-        let window = Self::build_window(window_size, window_type);
-        Self::from_window(window_size, window)
-    }
-
     /// Build the window table for a given window type and size
     fn build_window(n: usize, window_type: WindowType) -> Vec<f32> {
         match window_type {

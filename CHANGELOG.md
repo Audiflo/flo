@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **ALAC decode support** in reflo, via Symphonia.
 - **FFT backend abstraction:** a new `dsp` module with swappable `fft-rustfft` and `fft-microfft` backends.
 - **`no_std`:** `libflo-audio` compiles with `--no-default-features` for embedded targets (`thumbv8m.main-none-eabihf`); `reflo` follows with a conditional `std` feature.
-- **CLI:** `reflo-cli` splits into its own crate and gains `metadata`, `analysis`, and `validate` subcommands alongside `encode`, `decode`, and `info`.
+- **CLI:** `reflo-cli` splits into its own crate (published to crates.io, `cargo install reflo-cli` gives the `flo` binary) and gains `metadata`, `analysis`, and `validate` subcommands alongside `encode`, `decode`, and `info`.
 - **Web demo:** the desktop demo gains waveform and spectral visualization, worker-thread decoding, and TOC-based seeking during playback.
 - **Documentation:** docs move to a generated docmd site with new file-format, `no_std`, CLI reference, and architecture guides.
 - **Release infrastructure:** OIDC trusted publishing for both crates.io and npm, so no registry tokens are stored in CI; npm publications carry SLSA provenance and the CLI/WASM artifacts get build-provenance attestations. Release workflows (with dry-run for manual testing) split into `release-cargo.yml` and `release-npm.yml`.
@@ -27,7 +27,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Dependencies:** bumped `symphonia` 0.5 -> 0.6.1 and migrated the reflo decode/metadata pipelines to the new API (`AudioCodecParameters`,
   `AudioDecoderOptions`, metadata revisions, probe-by-value options). All Rust workspace deps updated to their latest patch/minor versions (`serde`, `serde_json`, `serde_bytes`, `messagepack-serde`, `serde-wasm-bindgen`, `rustfft`, `blake3`, `wasm-bindgen`, `js-sys`, `web-sys`, `anyhow`, `chrono`, `clap`).
 - **Workspace layout:** crates consolidate into a single `Build/` workspace (`crates/libflo`, `crates/reflo`, `crates/reflo-cli`, `crates/flo-fixtures`) with shared Python `scripts/` and a `Justfile` command layer.
+- **npm scope:** the JS packages move from `@flo-audio` to the `@audiflo` org (`@flo-audio/libflo-audio` -> `@audiflo/libflo`, `@flo-audio/reflo` -> `@audiflo/reflo`); the old package names are deprecated.
 - **Streaming encoder:** adds a compression-level knob, chunked `flush_into_frames`, and an explicit `finalize` step that writes the trailing metadata and footer.
+- **Demo downloads:** flo files are offered as inline downloads with the `audio/x-flo` MIME type instead of generic `application/octet-stream`.
 - **Test restructure:** native Rust integration tests now live in `Tests/` (`Tests/libflo/`, `Tests/reflo/`) and are wired via `[[test]]` paths in the crate manifests; Jest WASM tests moved to `Tests/libflo/js/`.
 - **Fixtures:** added `Build/crates/flo-fixtures`, an in-code signal synthesizer that replaces `sox`-based generation. `just examples` now writes `.wav`/`.flo` files to `Tests/fixtures/` and regenerates `Examples/`.
 - **Tooling:** `.devcontainer/` dev container (Rust + Node 24 + Python 3.14, wasm32 target, `just`, `cargo-deny`, `wasm-pack`) and toolchain version pins: `.nvmrc` (Node 24), `.python-version` (3.14), and an `.envrc` for direnv users.

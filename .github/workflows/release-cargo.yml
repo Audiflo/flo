@@ -22,6 +22,7 @@ on:
           - 'all'
           - 'libflo-audio'
           - 'reflo'
+          - 'reflo-cli'
 
 jobs:
   publish:
@@ -35,6 +36,7 @@ jobs:
       DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run == 'true' || false }}
       DO_LIBFLO: ${{ github.event_name != 'workflow_dispatch' || inputs.packages == 'all' || inputs.packages == 'libflo-audio' }}
       DO_REFLO: ${{ github.event_name != 'workflow_dispatch' || inputs.packages == 'all' || inputs.packages == 'reflo' }}
+      DO_REFLO_CLI: ${{ github.event_name != 'workflow_dispatch' || inputs.packages == 'all' || inputs.packages == 'reflo-cli' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -54,5 +56,11 @@ jobs:
       - name: Publish reflo
         if: env.DO_REFLO == 'true'
         run: cargo publish --manifest-path Build/crates/reflo/Cargo.toml ${{ env.DRY_RUN == 'true' && '--dry-run' || '' }}
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+
+      - name: Publish reflo-cli
+        if: env.DO_REFLO_CLI == 'true'
+        run: cargo publish --manifest-path Build/crates/reflo-cli/Cargo.toml ${{ env.DRY_RUN == 'true' && '--dry-run' || '' }}
         env:
           CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
