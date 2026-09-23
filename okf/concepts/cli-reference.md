@@ -6,7 +6,7 @@ path: /cli-reference/
 updated: 2026-09-23
 okf:
   generated_by: "@docmd/plugin-okf"
-  generated_at: "2026-09-23T03:53:19.656Z"
+  generated_at: "2026-09-23T03:53:42.906Z"
 ---
 # CLI Reference
 

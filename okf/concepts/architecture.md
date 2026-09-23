@@ -6,7 +6,7 @@ path: /architecture/
 updated: 2026-09-23
 okf:
   generated_by: "@docmd/plugin-okf"
-  generated_at: "2026-09-23T03:53:19.655Z"
+  generated_at: "2026-09-23T03:53:42.905Z"
 ---
 # Architecture
 
