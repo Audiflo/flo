@@ -100,7 +100,7 @@ jobs:
           workspaces: Build/crates/libflo
 
       - name: Cache npm
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: Tests/libflo/js/node_modules
           key: ${{ runner.os }}-npm-${{ hashFiles('Tests/libflo/js/package.json') }}
