@@ -9,7 +9,7 @@ use symphonia::core::codecs::audio::{well_known, AudioDecoderOptions, CODEC_ID_N
 use symphonia::core::common::Limit;
 use symphonia::core::formats::probe::Hint;
 use symphonia::core::formats::FormatOptions;
-use symphonia::core::io::{MediaSource, MediaSourceStream, SeekFrom};
+use symphonia::core::io::{MediaSource, MediaSourceStream};
 use symphonia::core::meta::{MetadataOptions, StandardTag, StandardVisualKey};
 
 #[cfg(feature = "std")]
@@ -26,6 +26,27 @@ fn io_err(ctx: &str, e: impl core::fmt::Display) -> FloError {
     FloError::new(FloErrorKind::Io, alloc::format!("{ctx}: {e}"))
 }
 
+/// Returns true if an I/O error is an end-of-stream condition. Under `std` the
+/// io error payload mirrors `std::io::Error`; on no_std symphonia uses its own
+/// [`MediaErrorKind`](symphonia::core::io::MediaErrorKind).
+#[cfg(feature = "std")]
+fn is_io_eof(e: &symphonia::core::errors::Error) -> bool {
+    matches!(
+        e,
+        symphonia::core::errors::Error::IoError(err)
+            if err.kind() == std::io::ErrorKind::UnexpectedEof
+    )
+}
+
+#[cfg(not(feature = "std"))]
+fn is_io_eof(e: &symphonia::core::errors::Error) -> bool {
+    matches!(
+        e,
+        symphonia::core::errors::Error::IoError(err)
+            if err.kind() == symphonia::core::io::MediaErrorKind::Eof
+    )
+}
+
 pub(crate) struct ByteSource {
     data: Vec<u8>,
     pos: usize,
@@ -37,6 +58,44 @@ impl ByteSource {
     }
 }
 
+// TODO: Once the no_std support lands upstream and the
+// git/[patch] override is removed, the `#[cfg(not(feature = "std"))]` block goes.
+#[cfg(feature = "std")]
+impl std::io::Read for ByteSource {
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        let remaining = self.data.len() - self.pos;
+        let n = core::cmp::min(buf.len(), remaining);
+        buf[..n].copy_from_slice(&self.data[self.pos..self.pos + n]);
+        self.pos += n;
+        Ok(n)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::io::Seek for ByteSource {
+    fn seek(&mut self, pos: std::io::SeekFrom) -> std::io::Result<u64> {
+        let new_pos = match pos {
+            std::io::SeekFrom::Start(p) => p as usize,
+            std::io::SeekFrom::End(p) => (self.data.len() as i64 + p) as usize,
+            std::io::SeekFrom::Current(p) => (self.pos as i64 + p) as usize,
+        };
+        self.pos = new_pos.min(self.data.len());
+        Ok(self.pos as u64)
+    }
+}
+
+#[cfg(feature = "std")]
+impl MediaSource for ByteSource {
+    fn is_seekable(&self) -> bool {
+        true
+    }
+
+    fn byte_len(&self) -> Option<u64> {
+        Some(self.data.len() as u64)
+    }
+}
+
+#[cfg(not(feature = "std"))]
 impl MediaSource for ByteSource {
     fn is_seekable(&self) -> bool {
         true
@@ -54,11 +113,14 @@ impl MediaSource for ByteSource {
         Ok(n)
     }
 
-    fn seek(&mut self, pos: SeekFrom) -> Result<u64, symphonia::core::io::MediaError> {
+    fn seek(
+        &mut self,
+        pos: symphonia::core::io::SeekFrom,
+    ) -> Result<u64, symphonia::core::io::MediaError> {
         let new_pos = match pos {
-            SeekFrom::Start(p) => p as usize,
-            SeekFrom::End(p) => (self.data.len() as i64 + p) as usize,
-            SeekFrom::Current(p) => (self.pos as i64 + p) as usize,
+            symphonia::core::io::SeekFrom::Start(p) => p as usize,
+            symphonia::core::io::SeekFrom::End(p) => (self.data.len() as i64 + p) as usize,
+            symphonia::core::io::SeekFrom::Current(p) => (self.pos as i64 + p) as usize,
         };
         self.pos = new_pos.min(self.data.len());
         Ok(self.pos as u64)
@@ -181,11 +243,7 @@ fn read_from_source_with_metadata(
         let packet = match format.next_packet() {
             Ok(Some(packet)) => packet,
             Ok(None) => break,
-            Err(symphonia::core::errors::Error::IoError(e))
-                if e.kind() == symphonia::core::io::MediaErrorKind::Eof =>
-            {
-                break
-            }
+            Err(e) if is_io_eof(&e) => break,
             Err(e) => return Err(codec_err("Error reading packet", e)),
         };
 

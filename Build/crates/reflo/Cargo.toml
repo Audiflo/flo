@@ -27,7 +27,7 @@ path = "../../../Tests/reflo/encode_decode_tests.rs"
 
 [features]
 default = ["std", "fft-rustfft"]
-std = ["dep:chrono"]
+std = ["dep:chrono", "symphonia/std"]
 fft-rustfft = ["libflo-audio/fft-rustfft"]
 fft-microfft = ["libflo-audio/fft-microfft"]
 wasm = [
