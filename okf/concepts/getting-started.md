@@ -6,7 +6,7 @@ path: /getting-started/
 updated: 2026-09-23
 okf:
   generated_by: "@docmd/plugin-okf"
-  generated_at: "2026-09-23T03:13:22.265Z"
+  generated_at: "2026-09-23T03:17:26.276Z"
 ---
 # Getting Started
 
@@ -41,6 +41,9 @@ Download from [GitHub Releases](https://github.com/Audiflo/flo/releases):
 
 Use `libflo-audio` for the codec or `reflo` for the higher-level raw-sample API:
 
+- [libflo-audio](https://crates.io/crates/libflo-audio) - core codec ([docs.rs](https://docs.rs/libflo-audio))
+- [reflo](https://crates.io/crates/reflo) - conversion facade ([docs.rs](https://docs.rs/reflo))
+
 ```toml
 [dependencies]
 libflo-audio = { version = "0.1.3" }
@@ -52,6 +55,8 @@ libflo-audio = { version = "0.1.3" }
 ```bash
 npm install @audiflo/libflo
 ```
+
+See [@audiflo/libflo](https://www.npmjs.com/package/@audiflo/libflo) on npm.
 
 Or use directly in HTML:
 

@@ -104,11 +104,11 @@
     
     
 
-    <link id="site-favicon" rel="icon" href="../assets/favicon.ico?v=mudj36fi">
-    <link rel="stylesheet" href="../assets/css/docmd-main.css?v=mudj36fi">
+    <link id="site-favicon" rel="icon" href="../assets/favicon.ico?v=mudj8eyt">
+    <link rel="stylesheet" href="../assets/css/docmd-main.css?v=mudj8eyt">
     
-    <link rel="stylesheet" href="../assets/css/docmd-highlight-light.css?v=mudj36fi" id="hljs-light" >
-    <link rel="stylesheet" href="../assets/css/docmd-highlight-dark.css?v=mudj36fi" id="hljs-dark" disabled>
+    <link rel="stylesheet" href="../assets/css/docmd-highlight-light.css?v=mudj8eyt" id="hljs-light" >
+    <link rel="stylesheet" href="../assets/css/docmd-highlight-dark.css?v=mudj8eyt" id="hljs-dark" disabled>
     
     
 <meta name="description" content="flo is a modern lossless and lossy audio codec with Rust and WebAssembly APIs.">
@@ -124,10 +124,10 @@
 
 
 
-<link rel="stylesheet" href="../assets/css/docmd-theme-ruby.css?v=mudj36fi" >
-<link rel="stylesheet" href="../assets/css/docmd-git.css?v=mudj36fi" >
-<link rel="stylesheet" href="../assets/css/docmd-openapi.css?v=mudj36fi" >
-<link rel="stylesheet" href="../assets/css/docmd-ai.css?v=mudj36fi" >
+<link rel="stylesheet" href="../assets/css/docmd-theme-ruby.css?v=mudj8eyt" >
+<link rel="stylesheet" href="../assets/css/docmd-git.css?v=mudj8eyt" >
+<link rel="stylesheet" href="../assets/css/docmd-openapi.css?v=mudj8eyt" >
+<link rel="stylesheet" href="../assets/css/docmd-ai.css?v=mudj8eyt" >
 
     
     
@@ -908,7 +908,7 @@
             <div class="content-layout">
               <div class="main-content">
                 <div class="docmd-breadcrumbs-row">
-                  <div id="docmd-raw-markdown" data-content="%23%20Getting%20Started%0A%0AThis%20guide%20will%20help%20you%20get%20up%20and%20running%20with%20flo%20quickly.%0A%0A%23%23%20Installation%0A%0A%23%23%23%20CLI%20Tool%20(reflo)%0A%0A%23%23%23%23%20From%20Source%0A%0A%60%60%60bash%0A%23%20Clone%20the%20repository%0Agit%20clone%20https%3A%2F%2Fgithub.com%2FAudiflo%2Fflo.git%0Acd%20flo%0A%0A%23%20Build%20and%20install%0Acd%20Build%0Acargo%20install%20--path%20crates%2Freflo-cli%20--manifest-path%20Cargo.toml%0A%60%60%60%0A%0A%23%23%23%23%20Pre-built%20Binaries%0A%0ADownload%20from%20%5BGitHub%20Releases%5D(https%3A%2F%2Fgithub.com%2FAudiflo%2Fflo%2Freleases)%3A%0A%0A-%20%60reflo-linux%60%20-%20Linux%20x64%0A-%20%60reflo-macos%60%20-%20macOS%20x64%0A-%20%60reflo-macos-arm64%60%20-%20macOS%20Apple%20Silicon%0A-%20%60reflo-windows.exe%60%20-%20Windows%20x64%0A%0A%23%23%23%20Rust%20Libraries%0A%0AUse%20%60libflo-audio%60%20for%20the%20codec%20or%20%60reflo%60%20for%20the%20higher-level%20raw-sample%20API%3A%0A%0A%60%60%60toml%0A%5Bdependencies%5D%0Alibflo-audio%20%3D%20%7B%20version%20%3D%20%220.1.3%22%20%7D%0A%23%20Or%3A%20reflo%20%3D%20%7B%20version%20%3D%20%220.1.3%22%2C%20default-features%20%3D%20false%20%7D%0A%60%60%60%0A%0A%23%23%23%20JavaScript%20(WASM)%0A%0A%60%60%60bash%0Anpm%20install%20%40audiflo%2Flibflo%0A%60%60%60%0A%0AOr%20use%20directly%20in%20HTML%3A%0A%0A%60%60%60html%0A%3Cscript%20type%3D%22module%22%3E%0A%20%20import%20init%2C%20%7B%20encode%2C%20decode%20%7D%20from%20&#039;.%2Fpkg-libflo%2Flibflo_audio.js&#039;%3B%0A%20%20await%20init()%3B%0A%3C%2Fscript%3E%0A%60%60%60%0A%0A---%0A%0A%23%23%20Quick%20Examples%0A%0A%23%23%23%20Convert%20a%20File%20(CLI)%0A%0A%60%60%60bash%0A%23%20Lossless%20encoding%20(default)%0Areflo%20encode%20music.mp3%20music.flo%0A%0A%23%20Lossy%20encoding%20with%20quality%20preset%0Areflo%20encode%20music.mp3%20music.flo%20--lossy%20--quality%20high%0A%0A%23%20Decode%20back%20to%20WAV%0Areflo%20decode%20music.flo%20music.wav%0A%0A%23%20Show%20file%20info%0Areflo%20info%20music.flo%0A%60%60%60%0A%0A%23%23%23%20Encode%20in%20Rust%0A%0A%60%60%60rust%0Ause%20libflo_audio%3A%3A%7BEncoder%2C%20decode%7D%3B%0A%0A%2F%2F%20Create%20encoder%0Alet%20encoder%20%3D%20Encoder%3A%3Anew(44100%2C%202%2C%2016)%3B%0A%0A%2F%2F%20Your%20audio%20samples%20(interleaved%20f32%2C%20-1.0%20to%201.0)%0Alet%20samples%3A%20Vec%3Cf32%3E%20%3D%20vec!%5B0.0%3B%2044100%20*%202%5D%3B%20%2F%2F%201%20second%20stereo%20silence%0A%0A%2F%2F%20Encode%0Alet%20flo_data%20%3D%20encoder.encode(%26samples%2C%20%26%5B%5D).unwrap()%3B%0A%0A%2F%2F%20Decode%0Alet%20decoded%20%3D%20decode(%26flo_data).unwrap()%3B%0A%60%60%60%0A%0A%23%23%23%20Encode%20in%20JavaScript%0A%0A%60%60%60javascript%0Aimport%20init%2C%20%7B%20encode%2C%20decode%2C%20info%20%7D%20from%20&#039;%40audiflo%2Flibflo&#039;%3B%0A%0Aawait%20init()%3B%0A%0A%2F%2F%20Get%20samples%20from%20AudioBuffer%20or%20Web%20Audio%20API%0Aconst%20samples%20%3D%20new%20Float32Array(44100%20*%202)%3B%0A%0A%2F%2F%20Encode%20(lossless)%0Aconst%20floData%20%3D%20encode(samples%2C%2044100%2C%202%2C%2016%2C%20null)%3B%0A%0A%2F%2F%20Decode%0Aconst%20decoded%20%3D%20decode(floData)%3B%0A%0A%2F%2F%20Get%20info%0Aconst%20fileInfo%20%3D%20info(floData)%3B%0Aconsole.log(%60Duration%3A%20%24%7BfileInfo.duration_secs%7Ds%60)%3B%0A%60%60%60%0A%0A---%0A%0A%23%23%20Choosing%20Lossless%20vs%20Lossy%0A%0A%7C%20Use%20Case%20%7C%20Mode%20%7C%20Quality%20%7C%20Compression%20%7C%0A%7C%20----------%20%7C%20------%20%7C%20---------%20%7C%20-------------%20%7C%0A%7C%20Archival%20%2F%20Mastering%20%7C%20Lossless%20%7C%20Perfect%20%7C%20~2-3x%20%7C%0A%7C%20Music%20streaming%20%7C%20Lossy%20High%20%7C%20Excellent%20%7C%20~6x%20%7C%0A%7C%20Podcasts%20%2F%20Speech%20%7C%20Lossy%20Medium%20%7C%20Good%20%7C%20~10x%20%7C%0A%7C%20Background%20audio%20%7C%20Lossy%20Low%20%7C%20Acceptable%20%7C%20~30x%20%7C%0A%0A%23%23%23%20Quality%20Presets%20(Lossy)%0A%0A%7C%20Preset%20%7C%20Equivalent%20Bitrate%20%7C%20Use%20Case%20%7C%0A%7C%20--------%20%7C%20-------------------%20%7C%20----------%20%7C%0A%7C%20%60low%60%20%7C%20~48%20kbps%20%7C%20Speech%2C%20podcasts%20%7C%0A%7C%20%60medium%60%20%7C%20~128%20kbps%20%7C%20General%20music%20%7C%0A%7C%20%60high%60%20%7C%20~192%20kbps%20%7C%20Quality%20listening%20%7C%0A%7C%20%60veryhigh%60%20%7C%20~256%20kbps%20%7C%20Near-transparent%20%7C%0A%7C%20%60transparent%60%20%7C%20~320%20kbps%20%7C%20Indistinguishable%20from%20lossless%20%7C%0A%0A---%0A%0A%23%23%20Next%20Steps%0A%0A-%20%5BCLI%20Reference%5D(cli-reference.md)%20-%20Full%20command%20documentation%0A-%20%5BJavaScript%20API%5D(javascript-api.md)%20-%20Browser%20integration%0A-%20%5BMetadata%20Guide%5D(metadata-guide.md)%20-%20Add%20titles%2C%20artwork%2C%20lyrics%0A-%20%5BStreaming%5D(streaming.md)%20-%20Real-time%20playback%0A" style="display: none;"></div>
+                  <div id="docmd-raw-markdown" data-content="%23%20Getting%20Started%0A%0AThis%20guide%20will%20help%20you%20get%20up%20and%20running%20with%20flo%20quickly.%0A%0A%23%23%20Installation%0A%0A%23%23%23%20CLI%20Tool%20(reflo)%0A%0A%23%23%23%23%20From%20Source%0A%0A%60%60%60bash%0A%23%20Clone%20the%20repository%0Agit%20clone%20https%3A%2F%2Fgithub.com%2FAudiflo%2Fflo.git%0Acd%20flo%0A%0A%23%20Build%20and%20install%0Acd%20Build%0Acargo%20install%20--path%20crates%2Freflo-cli%20--manifest-path%20Cargo.toml%0A%60%60%60%0A%0A%23%23%23%23%20Pre-built%20Binaries%0A%0ADownload%20from%20%5BGitHub%20Releases%5D(https%3A%2F%2Fgithub.com%2FAudiflo%2Fflo%2Freleases)%3A%0A%0A-%20%60reflo-linux%60%20-%20Linux%20x64%0A-%20%60reflo-macos%60%20-%20macOS%20x64%0A-%20%60reflo-macos-arm64%60%20-%20macOS%20Apple%20Silicon%0A-%20%60reflo-windows.exe%60%20-%20Windows%20x64%0A%0A%23%23%23%20Rust%20Libraries%0A%0AUse%20%60libflo-audio%60%20for%20the%20codec%20or%20%60reflo%60%20for%20the%20higher-level%20raw-sample%20API%3A%0A%0A-%20%5Blibflo-audio%5D(https%3A%2F%2Fcrates.io%2Fcrates%2Flibflo-audio)%20-%20core%20codec%20(%5Bdocs.rs%5D(https%3A%2F%2Fdocs.rs%2Flibflo-audio))%0A-%20%5Breflo%5D(https%3A%2F%2Fcrates.io%2Fcrates%2Freflo)%20-%20conversion%20facade%20(%5Bdocs.rs%5D(https%3A%2F%2Fdocs.rs%2Freflo))%0A%0A%60%60%60toml%0A%5Bdependencies%5D%0Alibflo-audio%20%3D%20%7B%20version%20%3D%20%220.1.3%22%20%7D%0A%23%20Or%3A%20reflo%20%3D%20%7B%20version%20%3D%20%220.1.3%22%2C%20default-features%20%3D%20false%20%7D%0A%60%60%60%0A%0A%23%23%23%20JavaScript%20(WASM)%0A%0A%60%60%60bash%0Anpm%20install%20%40audiflo%2Flibflo%0A%60%60%60%0A%0ASee%20%5B%40audiflo%2Flibflo%5D(https%3A%2F%2Fwww.npmjs.com%2Fpackage%2F%40audiflo%2Flibflo)%20on%20npm.%0A%0AOr%20use%20directly%20in%20HTML%3A%0A%0A%60%60%60html%0A%3Cscript%20type%3D%22module%22%3E%0A%20%20import%20init%2C%20%7B%20encode%2C%20decode%20%7D%20from%20&#039;.%2Fpkg-libflo%2Flibflo_audio.js&#039;%3B%0A%20%20await%20init()%3B%0A%3C%2Fscript%3E%0A%60%60%60%0A%0A---%0A%0A%23%23%20Quick%20Examples%0A%0A%23%23%23%20Convert%20a%20File%20(CLI)%0A%0A%60%60%60bash%0A%23%20Lossless%20encoding%20(default)%0Areflo%20encode%20music.mp3%20music.flo%0A%0A%23%20Lossy%20encoding%20with%20quality%20preset%0Areflo%20encode%20music.mp3%20music.flo%20--lossy%20--quality%20high%0A%0A%23%20Decode%20back%20to%20WAV%0Areflo%20decode%20music.flo%20music.wav%0A%0A%23%20Show%20file%20info%0Areflo%20info%20music.flo%0A%60%60%60%0A%0A%23%23%23%20Encode%20in%20Rust%0A%0A%60%60%60rust%0Ause%20libflo_audio%3A%3A%7BEncoder%2C%20decode%7D%3B%0A%0A%2F%2F%20Create%20encoder%0Alet%20encoder%20%3D%20Encoder%3A%3Anew(44100%2C%202%2C%2016)%3B%0A%0A%2F%2F%20Your%20audio%20samples%20(interleaved%20f32%2C%20-1.0%20to%201.0)%0Alet%20samples%3A%20Vec%3Cf32%3E%20%3D%20vec!%5B0.0%3B%2044100%20*%202%5D%3B%20%2F%2F%201%20second%20stereo%20silence%0A%0A%2F%2F%20Encode%0Alet%20flo_data%20%3D%20encoder.encode(%26samples%2C%20%26%5B%5D).unwrap()%3B%0A%0A%2F%2F%20Decode%0Alet%20decoded%20%3D%20decode(%26flo_data).unwrap()%3B%0A%60%60%60%0A%0A%23%23%23%20Encode%20in%20JavaScript%0A%0A%60%60%60javascript%0Aimport%20init%2C%20%7B%20encode%2C%20decode%2C%20info%20%7D%20from%20&#039;%40audiflo%2Flibflo&#039;%3B%0A%0Aawait%20init()%3B%0A%0A%2F%2F%20Get%20samples%20from%20AudioBuffer%20or%20Web%20Audio%20API%0Aconst%20samples%20%3D%20new%20Float32Array(44100%20*%202)%3B%0A%0A%2F%2F%20Encode%20(lossless)%0Aconst%20floData%20%3D%20encode(samples%2C%2044100%2C%202%2C%2016%2C%20null)%3B%0A%0A%2F%2F%20Decode%0Aconst%20decoded%20%3D%20decode(floData)%3B%0A%0A%2F%2F%20Get%20info%0Aconst%20fileInfo%20%3D%20info(floData)%3B%0Aconsole.log(%60Duration%3A%20%24%7BfileInfo.duration_secs%7Ds%60)%3B%0A%60%60%60%0A%0A---%0A%0A%23%23%20Choosing%20Lossless%20vs%20Lossy%0A%0A%7C%20Use%20Case%20%7C%20Mode%20%7C%20Quality%20%7C%20Compression%20%7C%0A%7C%20----------%20%7C%20------%20%7C%20---------%20%7C%20-------------%20%7C%0A%7C%20Archival%20%2F%20Mastering%20%7C%20Lossless%20%7C%20Perfect%20%7C%20~2-3x%20%7C%0A%7C%20Music%20streaming%20%7C%20Lossy%20High%20%7C%20Excellent%20%7C%20~6x%20%7C%0A%7C%20Podcasts%20%2F%20Speech%20%7C%20Lossy%20Medium%20%7C%20Good%20%7C%20~10x%20%7C%0A%7C%20Background%20audio%20%7C%20Lossy%20Low%20%7C%20Acceptable%20%7C%20~30x%20%7C%0A%0A%23%23%23%20Quality%20Presets%20(Lossy)%0A%0A%7C%20Preset%20%7C%20Equivalent%20Bitrate%20%7C%20Use%20Case%20%7C%0A%7C%20--------%20%7C%20-------------------%20%7C%20----------%20%7C%0A%7C%20%60low%60%20%7C%20~48%20kbps%20%7C%20Speech%2C%20podcasts%20%7C%0A%7C%20%60medium%60%20%7C%20~128%20kbps%20%7C%20General%20music%20%7C%0A%7C%20%60high%60%20%7C%20~192%20kbps%20%7C%20Quality%20listening%20%7C%0A%7C%20%60veryhigh%60%20%7C%20~256%20kbps%20%7C%20Near-transparent%20%7C%0A%7C%20%60transparent%60%20%7C%20~320%20kbps%20%7C%20Indistinguishable%20from%20lossless%20%7C%0A%0A---%0A%0A%23%23%20Next%20Steps%0A%0A-%20%5BCLI%20Reference%5D(cli-reference.md)%20-%20Full%20command%20documentation%0A-%20%5BJavaScript%20API%5D(javascript-api.md)%20-%20Browser%20integration%0A-%20%5BMetadata%20Guide%5D(metadata-guide.md)%20-%20Add%20titles%2C%20artwork%2C%20lyrics%0A-%20%5BStreaming%5D(streaming.md)%20-%20Real-time%20playback%0A" style="display: none;"></div>
                   
                     <nav aria-label="breadcrumb" class="docmd-breadcrumbs">
                       <ol>
@@ -1020,6 +1020,10 @@
 </ul>
 <h3 id="getting-started-installation-rust-libraries" class="docmd-heading"><a href="#getting-started-installation-rust-libraries" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>Rust Libraries</h3>
 <p>Use <code>libflo-audio</code> for the codec or <code>reflo</code> for the higher-level raw-sample API:</p>
+<ul>
+<li><a href="https://crates.io/crates/libflo-audio">libflo-audio</a> - core codec (<a href="https://docs.rs/libflo-audio">docs.rs</a>)</li>
+<li><a href="https://crates.io/crates/reflo">reflo</a> - conversion facade (<a href="https://docs.rs/reflo">docs.rs</a>)</li>
+</ul>
 <pre class="hljs"><code class="language-toml">[dependencies]
 libflo<span class="hljs-operator">-</span>audio <span class="hljs-operator">=</span> { version <span class="hljs-operator">=</span> <span class="hljs-string">&quot;0.1.3&quot;</span> }
 <span class="hljs-comment"># Or: reflo = { version = &quot;0.1.3&quot;, default-features = false }</span>
@@ -1027,6 +1031,7 @@ libflo<span class="hljs-operator">-</span>audio <span class="hljs-operator">=</s
 <h3 id="getting-started-installation-javascript-wasm" class="docmd-heading"><a href="#getting-started-installation-javascript-wasm" class="heading-anchor" aria-label="Permalink to this section"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 1 1 0 10h-2m-7-5h8"/></svg></a>JavaScript (WASM)</h3>
 <pre class="hljs"><code class="language-bash"><span class="hljs-keyword">npm</span> install @audiflo<span class="hljs-operator">/</span>libflo
 </code></pre>
+<p>See <a href="https://www.npmjs.com/package/@audiflo/libflo">@audiflo/libflo</a> on npm.</p>
 <p>Or use directly in HTML:</p>
 <pre class="hljs"><code class="language-html"><span class="hljs-operator">&lt;</span>script <span class="hljs-keyword">type</span><span class="hljs-operator">=</span><span class="hljs-string">&quot;module&quot;</span><span class="hljs-operator">&gt;</span>
   <span class="hljs-keyword">import</span> init, { encode, decode } <span class="hljs-keyword">from</span> <span class="hljs-string">&#039;./pkg-libflo/libflo_audio.js&#039;</span>;
@@ -1308,13 +1313,13 @@ console.<span class="hljs-title function_">log</span>(<span class="hljs-string">
             <div class="page-footer-actions">
               
               
-                <span class="git-last-updated" data-timestamp="1790132888000">
+                <span class="git-last-updated" data-timestamp="1790133238000">
                   <svg class="git-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="12" cy="12" r="10"></circle>
                     <polyline points="12 6 12 12 16 14"></polyline>
                   </svg>
                   <span class="git-label">Last updated:</span>
-                  <span class="git-time" data-timestamp="1790132888000"></span>
+                  <span class="git-time" data-timestamp="1790133238000"></span>
                   
                   <div class="git-commit-tooltip" role="tooltip">
                     <div class="git-tooltip-title">Recent commits</div>
@@ -1327,10 +1332,10 @@ console.<span class="hljs-title function_">log</span>(<span class="hljs-string">
                             
                           </div>
                           <div class="git-commit-details">
-                            <div class="git-commit-message" title="so reflo/reflo-cli on cargo is a bit different than on github because of symphonia no_std not being stable yet (aka merged)">so reflo/reflo-cli on cargo is a bit ...</div>
+                            <div class="git-commit-message" title="badges">badges</div>
                             <div class="git-commit-meta">
                               <span class="git-commit-author">NellowTCS</span>
-                              <span class="git-commit-date" data-timestamp="1790132888000"></span>
+                              <span class="git-commit-date" data-timestamp="1790133238000"></span>
                             </div>
                           </div>
                         </li>
@@ -1423,14 +1428,14 @@ console.<span class="hljs-title function_">log</span>(<span class="hljs-string">
         </div>
       </div>
       
-      <script src="../assets/js/docmd-main.js?v=mudj36fi"></script>
+      <script src="../assets/js/docmd-main.js?v=mudj8eyt"></script>
       
-      <script src="../assets/js/docmd-git.js?v=mudj36fi"></script>
-      <script src="../assets/js/docmd-image-lightbox.js?v=mudj36fi" ></script>
-<script src="../assets/js/vendor/minisearch.js?v=mudj36fi" ></script>
-<script src="../assets/js/docmd-search.js?v=mudj36fi" ></script>
-<script src="../assets/js/docmd-git.js?v=mudj36fi" ></script>
-<script src="../assets/js/docmd-ai.js?v=mudj36fi" ></script>
+      <script src="../assets/js/docmd-git.js?v=mudj8eyt"></script>
+      <script src="../assets/js/docmd-image-lightbox.js?v=mudj8eyt" ></script>
+<script src="../assets/js/vendor/minisearch.js?v=mudj8eyt" ></script>
+<script src="../assets/js/docmd-search.js?v=mudj8eyt" ></script>
+<script src="../assets/js/docmd-git.js?v=mudj8eyt" ></script>
+<script src="../assets/js/docmd-ai.js?v=mudj8eyt" ></script>
 
   <!-- Search Modal (Injected by @docmd/plugin-search) -->
   <div id="docmd-search-modal" class="docmd-search-modal" style="display: none;" data-show-confidence="false" data-show-filters="true"
