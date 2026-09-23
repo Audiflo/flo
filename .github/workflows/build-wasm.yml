@@ -51,7 +51,7 @@ jobs:
             Build/crates/libflo/pkg/package.json
 
       - name: Upload WASM artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: libflo-wasm
           path: Build/crates/libflo/pkg/
