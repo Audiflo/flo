@@ -6,7 +6,7 @@ path: /metadata-guide/
 updated: 2026-09-23
 okf:
   generated_by: "@docmd/plugin-okf"
-  generated_at: "2026-09-23T03:52:31.125Z"
+  generated_at: "2026-09-23T03:53:01.092Z"
 ---
 # Metadata Guide
 
