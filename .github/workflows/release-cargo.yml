@@ -38,7 +38,7 @@ jobs:
       DO_REFLO: ${{ github.event_name != 'workflow_dispatch' || inputs.packages == 'all' || inputs.packages == 'reflo' }}
       DO_REFLO_CLI: ${{ github.event_name != 'workflow_dispatch' || inputs.packages == 'all' || inputs.packages == 'reflo-cli' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
