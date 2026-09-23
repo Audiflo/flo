@@ -8,7 +8,6 @@
   <a href="https://docs.rs/reflo"><img src="https://img.shields.io/docsrs/reflo?style=flat-square" alt="reflo docs"></a>
   <a href="https://www.npmjs.com/package/@audiflo/reflo"><img src="https://img.shields.io/npm/v/@audiflo/reflo.svg?style=flat-square" alt="@audiflo/reflo on npm"></a>
   <a href="https://crates.io/crates/reflo-cli"><img src="https://img.shields.io/crates/v/reflo-cli.svg?style=flat-square" alt="reflo-cli on crates.io"></a>
-  <a href="https://docs.rs/reflo-cli"><img src="https://img.shields.io/docsrs/reflo-cli?style=flat-square" alt="reflo-cli docs"></a>
 </p>
 
 A modern audio codec supporting both **lossless** and **lossy** compression.
