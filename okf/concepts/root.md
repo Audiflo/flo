@@ -6,7 +6,7 @@ path: /
 updated: 2026-09-23
 okf:
   generated_by: "@docmd/plugin-okf"
-  generated_at: "2026-09-23T03:17:26.276Z"
+  generated_at: "2026-09-23T03:22:06.893Z"
 ---
 # flo Documentation
 
@@ -56,7 +56,7 @@ The core Rust library. Handles encoding, decoding, and metadata.
 command-line converter and owns filesystem/audio-container support.
 
 - [crates.io: reflo](https://crates.io/crates/reflo) / [docs.rs](https://docs.rs/reflo) / [npm: @audiflo/reflo](https://www.npmjs.com/package/@audiflo/reflo)
-- [crates.io: reflo-cli](https://crates.io/crates/reflo-cli) / [docs.rs](https://docs.rs/reflo-cli)
+- [crates.io: reflo-cli](https://crates.io/crates/reflo-cli)
 - Converts common formats to flo
 - Also available as WASM for browser-based conversion
 
