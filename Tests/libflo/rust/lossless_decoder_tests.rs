@@ -251,8 +251,7 @@ fn test_decoder_legacy_minor1_mid_side_still_decodes() {
     let mut bytes = Writer::new()
         .write(sample_rate, 2, 16, 5, &[frame], &[])
         .expect("Writing failed");
-    // Stored major/minor live at header offsets 4 and 5. Minor 1 is the only
-    // released format (tag v0.1.2); it coded mid = L + R.
+    // Stored major/minor live at header offsets 4 and 5.
     bytes[4] = 1;
     bytes[5] = 1;
 

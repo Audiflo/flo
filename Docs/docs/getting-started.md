@@ -10,7 +10,7 @@ This guide will help you get up and running with flo quickly.
 
 ```bash
 # Clone the repository
-git clone https://github.com/flo-audio/flo.git
+git clone https://github.com/Audiflo/flo.git
 cd flo
 
 # Build and install
@@ -20,7 +20,7 @@ cargo install --path crates/reflo-cli --manifest-path Cargo.toml
 
 #### Pre-built Binaries
 
-Download from [GitHub Releases](https://github.com/flo-audio/flo/releases):
+Download from [GitHub Releases](https://github.com/Audiflo/flo/releases):
 
 - `reflo-linux` - Linux x64
 - `reflo-macos` - macOS x64
@@ -33,14 +33,14 @@ Use `libflo-audio` for the codec or `reflo` for the higher-level raw-sample API:
 
 ```toml
 [dependencies]
-libflo-audio = { version = "0.1.2" }
-# Or: reflo = { version = "0.1.2", default-features = false }
+libflo-audio = { version = "0.1.3" }
+# Or: reflo = { version = "0.1.3", default-features = false }
 ```
 
 ### JavaScript (WASM)
 
 ```bash
-npm install @flo-audio/libflo
+npm install @audiflo/libflo
 ```
 
 Or use directly in HTML:
@@ -93,7 +93,7 @@ let decoded = decode(&flo_data).unwrap();
 ### Encode in JavaScript
 
 ```javascript
-import init, { encode, decode, info } from '@flo-audio/libflo';
+import init, { encode, decode, info } from '@audiflo/libflo';
 
 await init();
 

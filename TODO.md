@@ -1,7 +1,5 @@
 # Todo
 
-- [x] Add OIDC trusted publishing to flo CI for both crates.io (cargo publish) and npm (npm publish), no stored CI tokens (borrow Saikuro's release workflows)
-- [x] Add cargo audit + build provenance to CI
 - [ ] Add streaming encode to web demo
 
 - [ ] Add bulk converter to reflo + web demo (possibly separate page)

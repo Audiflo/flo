@@ -8,7 +8,7 @@ use std::path::PathBuf;
 #[derive(Parser)]
 #[command(name = "flo")]
 #[command(author = "NellowTCS")]
-#[command(version = "0.1.2")]
+#[command(version = "0.1.3")]
 #[command(about = "flo audio format converter", long_about = None)]
 struct Cli {
     #[command(subcommand)]

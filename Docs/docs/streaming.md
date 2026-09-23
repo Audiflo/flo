@@ -18,7 +18,7 @@ The streaming decoder enables real-time playback and progressive loading of flo 
 ### Basic Usage
 
 ```javascript
-import init, { WasmStreamingDecoder } from "@flo-audio/libflo";
+import init, { WasmStreamingDecoder } from "@audiflo/libflo";
 
 await init();
 

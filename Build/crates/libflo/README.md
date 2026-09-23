@@ -47,7 +47,7 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-libflo-audio = { version = "0.1.2" }
+libflo-audio = { version = "0.1.3" }
 ```
 
 ## API Reference

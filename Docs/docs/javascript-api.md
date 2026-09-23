@@ -7,7 +7,7 @@ The libflo WASM module provides full encoding, decoding, and metadata support fo
 ### npm
 
 ```bash
-npm install @flo-audio/libflo
+npm install @audiflo/libflo
 ```
 
 ### CDN / Direct
@@ -26,7 +26,7 @@ npm install @flo-audio/libflo
 Always call `init()` before using any functions:
 
 ```javascript
-import init, { encode, decode } from '@flo-audio/libflo';
+import init, { encode, decode } from '@audiflo/libflo';
 
 await init();
 // Now you can use the API
@@ -286,7 +286,7 @@ const floData = encode(samples, 44100, 2, 16, metadata);
 For real-time playback and progressive loading. See [Streaming Guide](streaming.md) for details.
 
 ```javascript
-import { WasmStreamingDecoder } from '@flo-audio/libflo';
+import { WasmStreamingDecoder } from '@audiflo/libflo';
 
 const decoder = new WasmStreamingDecoder();
 
