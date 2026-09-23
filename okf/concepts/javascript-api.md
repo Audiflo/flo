@@ -6,7 +6,7 @@ path: /javascript-api/
 updated: 2026-09-23
 okf:
   generated_by: "@docmd/plugin-okf"
-  generated_at: "2026-09-23T01:02:46.421Z"
+  generated_at: "2026-09-23T03:13:22.266Z"
 ---
 # JavaScript API
 
