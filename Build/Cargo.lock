@@ -215,12 +215,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "embedded-io"
-version = "0.7.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9eb1aa714776b75c7e67e1da744b81a129b3ff919c8712b5e1b32252c1f07cc7"
-
-[[package]]
 name = "extended"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -239,12 +233,6 @@ dependencies = [
  "anyhow",
  "reflo",
 ]
-
-[[package]]
-name = "foldhash"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "77ce24cb58228fbb8aa041425bb1050850ac19177686ea6e0f41a70416f56fdb"
 
 [[package]]
 name = "futures-core"
@@ -268,16 +256,6 @@ dependencies = [
  "futures-task",
  "pin-project-lite",
  "slab",
-]
-
-[[package]]
-name = "hashbrown"
-version = "0.17.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ed5909b6e89a2db4456e54cd5f673791d7eca6732202bbf2a9cc504fe2f9b84a"
-dependencies = [
- "foldhash",
- "rustc-std-workspace-alloc",
 ]
 
 [[package]]
@@ -433,7 +411,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "071dfc062690e90b734c0b2273ce72ad0ffa95f0c74596bc250dcfd960262841"
 dependencies = [
  "autocfg",
- "libm",
 ]
 
 [[package]]
@@ -532,12 +509,6 @@ name = "regex-syntax"
 version = "0.8.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
-
-[[package]]
-name = "rustc-std-workspace-alloc"
-version = "1.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f9d441c3b2ebf55cebf796bfdc265d67fa09db17b7bb6bd4be75c509e1e8fec3"
 
 [[package]]
 name = "rustfft"
@@ -662,7 +633,7 @@ checksum = "7da8b5736845d9f2fcb837ea5d9e2628564b3b043a70948a3f0b778838c5fb4f"
 [[package]]
 name = "symphonia"
 version = "0.6.1"
-source = "git+https://github.com/NellowTCS/Symphonia?branch=main#8250dd548faa33bdda27cf51053120cfea7a7ca7"
+source = "git+https://github.com/NellowTCS/Symphonia?branch=main#716a9011685e0d42ca6ae4ca98f4b314cf14f56a"
 dependencies = [
  "once_cell",
  "symphonia-bundle-flac",
@@ -684,7 +655,7 @@ dependencies = [
 [[package]]
 name = "symphonia-bundle-flac"
 version = "0.6.1"
-source = "git+https://github.com/NellowTCS/Symphonia?branch=main#8250dd548faa33bdda27cf51053120cfea7a7ca7"
+source = "git+https://github.com/NellowTCS/Symphonia?branch=main#716a9011685e0d42ca6ae4ca98f4b314cf14f56a"
 dependencies = [
  "log",
  "symphonia-common",
@@ -695,7 +666,7 @@ dependencies = [
 [[package]]
 name = "symphonia-bundle-mp3"
 version = "0.6.1"
-source = "git+https://github.com/NellowTCS/Symphonia?branch=main#8250dd548faa33bdda27cf51053120cfea7a7ca7"
+source = "git+https://github.com/NellowTCS/Symphonia?branch=main#716a9011685e0d42ca6ae4ca98f4b314cf14f56a"
 dependencies = [
  "log",
  "num-traits",
@@ -706,7 +677,7 @@ dependencies = [
 [[package]]
 name = "symphonia-codec-aac"
 version = "0.6.1"
-source = "git+https://github.com/NellowTCS/Symphonia?branch=main#8250dd548faa33bdda27cf51053120cfea7a7ca7"
+source = "git+https://github.com/NellowTCS/Symphonia?branch=main#716a9011685e0d42ca6ae4ca98f4b314cf14f56a"
 dependencies = [
  "log",
  "num-traits",
@@ -718,7 +689,7 @@ dependencies = [
 [[package]]
 name = "symphonia-codec-adpcm"
 version = "0.6.1"
-source = "git+https://github.com/NellowTCS/Symphonia?branch=main#8250dd548faa33bdda27cf51053120cfea7a7ca7"
+source = "git+https://github.com/NellowTCS/Symphonia?branch=main#716a9011685e0d42ca6ae4ca98f4b314cf14f56a"
 dependencies = [
  "log",
  "symphonia-core",
@@ -727,7 +698,7 @@ dependencies = [
 [[package]]
 name = "symphonia-codec-alac"
 version = "0.6.1"
-source = "git+https://github.com/NellowTCS/Symphonia?branch=main#8250dd548faa33bdda27cf51053120cfea7a7ca7"
+source = "git+https://github.com/NellowTCS/Symphonia?branch=main#716a9011685e0d42ca6ae4ca98f4b314cf14f56a"
 dependencies = [
  "log",
  "symphonia-common",
@@ -737,7 +708,7 @@ dependencies = [
 [[package]]
 name = "symphonia-codec-pcm"
 version = "0.6.1"
-source = "git+https://github.com/NellowTCS/Symphonia?branch=main#8250dd548faa33bdda27cf51053120cfea7a7ca7"
+source = "git+https://github.com/NellowTCS/Symphonia?branch=main#716a9011685e0d42ca6ae4ca98f4b314cf14f56a"
 dependencies = [
  "log",
  "symphonia-core",
@@ -746,9 +717,8 @@ dependencies = [
 [[package]]
 name = "symphonia-codec-vorbis"
 version = "0.6.1"
-source = "git+https://github.com/NellowTCS/Symphonia?branch=main#8250dd548faa33bdda27cf51053120cfea7a7ca7"
+source = "git+https://github.com/NellowTCS/Symphonia?branch=main#716a9011685e0d42ca6ae4ca98f4b314cf14f56a"
 dependencies = [
- "hashbrown",
  "log",
  "num-traits",
  "symphonia-common",
@@ -758,7 +728,7 @@ dependencies = [
 [[package]]
 name = "symphonia-common"
 version = "0.6.1"
-source = "git+https://github.com/NellowTCS/Symphonia?branch=main#8250dd548faa33bdda27cf51053120cfea7a7ca7"
+source = "git+https://github.com/NellowTCS/Symphonia?branch=main#716a9011685e0d42ca6ae4ca98f4b314cf14f56a"
 dependencies = [
  "log",
  "symphonia-core",
@@ -767,12 +737,10 @@ dependencies = [
 [[package]]
 name = "symphonia-core"
 version = "0.6.1"
-source = "git+https://github.com/NellowTCS/Symphonia?branch=main#8250dd548faa33bdda27cf51053120cfea7a7ca7"
+source = "git+https://github.com/NellowTCS/Symphonia?branch=main#716a9011685e0d42ca6ae4ca98f4b314cf14f56a"
 dependencies = [
  "bitflags",
  "bytemuck",
- "embedded-io",
- "hashbrown",
  "log",
  "num-complex",
  "num-traits",
@@ -783,7 +751,7 @@ dependencies = [
 [[package]]
 name = "symphonia-format-caf"
 version = "0.6.1"
-source = "git+https://github.com/NellowTCS/Symphonia?branch=main#8250dd548faa33bdda27cf51053120cfea7a7ca7"
+source = "git+https://github.com/NellowTCS/Symphonia?branch=main#716a9011685e0d42ca6ae4ca98f4b314cf14f56a"
 dependencies = [
  "log",
  "symphonia-common",
@@ -793,9 +761,8 @@ dependencies = [
 [[package]]
 name = "symphonia-format-isomp4"
 version = "0.6.1"
-source = "git+https://github.com/NellowTCS/Symphonia?branch=main#8250dd548faa33bdda27cf51053120cfea7a7ca7"
+source = "git+https://github.com/NellowTCS/Symphonia?branch=main#716a9011685e0d42ca6ae4ca98f4b314cf14f56a"
 dependencies = [
- "hashbrown",
  "log",
  "symphonia-common",
  "symphonia-core",
@@ -805,9 +772,8 @@ dependencies = [
 [[package]]
 name = "symphonia-format-mkv"
 version = "0.6.1"
-source = "git+https://github.com/NellowTCS/Symphonia?branch=main#8250dd548faa33bdda27cf51053120cfea7a7ca7"
+source = "git+https://github.com/NellowTCS/Symphonia?branch=main#716a9011685e0d42ca6ae4ca98f4b314cf14f56a"
 dependencies = [
- "hashbrown",
  "log",
  "num-traits",
  "once_cell",
@@ -818,7 +784,7 @@ dependencies = [
 [[package]]
 name = "symphonia-format-ogg"
 version = "0.6.1"
-source = "git+https://github.com/NellowTCS/Symphonia?branch=main#8250dd548faa33bdda27cf51053120cfea7a7ca7"
+source = "git+https://github.com/NellowTCS/Symphonia?branch=main#716a9011685e0d42ca6ae4ca98f4b314cf14f56a"
 dependencies = [
  "log",
  "num-traits",
@@ -830,10 +796,9 @@ dependencies = [
 [[package]]
 name = "symphonia-format-riff"
 version = "0.6.1"
-source = "git+https://github.com/NellowTCS/Symphonia?branch=main#8250dd548faa33bdda27cf51053120cfea7a7ca7"
+source = "git+https://github.com/NellowTCS/Symphonia?branch=main#716a9011685e0d42ca6ae4ca98f4b314cf14f56a"
 dependencies = [
  "extended",
- "hashbrown",
  "log",
  "symphonia-core",
  "symphonia-metadata",
@@ -842,9 +807,8 @@ dependencies = [
 [[package]]
 name = "symphonia-metadata"
 version = "0.6.1"
-source = "git+https://github.com/NellowTCS/Symphonia?branch=main#8250dd548faa33bdda27cf51053120cfea7a7ca7"
+source = "git+https://github.com/NellowTCS/Symphonia?branch=main#716a9011685e0d42ca6ae4ca98f4b314cf14f56a"
 dependencies = [
- "hashbrown",
  "log",
  "once_cell",
  "regex",
