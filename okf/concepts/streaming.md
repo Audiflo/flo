@@ -3,10 +3,10 @@ type: concept
 title: "Streaming Decoder"
 source: "https://audiflo.github.io/flo/streaming/"
 path: /streaming/
-updated: 2026-10-19
+updated: 2026-10-23
 okf:
   generated_by: "@docmd/plugin-okf"
-  generated_at: "2026-10-19T16:46:00.775Z"
+  generated_at: "2026-10-23T04:33:36.879Z"
 ---
 # Streaming Decoder
 
