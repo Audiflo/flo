@@ -242,7 +242,7 @@ export class WasmStreamingDecoder {
     }
     /**
      * feed data to the decoder, call as bytes come in from network
-     * @param {Uint8Array} data
+     * @param {Uint8Array | number[]} data
      * @returns {boolean}
      */
     feed(data) {
@@ -382,7 +382,7 @@ export class WasmStreamingEncoder {
      *
      * # Returns
      * Complete flo file as byte array
-     * @param {Uint8Array | null} [metadata]
+     * @param {Uint8Array | number[] | null} [metadata]
      * @returns {Uint8Array}
      */
     finalize(metadata) {
@@ -478,7 +478,7 @@ export class WasmStreamingEncoder {
      *
      * # Returns
      * Error if encoding fails
-     * @param {Float32Array} samples
+     * @param {Float32Array | number[]} samples
      */
     push_samples(samples) {
         const ptr0 = passArrayF32ToWasm0(samples, wasm.__wbindgen_malloc);
@@ -500,8 +500,9 @@ export class WasmStreamingEncoder {
      * @returns {WasmStreamingEncoder}
      */
     with_compression(level) {
+        const val1 = +level;
         const ptr = this.__destroy_into_raw();
-        const ret = wasm.wasmstreamingencoder_with_compression(ptr, level);
+        const ret = wasm.wasmstreamingencoder_with_compression(ptr, val1);
         return WasmStreamingEncoder.__wrap(ret);
     }
 }
@@ -517,15 +518,17 @@ if (Symbol.dispose) WasmStreamingEncoder.prototype[Symbol.dispose] = WasmStreami
  *
  * # Returns
  * LoudnessMetrics object with integrated LUFS, loudness range LU, and true peak dBTP
- * @param {Float32Array} samples
+ * @param {Float32Array | number[]} samples
  * @param {number} channels
  * @param {number} sample_rate
  * @returns {any}
  */
 export function compute_loudness_metrics(samples, channels, sample_rate) {
+    const val2 = +channels;
+    const val3 = +sample_rate;
     const ptr0 = passArrayF32ToWasm0(samples, wasm.__wbindgen_malloc);
     const len0 = WASM_VECTOR_LEN;
-    const ret = wasm.compute_loudness_metrics(ptr0, len0, channels, sample_rate);
+    const ret = wasm.compute_loudness_metrics(ptr0, len0, val2, val3);
     if (ret[2]) {
         throw takeFromExternrefTable0(ret[1]);
     }
@@ -534,15 +537,17 @@ export function compute_loudness_metrics(samples, channels, sample_rate) {
 
 /**
  * Compute EBU R128 loudness metrics from audio samples
- * @param {Float32Array} samples
+ * @param {Float32Array | number[]} samples
  * @param {number} channels
  * @param {number} sample_rate
  * @returns {any}
  */
 export function compute_loudness_metrics_reflo(samples, channels, sample_rate) {
+    const val2 = +channels;
+    const val3 = +sample_rate;
     const ptr0 = passArrayF32ToWasm0(samples, wasm.__wbindgen_malloc);
     const len0 = WASM_VECTOR_LEN;
-    const ret = wasm.compute_loudness_metrics_reflo(ptr0, len0, channels, sample_rate);
+    const ret = wasm.compute_loudness_metrics_reflo(ptr0, len0, val2, val3);
     if (ret[2]) {
         throw takeFromExternrefTable0(ret[1]);
     }
@@ -565,12 +570,20 @@ export function compute_loudness_metrics_reflo(samples, channels, sample_rate) {
  * @returns {Uint8Array}
  */
 export function create_metadata(title, artist, album) {
-    var ptr0 = isLikeNone(title) ? 0 : passStringToWasm0(title, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-    var len0 = WASM_VECTOR_LEN;
-    var ptr1 = isLikeNone(artist) ? 0 : passStringToWasm0(artist, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-    var len1 = WASM_VECTOR_LEN;
-    var ptr2 = isLikeNone(album) ? 0 : passStringToWasm0(album, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-    var len2 = WASM_VECTOR_LEN;
+    let ptr0, len0, ptr1, len1, ptr2, len2;
+    try {
+        ptr0 = isLikeNone(title) ? 0 : passStringToWasm0(title, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        len0 = WASM_VECTOR_LEN;
+        ptr1 = isLikeNone(artist) ? 0 : passStringToWasm0(artist, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        len1 = WASM_VECTOR_LEN;
+        ptr2 = isLikeNone(album) ? 0 : passStringToWasm0(album, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        len2 = WASM_VECTOR_LEN;
+    } catch (e) {
+        if (ptr2) { wasm.__wbindgen_free(ptr2, len2 * 1, 1); }
+        if (ptr1) { wasm.__wbindgen_free(ptr1, len1 * 1, 1); }
+        if (ptr0) { wasm.__wbindgen_free(ptr0, len0 * 1, 1); }
+        throw e;
+    }
     const ret = wasm.create_metadata(ptr0, len0, ptr1, len1, ptr2, len2);
     if (ret[3]) {
         throw takeFromExternrefTable0(ret[2]);
@@ -612,7 +625,7 @@ export function create_metadata_from_object(obj) {
  *
  * # Returns
  * Interleaved audio samples (f32, -1.0 to 1.0)
- * @param {Uint8Array} data
+ * @param {Uint8Array | number[]} data
  * @returns {Float32Array}
  */
 export function decode(data) {
@@ -628,7 +641,7 @@ export function decode(data) {
 }
 
 /**
- * @param {Uint8Array} flo_bytes
+ * @param {Uint8Array | number[]} flo_bytes
  * @returns {any}
  */
 export function decode_flo_to_samples(flo_bytes) {
@@ -642,7 +655,7 @@ export function decode_flo_to_samples(flo_bytes) {
 }
 
 /**
- * @param {Uint8Array} flo_bytes
+ * @param {Uint8Array | number[]} flo_bytes
  * @returns {Uint8Array}
  */
 export function decode_flo_to_wav(flo_bytes) {
@@ -666,20 +679,21 @@ export function decode_flo_to_wav(flo_bytes) {
  *
  * # Returns
  * Interleaved audio samples for that frame (f32, -1.0 to 1.0)
- * @param {Uint8Array} flo_data
+ * @param {Uint8Array | number[]} flo_data
  * @param {number} frame_index
  * @returns {Float32Array}
  */
 export function decode_frame_at(flo_data, frame_index) {
+    const val2 = +frame_index;
     const ptr0 = passArray8ToWasm0(flo_data, wasm.__wbindgen_malloc);
     const len0 = WASM_VECTOR_LEN;
-    const ret = wasm.decode_frame_at(ptr0, len0, frame_index);
+    const ret = wasm.decode_frame_at(ptr0, len0, val2);
     if (ret[3]) {
         throw takeFromExternrefTable0(ret[2]);
     }
-    var v2 = getArrayF32FromWasm0(ret[0], ret[1]).slice();
+    var v3 = getArrayF32FromWasm0(ret[0], ret[1]).slice();
     wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
-    return v2;
+    return v3;
 }
 
 /**
@@ -698,44 +712,57 @@ export function decode_frame_at(flo_data, frame_index) {
  * # Note
  * For advanced usage with custom compression levels (0-9),
  * use the `Encoder` builder pattern directly.
- * @param {Float32Array} samples
+ * @param {Float32Array | number[]} samples
  * @param {number} sample_rate
  * @param {number} channels
  * @param {number} bit_depth
- * @param {Uint8Array | null} [metadata]
+ * @param {Uint8Array | number[] | null} [metadata]
  * @returns {Uint8Array}
  */
 export function encode(samples, sample_rate, channels, bit_depth, metadata) {
-    const ptr0 = passArrayF32ToWasm0(samples, wasm.__wbindgen_malloc);
-    const len0 = WASM_VECTOR_LEN;
-    var ptr1 = isLikeNone(metadata) ? 0 : passArray8ToWasm0(metadata, wasm.__wbindgen_malloc);
-    var len1 = WASM_VECTOR_LEN;
-    const ret = wasm.encode(ptr0, len0, sample_rate, channels, bit_depth, ptr1, len1);
+    const val3 = +sample_rate;
+    const val4 = +channels;
+    const val5 = +bit_depth;
+    let ptr0, len0, ptr1, len1;
+    try {
+        ptr0 = passArrayF32ToWasm0(samples, wasm.__wbindgen_malloc);
+        len0 = WASM_VECTOR_LEN;
+        ptr1 = isLikeNone(metadata) ? 0 : passArray8ToWasm0(metadata, wasm.__wbindgen_malloc);
+        len1 = WASM_VECTOR_LEN;
+    } catch (e) {
+        if (ptr1) { wasm.__wbindgen_free(ptr1, len1 * 1, 1); }
+        if (ptr0) { wasm.__wbindgen_free(ptr0, len0 * 4, 4); }
+        throw e;
+    }
+    const ret = wasm.encode(ptr0, len0, val3, val4, val5, ptr1, len1);
     if (ret[3]) {
         throw takeFromExternrefTable0(ret[2]);
     }
-    var v3 = getArrayU8FromWasm0(ret[0], ret[1]).slice();
+    var v6 = getArrayU8FromWasm0(ret[0], ret[1]).slice();
     wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
-    return v3;
+    return v6;
 }
 
 /**
- * @param {Uint8Array} audio_bytes
+ * @param {Uint8Array | number[]} audio_bytes
  * @param {boolean} lossy
  * @param {number} quality
  * @param {number} level
  * @returns {Uint8Array}
  */
 export function encode_audio_to_flo(audio_bytes, lossy, quality, level) {
+    const val2 = +lossy;
+    const val3 = +quality;
+    const val4 = +level;
     const ptr0 = passArray8ToWasm0(audio_bytes, wasm.__wbindgen_malloc);
     const len0 = WASM_VECTOR_LEN;
-    const ret = wasm.encode_audio_to_flo(ptr0, len0, lossy, quality, level);
+    const ret = wasm.encode_audio_to_flo(ptr0, len0, val2, val3, val4);
     if (ret[3]) {
         throw takeFromExternrefTable0(ret[2]);
     }
-    var v2 = getArrayU8FromWasm0(ret[0], ret[1]).slice();
+    var v5 = getArrayU8FromWasm0(ret[0], ret[1]).slice();
     wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
-    return v2;
+    return v5;
 }
 
 /**
@@ -755,26 +782,37 @@ export function encode_audio_to_flo(audio_bytes, lossy, quality, level) {
  * # Note
  * For advanced usage with continuous quality control (0.0-1.0) or custom settings,
  * use the `LossyEncoder` builder pattern directly.
- * @param {Float32Array} samples
+ * @param {Float32Array | number[]} samples
  * @param {number} sample_rate
  * @param {number} channels
  * @param {number} _bit_depth
  * @param {number} quality
- * @param {Uint8Array | null} [metadata]
+ * @param {Uint8Array | number[] | null} [metadata]
  * @returns {Uint8Array}
  */
 export function encode_lossy(samples, sample_rate, channels, _bit_depth, quality, metadata) {
-    const ptr0 = passArrayF32ToWasm0(samples, wasm.__wbindgen_malloc);
-    const len0 = WASM_VECTOR_LEN;
-    var ptr1 = isLikeNone(metadata) ? 0 : passArray8ToWasm0(metadata, wasm.__wbindgen_malloc);
-    var len1 = WASM_VECTOR_LEN;
-    const ret = wasm.encode_lossy(ptr0, len0, sample_rate, channels, _bit_depth, quality, ptr1, len1);
+    const val3 = +sample_rate;
+    const val4 = +channels;
+    const val5 = +_bit_depth;
+    const val6 = +quality;
+    let ptr0, len0, ptr1, len1;
+    try {
+        ptr0 = passArrayF32ToWasm0(samples, wasm.__wbindgen_malloc);
+        len0 = WASM_VECTOR_LEN;
+        ptr1 = isLikeNone(metadata) ? 0 : passArray8ToWasm0(metadata, wasm.__wbindgen_malloc);
+        len1 = WASM_VECTOR_LEN;
+    } catch (e) {
+        if (ptr1) { wasm.__wbindgen_free(ptr1, len1 * 1, 1); }
+        if (ptr0) { wasm.__wbindgen_free(ptr0, len0 * 4, 4); }
+        throw e;
+    }
+    const ret = wasm.encode_lossy(ptr0, len0, val3, val4, val5, val6, ptr1, len1);
     if (ret[3]) {
         throw takeFromExternrefTable0(ret[2]);
     }
-    var v3 = getArrayU8FromWasm0(ret[0], ret[1]).slice();
+    var v7 = getArrayU8FromWasm0(ret[0], ret[1]).slice();
     wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
-    return v3;
+    return v7;
 }
 
 /**
@@ -790,26 +828,37 @@ export function encode_lossy(samples, sample_rate, channels, _bit_depth, quality
  *
  * # Returns
  * flo file as byte array
- * @param {Float32Array} samples
+ * @param {Float32Array | number[]} samples
  * @param {number} sample_rate
  * @param {number} channels
  * @param {number} _bit_depth
  * @param {number} target_bitrate_kbps
- * @param {Uint8Array | null} [metadata]
+ * @param {Uint8Array | number[] | null} [metadata]
  * @returns {Uint8Array}
  */
 export function encode_with_bitrate(samples, sample_rate, channels, _bit_depth, target_bitrate_kbps, metadata) {
-    const ptr0 = passArrayF32ToWasm0(samples, wasm.__wbindgen_malloc);
-    const len0 = WASM_VECTOR_LEN;
-    var ptr1 = isLikeNone(metadata) ? 0 : passArray8ToWasm0(metadata, wasm.__wbindgen_malloc);
-    var len1 = WASM_VECTOR_LEN;
-    const ret = wasm.encode_with_bitrate(ptr0, len0, sample_rate, channels, _bit_depth, target_bitrate_kbps, ptr1, len1);
+    const val3 = +sample_rate;
+    const val4 = +channels;
+    const val5 = +_bit_depth;
+    const val6 = +target_bitrate_kbps;
+    let ptr0, len0, ptr1, len1;
+    try {
+        ptr0 = passArrayF32ToWasm0(samples, wasm.__wbindgen_malloc);
+        len0 = WASM_VECTOR_LEN;
+        ptr1 = isLikeNone(metadata) ? 0 : passArray8ToWasm0(metadata, wasm.__wbindgen_malloc);
+        len1 = WASM_VECTOR_LEN;
+    } catch (e) {
+        if (ptr1) { wasm.__wbindgen_free(ptr1, len1 * 1, 1); }
+        if (ptr0) { wasm.__wbindgen_free(ptr0, len0 * 4, 4); }
+        throw e;
+    }
+    const ret = wasm.encode_with_bitrate(ptr0, len0, val3, val4, val5, val6, ptr1, len1);
     if (ret[3]) {
         throw takeFromExternrefTable0(ret[2]);
     }
-    var v3 = getArrayU8FromWasm0(ret[0], ret[1]).slice();
+    var v7 = getArrayU8FromWasm0(ret[0], ret[1]).slice();
     wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
-    return v3;
+    return v7;
 }
 
 /**
@@ -846,7 +895,7 @@ export function extract_dominant_frequencies_from_fingerprint_wasm(fingerprint_j
  *
  * # Returns
  * JavaScript array of arrays containing dominant frequencies (Hz) for each frame
- * @param {Float32Array} samples
+ * @param {Float32Array | number[]} samples
  * @param {number} sample_rate
  * @param {number} channels
  * @param {number} num_frequencies
@@ -855,9 +904,14 @@ export function extract_dominant_frequencies_from_fingerprint_wasm(fingerprint_j
  * @returns {any}
  */
 export function extract_dominant_frequencies_from_samples_wasm(samples, sample_rate, channels, num_frequencies, fft_size, hop_size) {
+    const val2 = +sample_rate;
+    const val3 = +channels;
+    const val4 = +num_frequencies;
+    const val5 = +(isLikeNone(fft_size) ? Number.MAX_SAFE_INTEGER : (fft_size) >>> 0);
+    const val6 = +(isLikeNone(hop_size) ? Number.MAX_SAFE_INTEGER : (hop_size) >>> 0);
     const ptr0 = passArrayF32ToWasm0(samples, wasm.__wbindgen_malloc);
     const len0 = WASM_VECTOR_LEN;
-    const ret = wasm.extract_dominant_frequencies_from_samples_wasm(ptr0, len0, sample_rate, channels, num_frequencies, isLikeNone(fft_size) ? Number.MAX_SAFE_INTEGER : (fft_size) >>> 0, isLikeNone(hop_size) ? Number.MAX_SAFE_INTEGER : (hop_size) >>> 0);
+    const ret = wasm.extract_dominant_frequencies_from_samples_wasm(ptr0, len0, val2, val3, val4, val5, val6);
     if (ret[2]) {
         throw takeFromExternrefTable0(ret[1]);
     }
@@ -894,7 +948,7 @@ export function extract_dominant_frequencies_wasm(fingerprint_js, num_frequencie
 
 /**
  * Extract spectral fingerprint from audio samples
- * @param {Float32Array} samples
+ * @param {Float32Array | number[]} samples
  * @param {number} channels
  * @param {number} sample_rate
  * @param {number | null} [fft_size]
@@ -902,9 +956,13 @@ export function extract_dominant_frequencies_wasm(fingerprint_js, num_frequencie
  * @returns {any}
  */
 export function extract_spectral_fingerprint_reflo(samples, channels, sample_rate, fft_size, hop_size) {
+    const val2 = +channels;
+    const val3 = +sample_rate;
+    const val4 = +(isLikeNone(fft_size) ? Number.MAX_SAFE_INTEGER : (fft_size) >>> 0);
+    const val5 = +(isLikeNone(hop_size) ? Number.MAX_SAFE_INTEGER : (hop_size) >>> 0);
     const ptr0 = passArrayF32ToWasm0(samples, wasm.__wbindgen_malloc);
     const len0 = WASM_VECTOR_LEN;
-    const ret = wasm.extract_spectral_fingerprint_reflo(ptr0, len0, channels, sample_rate, isLikeNone(fft_size) ? Number.MAX_SAFE_INTEGER : (fft_size) >>> 0, isLikeNone(hop_size) ? Number.MAX_SAFE_INTEGER : (hop_size) >>> 0);
+    const ret = wasm.extract_spectral_fingerprint_reflo(ptr0, len0, val2, val3, val4, val5);
     if (ret[2]) {
         throw takeFromExternrefTable0(ret[1]);
     }
@@ -923,7 +981,7 @@ export function extract_spectral_fingerprint_reflo(samples, channels, sample_rat
  *
  * # Returns
  * SpectralFingerprint object with frequency analysis
- * @param {Float32Array} samples
+ * @param {Float32Array | number[]} samples
  * @param {number} channels
  * @param {number} sample_rate
  * @param {number | null} [fft_size]
@@ -931,9 +989,13 @@ export function extract_spectral_fingerprint_reflo(samples, channels, sample_rat
  * @returns {any}
  */
 export function extract_spectral_fingerprint_wasm(samples, channels, sample_rate, fft_size, hop_size) {
+    const val2 = +channels;
+    const val3 = +sample_rate;
+    const val4 = +(isLikeNone(fft_size) ? Number.MAX_SAFE_INTEGER : (fft_size) >>> 0);
+    const val5 = +(isLikeNone(hop_size) ? Number.MAX_SAFE_INTEGER : (hop_size) >>> 0);
     const ptr0 = passArrayF32ToWasm0(samples, wasm.__wbindgen_malloc);
     const len0 = WASM_VECTOR_LEN;
-    const ret = wasm.extract_spectral_fingerprint_wasm(ptr0, len0, channels, sample_rate, isLikeNone(fft_size) ? Number.MAX_SAFE_INTEGER : (fft_size) >>> 0, isLikeNone(hop_size) ? Number.MAX_SAFE_INTEGER : (hop_size) >>> 0);
+    const ret = wasm.extract_spectral_fingerprint_wasm(ptr0, len0, val2, val3, val4, val5);
     if (ret[2]) {
         throw takeFromExternrefTable0(ret[1]);
     }
@@ -942,16 +1004,19 @@ export function extract_spectral_fingerprint_wasm(samples, channels, sample_rate
 
 /**
  * Extract waveform peaks from audio samples
- * @param {Float32Array} samples
+ * @param {Float32Array | number[]} samples
  * @param {number} channels
  * @param {number} sample_rate
  * @param {number} peaks_per_second
  * @returns {any}
  */
 export function extract_waveform_peaks_reflo(samples, channels, sample_rate, peaks_per_second) {
+    const val2 = +channels;
+    const val3 = +sample_rate;
+    const val4 = +peaks_per_second;
     const ptr0 = passArrayF32ToWasm0(samples, wasm.__wbindgen_malloc);
     const len0 = WASM_VECTOR_LEN;
-    const ret = wasm.extract_waveform_peaks_reflo(ptr0, len0, channels, sample_rate, peaks_per_second);
+    const ret = wasm.extract_waveform_peaks_reflo(ptr0, len0, val2, val3, val4);
     if (ret[2]) {
         throw takeFromExternrefTable0(ret[1]);
     }
@@ -969,16 +1034,19 @@ export function extract_waveform_peaks_reflo(samples, channels, sample_rate, pea
  *
  * # Returns
  * WaveformData object with extracted peaks
- * @param {Float32Array} samples
+ * @param {Float32Array | number[]} samples
  * @param {number} channels
  * @param {number} sample_rate
  * @param {number | null} [peaks_per_second]
  * @returns {any}
  */
 export function extract_waveform_peaks_wasm(samples, channels, sample_rate, peaks_per_second) {
+    const val2 = +channels;
+    const val3 = +sample_rate;
+    const val4 = +(isLikeNone(peaks_per_second) ? Number.MAX_SAFE_INTEGER : (peaks_per_second) >>> 0);
     const ptr0 = passArrayF32ToWasm0(samples, wasm.__wbindgen_malloc);
     const len0 = WASM_VECTOR_LEN;
-    const ret = wasm.extract_waveform_peaks_wasm(ptr0, len0, channels, sample_rate, isLikeNone(peaks_per_second) ? Number.MAX_SAFE_INTEGER : (peaks_per_second) >>> 0);
+    const ret = wasm.extract_waveform_peaks_wasm(ptr0, len0, val2, val3, val4);
     if (ret[2]) {
         throw takeFromExternrefTable0(ret[1]);
     }
@@ -1022,7 +1090,7 @@ export function format_time_ms(milliseconds) {
 }
 
 /**
- * @param {Uint8Array} audio_bytes
+ * @param {Uint8Array | number[]} audio_bytes
  * @returns {any}
  */
 export function get_audio_file_info(audio_bytes) {
@@ -1043,7 +1111,7 @@ export function get_audio_file_info(audio_bytes) {
  *
  * # Returns
  * Object with `mime_type` and `data` (Uint8Array) or null if no cover
- * @param {Uint8Array} data
+ * @param {Uint8Array | number[]} data
  * @returns {any}
  */
 export function get_cover_art(data) {
@@ -1059,7 +1127,7 @@ export function get_cover_art(data) {
 /**
  * Get encoding information from a flo file
  * Returns { originalFilename, encoderSettings, encoderVersion, encodingTime, sourceFormat, encodedBy }
- * @param {Uint8Array} flo_bytes
+ * @param {Uint8Array | number[]} flo_bytes
  * @returns {any}
  */
 export function get_encoding_info(flo_bytes) {
@@ -1073,7 +1141,7 @@ export function get_encoding_info(flo_bytes) {
 }
 
 /**
- * @param {Uint8Array} flo_bytes
+ * @param {Uint8Array | number[]} flo_bytes
  * @returns {any}
  */
 export function get_flo_info(flo_bytes) {
@@ -1094,7 +1162,7 @@ export function get_flo_info(flo_bytes) {
  *
  * # Returns
  * JavaScript object with metadata fields (or null if no metadata)
- * @param {Uint8Array} data
+ * @param {Uint8Array | number[]} data
  * @returns {any}
  */
 export function get_metadata(data) {
@@ -1115,7 +1183,7 @@ export function get_metadata(data) {
  *
  * # Returns
  * Raw MessagePack metadata bytes (or empty array)
- * @param {Uint8Array} flo_data
+ * @param {Uint8Array | number[]} flo_data
  * @returns {Uint8Array}
  */
 export function get_metadata_bytes(flo_data) {
@@ -1135,7 +1203,7 @@ export function get_metadata_bytes(flo_data) {
  *
  * # Returns
  * Array of section markers or null if none
- * @param {Uint8Array} data
+ * @param {Uint8Array | number[]} data
  * @returns {any}
  */
 export function get_section_markers(data) {
@@ -1153,7 +1221,7 @@ export function get_section_markers(data) {
  *
  * # Returns
  * Array of synced lyrics objects or null if none
- * @param {Uint8Array} data
+ * @param {Uint8Array | number[]} data
  * @returns {any}
  */
 export function get_synced_lyrics(data) {
@@ -1171,7 +1239,7 @@ export function get_synced_lyrics(data) {
  *
  * # Returns
  * Array of TOC entries with frame indices, byte offsets, and timestamps
- * @param {Uint8Array} flo_data
+ * @param {Uint8Array | number[]} flo_data
  * @returns {any[]}
  */
 export function get_toc(flo_data) {
@@ -1191,7 +1259,7 @@ export function get_toc(flo_data) {
  *
  * # Returns
  * WaveformData object or null if not present
- * @param {Uint8Array} data
+ * @param {Uint8Array | number[]} data
  * @returns {any}
  */
 export function get_waveform_data(data) {
@@ -1206,7 +1274,7 @@ export function get_waveform_data(data) {
 
 /**
  * Check if a flo file has metadata
- * @param {Uint8Array} flo_bytes
+ * @param {Uint8Array | number[]} flo_bytes
  * @returns {boolean}
  */
 export function has_flo_metadata(flo_bytes) {
@@ -1218,7 +1286,7 @@ export function has_flo_metadata(flo_bytes) {
 
 /**
  * does the file have metadata? (wasm binding)
- * @param {Uint8Array} flo_data
+ * @param {Uint8Array | number[]} flo_data
  * @returns {boolean}
  */
 export function has_metadata(flo_data) {
@@ -1236,7 +1304,7 @@ export function has_metadata(flo_data) {
  *
  * # Returns
  * AudioInfo struct with file details
- * @param {Uint8Array} data
+ * @param {Uint8Array | number[]} data
  * @returns {AudioInfo}
  */
 export function info(data) {
@@ -1254,7 +1322,7 @@ export function init() {
 }
 
 /**
- * @param {Uint8Array} flo_bytes
+ * @param {Uint8Array | number[]} flo_bytes
  * @returns {any}
  */
 export function read_flo_metadata(flo_bytes) {
@@ -1276,14 +1344,15 @@ export function read_flo_metadata(flo_bytes) {
  *
  * # Returns
  * Seek result object containing frame index, byte offset, timestamp, sample offset, and next timestamp.
- * @param {Uint8Array} flo_data
+ * @param {Uint8Array | number[]} flo_data
  * @param {number} time_ms
  * @returns {any}
  */
 export function seek_to_time(flo_data, time_ms) {
+    const val2 = +time_ms;
     const ptr0 = passArray8ToWasm0(flo_data, wasm.__wbindgen_malloc);
     const len0 = WASM_VECTOR_LEN;
-    const ret = wasm.seek_to_time(ptr0, len0, time_ms);
+    const ret = wasm.seek_to_time(ptr0, len0, val2);
     if (ret[2]) {
         throw takeFromExternrefTable0(ret[1]);
     }
@@ -1301,7 +1370,7 @@ export function seek_to_time(flo_data, time_ms) {
  *
  * # Returns
  * New flo file with updated metadata
- * @param {Uint8Array} flo_data
+ * @param {Uint8Array | number[]} flo_data
  * @param {any} metadata
  * @returns {Uint8Array}
  */
@@ -1330,16 +1399,23 @@ export function set_metadata(flo_data, metadata) {
  *
  * # Returns
  * Updated MessagePack metadata bytes
- * @param {Uint8Array | null | undefined} metadata
+ * @param {Uint8Array | number[] | null | undefined} metadata
  * @param {string} field
  * @param {any} value
  * @returns {Uint8Array}
  */
 export function set_metadata_field(metadata, field, value) {
-    var ptr0 = isLikeNone(metadata) ? 0 : passArray8ToWasm0(metadata, wasm.__wbindgen_malloc);
-    var len0 = WASM_VECTOR_LEN;
-    const ptr1 = passStringToWasm0(field, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-    const len1 = WASM_VECTOR_LEN;
+    let ptr0, len0, ptr1, len1;
+    try {
+        ptr0 = isLikeNone(metadata) ? 0 : passArray8ToWasm0(metadata, wasm.__wbindgen_malloc);
+        len0 = WASM_VECTOR_LEN;
+        ptr1 = passStringToWasm0(field, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        len1 = WASM_VECTOR_LEN;
+    } catch (e) {
+        if (ptr1) { wasm.__wbindgen_free(ptr1, len1 * 1, 1); }
+        if (ptr0) { wasm.__wbindgen_free(ptr0, len0 * 1, 1); }
+        throw e;
+    }
     const ret = wasm.set_metadata_field(ptr0, len0, ptr1, len1, value);
     if (ret[3]) {
         throw takeFromExternrefTable0(ret[2]);
@@ -1362,8 +1438,8 @@ export function set_metadata_field(metadata, field, value) {
  *
  * # Returns
  * Similarity score between 0.0 (completely different) and 1.0 (identical)
- * @param {Float32Array} samples1
- * @param {Float32Array} samples2
+ * @param {Float32Array | number[]} samples1
+ * @param {Float32Array | number[]} samples2
  * @param {number} sample_rate
  * @param {number} channels
  * @param {number | null} [fft_size]
@@ -1371,11 +1447,22 @@ export function set_metadata_field(metadata, field, value) {
  * @returns {any}
  */
 export function spectral_similarity(samples1, samples2, sample_rate, channels, fft_size, hop_size) {
-    const ptr0 = passArrayF32ToWasm0(samples1, wasm.__wbindgen_malloc);
-    const len0 = WASM_VECTOR_LEN;
-    const ptr1 = passArrayF32ToWasm0(samples2, wasm.__wbindgen_malloc);
-    const len1 = WASM_VECTOR_LEN;
-    const ret = wasm.spectral_similarity(ptr0, len0, ptr1, len1, sample_rate, channels, isLikeNone(fft_size) ? Number.MAX_SAFE_INTEGER : (fft_size) >>> 0, isLikeNone(hop_size) ? Number.MAX_SAFE_INTEGER : (hop_size) >>> 0);
+    const val3 = +sample_rate;
+    const val4 = +channels;
+    const val5 = +(isLikeNone(fft_size) ? Number.MAX_SAFE_INTEGER : (fft_size) >>> 0);
+    const val6 = +(isLikeNone(hop_size) ? Number.MAX_SAFE_INTEGER : (hop_size) >>> 0);
+    let ptr0, len0, ptr1, len1;
+    try {
+        ptr0 = passArrayF32ToWasm0(samples1, wasm.__wbindgen_malloc);
+        len0 = WASM_VECTOR_LEN;
+        ptr1 = passArrayF32ToWasm0(samples2, wasm.__wbindgen_malloc);
+        len1 = WASM_VECTOR_LEN;
+    } catch (e) {
+        if (ptr1) { wasm.__wbindgen_free(ptr1, len1 * 4, 4); }
+        if (ptr0) { wasm.__wbindgen_free(ptr0, len0 * 4, 4); }
+        throw e;
+    }
+    const ret = wasm.spectral_similarity(ptr0, len0, ptr1, len1, val3, val4, val5, val6);
     if (ret[2]) {
         throw takeFromExternrefTable0(ret[1]);
     }
@@ -1383,7 +1470,7 @@ export function spectral_similarity(samples1, samples2, sample_rate, channels, f
 }
 
 /**
- * @param {Uint8Array} flo_bytes
+ * @param {Uint8Array | number[]} flo_bytes
  * @returns {Uint8Array}
  */
 export function strip_flo_metadata(flo_bytes) {
@@ -1406,7 +1493,7 @@ export function strip_flo_metadata(flo_bytes) {
  *
  * # Returns
  * New flo file with no metadata
- * @param {Uint8Array} flo_data
+ * @param {Uint8Array | number[]} flo_data
  * @returns {Uint8Array}
  */
 export function strip_metadata(flo_data) {
@@ -1422,7 +1509,7 @@ export function strip_metadata(flo_data) {
 }
 
 /**
- * @param {Uint8Array} flo_bytes
+ * @param {Uint8Array | number[]} flo_bytes
  * @param {any} metadata
  * @returns {Uint8Array}
  */
@@ -1447,15 +1534,22 @@ export function update_flo_metadata(flo_bytes, metadata) {
  *
  * # Returns
  * New flo file with updated metadata
- * @param {Uint8Array} flo_data
- * @param {Uint8Array} new_metadata
+ * @param {Uint8Array | number[]} flo_data
+ * @param {Uint8Array | number[]} new_metadata
  * @returns {Uint8Array}
  */
 export function update_metadata(flo_data, new_metadata) {
-    const ptr0 = passArray8ToWasm0(flo_data, wasm.__wbindgen_malloc);
-    const len0 = WASM_VECTOR_LEN;
-    const ptr1 = passArray8ToWasm0(new_metadata, wasm.__wbindgen_malloc);
-    const len1 = WASM_VECTOR_LEN;
+    let ptr0, len0, ptr1, len1;
+    try {
+        ptr0 = passArray8ToWasm0(flo_data, wasm.__wbindgen_malloc);
+        len0 = WASM_VECTOR_LEN;
+        ptr1 = passArray8ToWasm0(new_metadata, wasm.__wbindgen_malloc);
+        len1 = WASM_VECTOR_LEN;
+    } catch (e) {
+        if (ptr1) { wasm.__wbindgen_free(ptr1, len1 * 1, 1); }
+        if (ptr0) { wasm.__wbindgen_free(ptr0, len0 * 1, 1); }
+        throw e;
+    }
     const ret = wasm.update_metadata(ptr0, len0, ptr1, len1);
     if (ret[3]) {
         throw takeFromExternrefTable0(ret[2]);
@@ -1473,7 +1567,7 @@ export function update_metadata(flo_data, new_metadata) {
  *
  * # Returns
  * true if file is valid and CRC matches
- * @param {Uint8Array} data
+ * @param {Uint8Array | number[]} data
  * @returns {boolean}
  */
 export function validate(data) {
@@ -1487,7 +1581,7 @@ export function validate(data) {
 }
 
 /**
- * @param {Uint8Array} flo_bytes
+ * @param {Uint8Array | number[]} flo_bytes
  * @returns {boolean}
  */
 export function validate_flo_file(flo_bytes) {
@@ -1519,11 +1613,11 @@ export function version() {
 function __wbg_get_imports() {
     const import0 = {
         __proto__: null,
-        __wbg_Error_30c8987f7c2ed4e2: function(arg0, arg1) {
+        __wbg_Error_208446807d0d1e30: function(arg0, arg1) {
             const ret = Error(getStringFromWasm0(arg0, arg1));
             return ret;
         },
-        __wbg_Number_14af1003b8dd5ead: function(arg0) {
+        __wbg_Number_ff192a72a0dcdf6d: function(arg0) {
             const ret = Number(arg0);
             return ret;
         },
@@ -1531,90 +1625,90 @@ function __wbg_get_imports() {
             const ret = String(arg1);
             const ptr1 = passStringToWasm0(ret, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
             const len1 = WASM_VECTOR_LEN;
-            getDataViewMemory0().setInt32(arg0 + 4 * 1, len1, true);
-            getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true);
+            getDataViewMemory0().setInt32((arg0 >>> 0) + 4 * 1, len1, true);
+            getDataViewMemory0().setInt32((arg0 >>> 0) + 4 * 0, ptr1, true);
         },
-        __wbg___wbindgen_bigint_get_as_i64_a2383202b9353e4c: function(arg0, arg1) {
+        __wbg___wbindgen_bigint_get_as_i64_11da4b52cd0aedef: function(arg0, arg1) {
             const v = arg1;
             const ret = typeof(v) === 'bigint' ? v : undefined;
-            getDataViewMemory0().setBigInt64(arg0 + 8 * 1, isLikeNone(ret) ? BigInt(0) : ret, true);
-            getDataViewMemory0().setInt32(arg0 + 4 * 0, !isLikeNone(ret), true);
+            getDataViewMemory0().setBigInt64((arg0 >>> 0) + 8 * 1, isLikeNone(ret) ? BigInt(0) : ret, true);
+            getDataViewMemory0().setInt32((arg0 >>> 0) + 4 * 0, !isLikeNone(ret), true);
         },
-        __wbg___wbindgen_boolean_get_5b446f51afd21013: function(arg0) {
+        __wbg___wbindgen_boolean_get_4f1baf9a00be3c74: function(arg0) {
             const v = arg0;
             const ret = typeof(v) === 'boolean' ? v : undefined;
             return isLikeNone(ret) ? 0xFFFFFF : ret ? 1 : 0;
         },
-        __wbg___wbindgen_debug_string_4687d8d8c2017d52: function(arg0, arg1) {
+        __wbg___wbindgen_debug_string_f249a2a76caa9a55: function(arg0, arg1) {
             const ret = debugString(arg1);
             const ptr1 = passStringToWasm0(ret, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
             const len1 = WASM_VECTOR_LEN;
-            getDataViewMemory0().setInt32(arg0 + 4 * 1, len1, true);
-            getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true);
+            getDataViewMemory0().setInt32((arg0 >>> 0) + 4 * 1, len1, true);
+            getDataViewMemory0().setInt32((arg0 >>> 0) + 4 * 0, ptr1, true);
         },
-        __wbg___wbindgen_in_92f62ee1427d9e49: function(arg0, arg1) {
+        __wbg___wbindgen_in_3f58a9d3b3a7eed2: function(arg0, arg1) {
             const ret = arg0 in arg1;
             return ret;
         },
-        __wbg___wbindgen_is_bigint_b123553bed3bb382: function(arg0) {
+        __wbg___wbindgen_is_bigint_5fa10641e039d3ef: function(arg0) {
             const ret = typeof(arg0) === 'bigint';
             return ret;
         },
-        __wbg___wbindgen_is_function_1f9d30630b8b1d3d: function(arg0) {
+        __wbg___wbindgen_is_function_741ff2bb612836f5: function(arg0) {
             const ret = typeof(arg0) === 'function';
             return ret;
         },
-        __wbg___wbindgen_is_null_e343b7d08827ba72: function(arg0) {
+        __wbg___wbindgen_is_null_c22311b1cc228e3a: function(arg0) {
             const ret = arg0 === null;
             return ret;
         },
-        __wbg___wbindgen_is_object_3c45d4f2dde4e749: function(arg0) {
+        __wbg___wbindgen_is_object_8b968c3ab8e96595: function(arg0) {
             const val = arg0;
             const ret = typeof(val) === 'object' && val !== null;
             return ret;
         },
-        __wbg___wbindgen_is_string_90b56bc79aad6f6c: function(arg0) {
+        __wbg___wbindgen_is_string_fc456fee5d3317de: function(arg0) {
             const ret = typeof(arg0) === 'string';
             return ret;
         },
-        __wbg___wbindgen_is_undefined_8865fb403f8fe9d8: function(arg0) {
+        __wbg___wbindgen_is_undefined_be5b34249ff1fc15: function(arg0) {
             const ret = arg0 === undefined;
             return ret;
         },
-        __wbg___wbindgen_jsval_eq_02babf21faa37971: function(arg0, arg1) {
+        __wbg___wbindgen_jsval_eq_38d7bfbe4cc84039: function(arg0, arg1) {
             const ret = arg0 === arg1;
             return ret;
         },
-        __wbg___wbindgen_jsval_loose_eq_677f21e468d6b461: function(arg0, arg1) {
+        __wbg___wbindgen_jsval_loose_eq_b2f214e2e4b30e36: function(arg0, arg1) {
             const ret = arg0 == arg1;
             return ret;
         },
-        __wbg___wbindgen_number_get_2e0e7dee9f701a71: function(arg0, arg1) {
+        __wbg___wbindgen_number_get_934b640d0889af78: function(arg0, arg1) {
             const obj = arg1;
             const ret = typeof(obj) === 'number' ? obj : undefined;
-            getDataViewMemory0().setFloat64(arg0 + 8 * 1, isLikeNone(ret) ? 0 : ret, true);
-            getDataViewMemory0().setInt32(arg0 + 4 * 0, !isLikeNone(ret), true);
+            getDataViewMemory0().setFloat64((arg0 >>> 0) + 8 * 1, isLikeNone(ret) ? 0 : ret, true);
+            getDataViewMemory0().setInt32((arg0 >>> 0) + 4 * 0, !isLikeNone(ret), true);
         },
-        __wbg___wbindgen_string_get_0380ccaa2f57f0d9: function(arg0, arg1) {
+        __wbg___wbindgen_string_get_7ce8eee7fd327545: function(arg0, arg1) {
             const obj = arg1;
             const ret = typeof(obj) === 'string' ? obj : undefined;
             var ptr1 = isLikeNone(ret) ? 0 : passStringToWasm0(ret, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
             var len1 = WASM_VECTOR_LEN;
-            getDataViewMemory0().setInt32(arg0 + 4 * 1, len1, true);
-            getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true);
+            getDataViewMemory0().setInt32((arg0 >>> 0) + 4 * 1, len1, true);
+            getDataViewMemory0().setInt32((arg0 >>> 0) + 4 * 0, ptr1, true);
         },
-        __wbg___wbindgen_throw_41e9ee4f547fc59a: function(arg0, arg1) {
+        __wbg___wbindgen_throw_4c88d8bf264fd984: function(arg0, arg1) {
             throw new Error(getStringFromWasm0(arg0, arg1));
         },
-        __wbg_call_6137034ef55c9d0f: function() { return handleError(function (arg0, arg1) {
+        __wbg_call_40b008ba32f73991: function() { return handleError(function (arg0, arg1) {
             const ret = arg0.call(arg1);
             return ret;
         }, arguments); },
-        __wbg_done_b41a1d26cdb37fb6: function(arg0) {
+        __wbg_done_57e08d0be6e30c02: function(arg0) {
             const ret = arg0.done;
             return ret;
         },
-        __wbg_entries_fb6397112b1de25f: function(arg0) {
+        __wbg_entries_7bb1459bd9b5c2b9: function(arg0) {
             const ret = Object.entries(arg0);
             return ret;
         },
@@ -1629,31 +1723,31 @@ function __wbg_get_imports() {
                 wasm.__wbindgen_free(deferred0_0, deferred0_1, 1);
             }
         },
-        __wbg_from_296ca31f8d0f1c52: function(arg0) {
+        __wbg_from_eac91875c8a5ffa4: function(arg0) {
             const ret = Array.from(arg0);
             return ret;
         },
-        __wbg_get_31af05bd4842a84f: function() { return handleError(function (arg0, arg1) {
+        __wbg_get_2080c49015e35254: function() { return handleError(function (arg0, arg1) {
             const ret = Reflect.get(arg0, arg1);
             return ret;
         }, arguments); },
-        __wbg_get_658f6698067d9515: function() { return handleError(function (arg0, arg1) {
+        __wbg_get_635eea311fa1a291: function() { return handleError(function (arg0, arg1) {
             const ret = Reflect.get(arg0, arg1);
             return ret;
         }, arguments); },
-        __wbg_get_6c896e0571ddae51: function(arg0, arg1) {
+        __wbg_get_d7176cfb76d71114: function(arg0, arg1) {
             const ret = arg0[arg1 >>> 0];
             return ret;
         },
-        __wbg_get_unchecked_288889d017702237: function(arg0, arg1) {
+        __wbg_get_unchecked_e6325ad374eff861: function(arg0, arg1) {
             const ret = arg0[arg1 >>> 0];
             return ret;
         },
-        __wbg_get_with_ref_key_6412cf3094599694: function(arg0, arg1) {
+        __wbg_get_with_ref_key_fc601247060b7204: function(arg0, arg1) {
             const ret = arg0[arg1];
             return ret;
         },
-        __wbg_instanceof_ArrayBuffer_a99f175873e5d9b8: function(arg0) {
+        __wbg_instanceof_ArrayBuffer_12cdaa4161423e6b: function(arg0) {
             let result;
             try {
                 result = arg0 instanceof ArrayBuffer;
@@ -1663,7 +1757,7 @@ function __wbg_get_imports() {
             const ret = result;
             return ret;
         },
-        __wbg_instanceof_Object_67a83cdc00c5d141: function(arg0) {
+        __wbg_instanceof_Object_97e16a01fd368661: function(arg0) {
             let result;
             try {
                 result = arg0 instanceof Object;
@@ -1673,7 +1767,7 @@ function __wbg_get_imports() {
             const ret = result;
             return ret;
         },
-        __wbg_instanceof_Uint8Array_828cef2aaacafc31: function(arg0) {
+        __wbg_instanceof_Uint8Array_d7aeb0dcb3108fea: function(arg0) {
             let result;
             try {
                 result = arg0 instanceof Uint8Array;
@@ -1683,118 +1777,118 @@ function __wbg_get_imports() {
             const ret = result;
             return ret;
         },
-        __wbg_isArray_e15a2ff68ffdbef2: function(arg0) {
+        __wbg_isArray_bcf1376d0d732d08: function(arg0) {
             const ret = Array.isArray(arg0);
             return ret;
         },
-        __wbg_isSafeInteger_717808ad6a54bd9e: function(arg0) {
+        __wbg_isSafeInteger_1a35ba4d31e71d38: function(arg0) {
             const ret = Number.isSafeInteger(arg0);
             return ret;
         },
-        __wbg_iterator_e3c31c892080e444: function() {
+        __wbg_iterator_e4c5e8f68ada7b58: function() {
             const ret = Symbol.iterator;
             return ret;
         },
-        __wbg_length_58572db4c38f3c3e: function(arg0) {
+        __wbg_length_186163212ffe79c3: function(arg0) {
             const ret = arg0.length;
             return ret;
         },
-        __wbg_length_7f3c00c40364105e: function(arg0) {
+        __wbg_length_6e9d2869242cabf3: function(arg0) {
             const ret = arg0.length;
             return ret;
         },
-        __wbg_length_d4bdea10311bd9cf: function(arg0) {
+        __wbg_length_b03a0fabb109b1e9: function(arg0) {
             const ret = arg0.length;
             return ret;
         },
-        __wbg_new_0_72d020f0c63443d4: function() {
+        __wbg_new_0_36d738a0c8cfac43: function() {
             const ret = new Date();
             return ret;
         },
-        __wbg_new_1dbf7428bba60a42: function(arg0) {
+        __wbg_new_13de428334042d26: function(arg0) {
             const ret = new Uint8Array(arg0);
             return ret;
         },
-        __wbg_new_227d7c05414eb861: function() {
-            const ret = new Error();
-            return ret;
-        },
-        __wbg_new_28744009d011f847: function() {
-            const ret = new Map();
-            return ret;
-        },
-        __wbg_new_617a8cdb8bb1130e: function() {
-            const ret = new Object();
-            return ret;
-        },
-        __wbg_new_ee2291f50781bf1d: function() {
+        __wbg_new_37eb45aaf5eeb820: function() {
             const ret = new Array();
             return ret;
         },
-        __wbg_new_from_slice_9a868026ffa4208a: function(arg0, arg1) {
-            const ret = new Uint8Array(getArrayU8FromWasm0(arg0, arg1));
+        __wbg_new_7075786089b89c5e: function() {
+            const ret = new Map();
             return ret;
         },
-        __wbg_new_from_slice_ca6ad97db1f4779a: function(arg0, arg1) {
+        __wbg_new_bb74001155cb8ca8: function() {
+            const ret = new Error();
+            return ret;
+        },
+        __wbg_new_cd4348290afae586: function() {
+            const ret = new Object();
+            return ret;
+        },
+        __wbg_new_from_slice_355c10c5d8f2addb: function(arg0, arg1) {
             const ret = new Float32Array(getArrayF32FromWasm0(arg0, arg1));
             return ret;
         },
-        __wbg_new_from_slice_f545fd22ddc142b8: function(arg0, arg1) {
+        __wbg_new_from_slice_aaf85a9746711968: function(arg0, arg1) {
             const ret = new Float64Array(getArrayF64FromWasm0(arg0, arg1));
             return ret;
         },
-        __wbg_new_with_length_cc0362bfe8499e5a: function(arg0) {
+        __wbg_new_from_slice_b8daf545a41c6aa0: function(arg0, arg1) {
+            const ret = new Uint8Array(getArrayU8FromWasm0(arg0, arg1));
+            return ret;
+        },
+        __wbg_new_with_length_5c0c9043ebd9ec32: function(arg0) {
             const ret = new Float32Array(arg0 >>> 0);
             return ret;
         },
-        __wbg_next_33784799010f1bbe: function(arg0) {
+        __wbg_next_178c1651c11432b3: function(arg0) {
             const ret = arg0.next;
             return ret;
         },
-        __wbg_next_f4aac29c42af995c: function() { return handleError(function (arg0) {
+        __wbg_next_af5ac6a08bb0a717: function() { return handleError(function (arg0) {
             const ret = arg0.next();
             return ret;
         }, arguments); },
-        __wbg_prototypesetcall_bc27214492979395: function(arg0, arg1, arg2) {
+        __wbg_prototypesetcall_13162965d1fe7aa3: function(arg0, arg1, arg2) {
             Uint8Array.prototype.set.call(getArrayU8FromWasm0(arg0, arg1), arg2);
         },
-        __wbg_push_2baf45db356cf468: function(arg0, arg1) {
+        __wbg_push_c9f4893fc209f768: function(arg0, arg1) {
             const ret = arg0.push(arg1);
             return ret;
         },
-        __wbg_set_070bd465f1c195a4: function(arg0, arg1, arg2) {
-            arg0.set(getArrayF32FromWasm0(arg1, arg2));
-        },
-        __wbg_set_145a351398b48c65: function() { return handleError(function (arg0, arg1, arg2) {
+        __wbg_set_2793479888329cb6: function() { return handleError(function (arg0, arg1, arg2) {
             const ret = Reflect.set(arg0, arg1, arg2);
             return ret;
         }, arguments); },
-        __wbg_set_6ae97e73113c4f0b: function(arg0, arg1, arg2) {
+        __wbg_set_8282f7e0d2d01336: function(arg0, arg1, arg2) {
             const ret = arg0.set(arg1, arg2);
             return ret;
         },
-        __wbg_set_6be42768c690e380: function(arg0, arg1, arg2) {
-            arg0[arg1] = arg2;
+        __wbg_set_d0e2abd6ed08e04c: function(arg0, arg1, arg2) {
+            arg0.set(getArrayF32FromWasm0(arg1, arg2));
         },
-        __wbg_set_bea140a88be9b277: function(arg0, arg1, arg2) {
+        __wbg_set_d2d33b52458e984a: function(arg0, arg1, arg2) {
             arg0[arg1 >>> 0] = arg2;
         },
-        __wbg_stack_3b0d974bbf31e44f: function(arg0, arg1) {
+        __wbg_set_e4b9a833d288759a: function(arg0, arg1, arg2) {
+            arg0[arg1] = arg2;
+        },
+        __wbg_stack_575c4e0918581b9c: function(arg0, arg1) {
             const ret = arg1.stack;
             const ptr1 = passStringToWasm0(ret, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
             const len1 = WASM_VECTOR_LEN;
-            getDataViewMemory0().setInt32(arg0 + 4 * 1, len1, true);
-            getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true);
+            getDataViewMemory0().setInt32((arg0 >>> 0) + 4 * 1, len1, true);
+            getDataViewMemory0().setInt32((arg0 >>> 0) + 4 * 0, ptr1, true);
         },
-        __wbg_stringify_52ff602c1cc4fbb6: function() { return handleError(function (arg0) {
+        __wbg_stringify_0a0fbf2ef722380a: function() { return handleError(function (arg0) {
             const ret = JSON.stringify(arg0);
             return ret;
         }, arguments); },
-        __wbg_toISOString_3217c36cf55f719b: function(arg0) {
+        __wbg_toISOString_51ebc75332aba76a: function(arg0) {
             const ret = arg0.toISOString();
             return ret;
         },
-        __wbg_value_f3c585ee8f5ba40c: function(arg0) {
+        __wbg_value_e0f328965e184931: function(arg0) {
             const ret = arg0.value;
             return ret;
         },
@@ -1820,12 +1914,11 @@ function __wbg_get_imports() {
         },
         __wbindgen_init_externref_table: function() {
             const table = wasm.__wbindgen_externrefs;
-            const offset = table.grow(4);
             table.set(0, undefined);
-            table.set(offset + 0, undefined);
-            table.set(offset + 1, null);
-            table.set(offset + 2, true);
-            table.set(offset + 3, false);
+            table.set(1024, undefined);
+            table.set(1025, null);
+            table.set(1026, true);
+            table.set(1027, false);
         },
     };
     return {
@@ -1851,68 +1944,61 @@ function addToExternrefTable0(obj) {
 }
 
 function debugString(val) {
-    // primitive types
-    const type = typeof val;
-    if (type == 'number' || type == 'boolean' || val == null) {
-        return  `${val}`;
-    }
-    if (type == 'string') {
-        return `"${val}"`;
-    }
-    if (type == 'symbol') {
-        const description = val.description;
-        if (description == null) {
-            return 'Symbol';
-        } else {
-            return `Symbol(${description})`;
+    switch (typeof val) {
+        // primitive types
+        case 'number':
+        case 'boolean':
+        case 'undefined':
+        return `${val}`;
+        case 'string':
+        return JSON.stringify(val);
+        case 'bigint':
+        return `${val}n`;
+        case 'symbol':
+        return val.description !== undefined
+            ? `Symbol(${val.description})`
+            : 'Symbol';
+        case 'function':
+        return typeof val.name === 'string' && val.name !== ''
+            ? `Function(${val.name})`
+            : 'Function';
+        case 'object': {
+            if (val === null) {
+                return 'null';
+            }
+            // objects
+            if (Array.isArray(val)) {
+                return '[' + Array.from(val, debugString).join(', ') + ']';
+            }
+            // errors
+            if (val instanceof Error) {
+                return `${val.name}: ${val.message}\n${val.stack}`;
+            }
+
+            const toStringOutput = toString.call(val);
+            // Test for built-in
+            const className = /\[object ([^\]]+)\]/.exec(toStringOutput)?.[1];
+
+            // Failed to match the standard '[object ClassName]'
+            if (className === undefined) {
+                return toStringOutput;
+            }
+            if (className === 'Object') {
+                // we're a user defined class or Object
+                // JSON.stringify avoids problems with cycles, and is generally much
+                // easier than looping through ownProperties of `val`.
+                try {
+                    return 'Object(' + JSON.stringify(val) + ')';
+                } catch (_) {
+                    return 'Object';
+                }
+            }
+            // TODO we could test for more things here, like `Set`s and `Map`s.
+            return className;
         }
+        // Per MDN: 'This list of values is exhaustive.'
+        // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/typeof#description
     }
-    if (type == 'function') {
-        const name = val.name;
-        if (typeof name == 'string' && name.length > 0) {
-            return `Function(${name})`;
-        } else {
-            return 'Function';
-        }
-    }
-    // objects
-    if (Array.isArray(val)) {
-        const length = val.length;
-        let debug = '[';
-        if (length > 0) {
-            debug += debugString(val[0]);
-        }
-        for(let i = 1; i < length; i++) {
-            debug += ', ' + debugString(val[i]);
-        }
-        debug += ']';
-        return debug;
-    }
-    // Test for built-in
-    const builtInMatches = /\[object ([^\]]+)\]/.exec(toString.call(val));
-    let className;
-    if (builtInMatches && builtInMatches.length > 1) {
-        className = builtInMatches[1];
-    } else {
-        // Failed to match the standard '[object ClassName]'
-        return toString.call(val);
-    }
-    if (className == 'Object') {
-        // we're a user defined class or Object
-        // JSON.stringify avoids problems with cycles, and is generally much
-        // easier than looping through ownProperties of `val`.
-        try {
-            return 'Object(' + JSON.stringify(val) + ')';
-        } catch (_) {
-            return 'Object';
-        }
-    }
-    // errors
-    if (val instanceof Error) {
-        return `${val.name}: ${val.message}\n${val.stack}`;
-    }
-    // TODO we could test for more things here, like `Set`s and `Map`s.
-    return className;
 }
 
 function getArrayF32FromWasm0(ptr, len) {
@@ -1966,7 +2052,8 @@ function getFloat64ArrayMemory0() {
 }
 
 function getStringFromWasm0(ptr, len) {
-    return decodeText(ptr >>> 0, len);
+    ptr = ptr >>> 0;
+    return decodeText(getUint8ArrayMemory0().subarray(ptr, ptr + len));
 }
 
 let cachedUint8ArrayMemory0 = null;
@@ -2047,18 +2134,18 @@ function takeFromExternrefTable0(idx) {
     return value;
 }
 
-let cachedTextDecoder = new TextDecoder('utf-8', { ignoreBOM: true, fatal: true });
+let cachedTextDecoder = new TextDecoder('utf-8', { ignoreBOM: true });
 cachedTextDecoder.decode();
 const MAX_SAFARI_DECODE_BYTES = 2146435072;
 let numBytesDecoded = 0;
-function decodeText(ptr, len) {
-    numBytesDecoded += len;
+function decodeText(bytes) {
+    numBytesDecoded += bytes.length;
     if (numBytesDecoded >= MAX_SAFARI_DECODE_BYTES) {
-        cachedTextDecoder = new TextDecoder('utf-8', { ignoreBOM: true, fatal: true });
+        cachedTextDecoder = new TextDecoder('utf-8', { ignoreBOM: true });
         cachedTextDecoder.decode();
-        numBytesDecoded = len;
+        numBytesDecoded = bytes.length;
     }
-    return cachedTextDecoder.decode(getUint8ArrayMemory0().subarray(ptr, ptr + len));
+    return cachedTextDecoder.decode(bytes);
 }
 
 const cachedTextEncoder = new TextEncoder();
@@ -2148,9 +2235,17 @@ function initSync(module) {
     return __wbg_finalize_init(instance, module);
 }
 
+let __wbg_init_promise;
 async function __wbg_init(module_or_path) {
     if (wasm !== undefined) return wasm;
+    if (__wbg_init_promise === undefined) {
+        __wbg_init_promise = __wbg_init_once(module_or_path);
+        __wbg_init_promise.catch(() => { __wbg_init_promise = undefined; });
+    }
+    return __wbg_init_promise;
+}
 
+async function __wbg_init_once(module_or_path) {
 
     if (module_or_path !== undefined) {
         if (Object.getPrototypeOf(module_or_path) === Object.prototype) {

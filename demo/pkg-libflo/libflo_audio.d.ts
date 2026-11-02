@@ -75,7 +75,7 @@ export class WasmStreamingDecoder {
     /**
      * feed data to the decoder, call as bytes come in from network
      */
-    feed(data: Uint8Array): boolean;
+    feed(data: Uint8Array | number[]): boolean;
     /**
      * Get audio information (available after header is parsed)
      *
@@ -145,7 +145,7 @@ export class WasmStreamingEncoder {
      * # Returns
      * Complete flo file as byte array
      */
-    finalize(metadata?: Uint8Array | null): Uint8Array;
+    finalize(metadata?: Uint8Array | number[] | null): Uint8Array;
     /**
      * Flush remaining samples and finalize encoding
      *
@@ -204,7 +204,7 @@ export class WasmStreamingEncoder {
      * # Returns
      * Error if encoding fails
      */
-    push_samples(samples: Float32Array): void;
+    push_samples(samples: Float32Array | number[]): void;
     /**
      * Set compression level (0-9)
      *
@@ -228,7 +228,7 @@ export class WasmStreamingEncoder {
  * # Returns
  * LoudnessMetrics object with integrated LUFS, loudness range LU, and true peak dBTP
  */
-export function compute_loudness_metrics(samples: Float32Array, channels: number, sample_rate: number): any;
+export function compute_loudness_metrics(samples: Float32Array | number[], channels: number, sample_rate: number): any;
 
 /**
  * Create metadata from basic fields and serialize to MessagePack
@@ -266,7 +266,7 @@ export function create_metadata_from_object(obj: any): Uint8Array;
  * # Returns
  * Interleaved audio samples (f32, -1.0 to 1.0)
  */
-export function decode(data: Uint8Array): Float32Array;
+export function decode(data: Uint8Array | number[]): Float32Array;
 
 /**
  * Decode a single frame by index without decoding the entire file
@@ -278,7 +278,7 @@ export function decode(data: Uint8Array): Float32Array;
  * # Returns
  * Interleaved audio samples for that frame (f32, -1.0 to 1.0)
  */
-export function decode_frame_at(flo_data: Uint8Array, frame_index: number): Float32Array;
+export function decode_frame_at(flo_data: Uint8Array | number[], frame_index: number): Float32Array;
 
 /**
  * encode samples to flo lossless
@@ -297,7 +297,7 @@ export function decode_frame_at(flo_data: Uint8Array, frame_index: number): Floa
  * For advanced usage with custom compression levels (0-9),
  * use the `Encoder` builder pattern directly.
  */
-export function encode(samples: Float32Array, sample_rate: number, channels: number, bit_depth: number, metadata?: Uint8Array | null): Uint8Array;
+export function encode(samples: Float32Array | number[], sample_rate: number, channels: number, bit_depth: number, metadata?: Uint8Array | number[] | null): Uint8Array;
 
 /**
  * encode samples to flo lossy
@@ -317,7 +317,7 @@ export function encode(samples: Float32Array, sample_rate: number, channels: num
  * For advanced usage with continuous quality control (0.0-1.0) or custom settings,
  * use the `LossyEncoder` builder pattern directly.
  */
-export function encode_lossy(samples: Float32Array, sample_rate: number, channels: number, _bit_depth: number, quality: number, metadata?: Uint8Array | null): Uint8Array;
+export function encode_lossy(samples: Float32Array | number[], sample_rate: number, channels: number, _bit_depth: number, quality: number, metadata?: Uint8Array | number[] | null): Uint8Array;
 
 /**
  * encode to flo lossy with target bitrate
@@ -333,7 +333,7 @@ export function encode_lossy(samples: Float32Array, sample_rate: number, channel
  * # Returns
  * flo file as byte array
  */
-export function encode_with_bitrate(samples: Float32Array, sample_rate: number, channels: number, _bit_depth: number, target_bitrate_kbps: number, metadata?: Uint8Array | null): Uint8Array;
+export function encode_with_bitrate(samples: Float32Array | number[], sample_rate: number, channels: number, _bit_depth: number, target_bitrate_kbps: number, metadata?: Uint8Array | number[] | null): Uint8Array;
 
 /**
  * Extract dominant frequencies from spectral fingerprint
@@ -361,7 +361,7 @@ export function extract_dominant_frequencies_from_fingerprint_wasm(fingerprint_j
  * # Returns
  * JavaScript array of arrays containing dominant frequencies (Hz) for each frame
  */
-export function extract_dominant_frequencies_from_samples_wasm(samples: Float32Array, sample_rate: number, channels: number, num_frequencies: number, fft_size?: number | null, hop_size?: number | null): any;
+export function extract_dominant_frequencies_from_samples_wasm(samples: Float32Array | number[], sample_rate: number, channels: number, num_frequencies: number, fft_size?: number | null, hop_size?: number | null): any;
 
 /**
  * Extract dominant frequencies from spectral fingerprint
@@ -381,7 +381,7 @@ export function extract_dominant_frequencies_wasm(fingerprint_js: any, num_frequ
  * # Returns
  * SpectralFingerprint object with frequency analysis
  */
-export function extract_spectral_fingerprint_wasm(samples: Float32Array, channels: number, sample_rate: number, fft_size?: number | null, hop_size?: number | null): any;
+export function extract_spectral_fingerprint_wasm(samples: Float32Array | number[], channels: number, sample_rate: number, fft_size?: number | null, hop_size?: number | null): any;
 
 /**
  * Extract waveform peaks from audio samples
@@ -395,7 +395,7 @@ export function extract_spectral_fingerprint_wasm(samples: Float32Array, channel
  * # Returns
  * WaveformData object with extracted peaks
  */
-export function extract_waveform_peaks_wasm(samples: Float32Array, channels: number, sample_rate: number, peaks_per_second?: number | null): any;
+export function extract_waveform_peaks_wasm(samples: Float32Array | number[], channels: number, sample_rate: number, peaks_per_second?: number | null): any;
 
 /**
  * Format time in seconds to MM:SS or H:MM:SS string
@@ -416,7 +416,7 @@ export function format_time_ms(milliseconds: number): string;
  * # Returns
  * Object with `mime_type` and `data` (Uint8Array) or null if no cover
  */
-export function get_cover_art(data: Uint8Array): any;
+export function get_cover_art(data: Uint8Array | number[]): any;
 
 /**
  * Extract metadata from a flo file
@@ -427,7 +427,7 @@ export function get_cover_art(data: Uint8Array): any;
  * # Returns
  * JavaScript object with metadata fields (or null if no metadata)
  */
-export function get_metadata(data: Uint8Array): any;
+export function get_metadata(data: Uint8Array | number[]): any;
 
 /**
  * Get just the metadata bytes from a flo file
@@ -438,7 +438,7 @@ export function get_metadata(data: Uint8Array): any;
  * # Returns
  * Raw MessagePack metadata bytes (or empty array)
  */
-export function get_metadata_bytes(flo_data: Uint8Array): Uint8Array;
+export function get_metadata_bytes(flo_data: Uint8Array | number[]): Uint8Array;
 
 /**
  * Get section markers from a flo file
@@ -446,7 +446,7 @@ export function get_metadata_bytes(flo_data: Uint8Array): Uint8Array;
  * # Returns
  * Array of section markers or null if none
  */
-export function get_section_markers(data: Uint8Array): any;
+export function get_section_markers(data: Uint8Array | number[]): any;
 
 /**
  * Get synced lyrics from a flo file
@@ -454,7 +454,7 @@ export function get_section_markers(data: Uint8Array): any;
  * # Returns
  * Array of synced lyrics objects or null if none
  */
-export function get_synced_lyrics(data: Uint8Array): any;
+export function get_synced_lyrics(data: Uint8Array | number[]): any;
 
 /**
  * Extract TOC (Table of Contents) entries from a flo file
@@ -462,7 +462,7 @@ export function get_synced_lyrics(data: Uint8Array): any;
  * # Returns
  * Array of TOC entries with frame indices, byte offsets, and timestamps
  */
-export function get_toc(flo_data: Uint8Array): any[];
+export function get_toc(flo_data: Uint8Array | number[]): any[];
 
 /**
  * Get waveform data from a flo file for instant visualization
@@ -470,12 +470,12 @@ export function get_toc(flo_data: Uint8Array): any[];
  * # Returns
  * WaveformData object or null if not present
  */
-export function get_waveform_data(data: Uint8Array): any;
+export function get_waveform_data(data: Uint8Array | number[]): any;
 
 /**
  * does the file have metadata? (wasm binding)
  */
-export function has_metadata(flo_data: Uint8Array): boolean;
+export function has_metadata(flo_data: Uint8Array | number[]): boolean;
 
 /**
  * Get information about a flo file
@@ -486,7 +486,7 @@ export function has_metadata(flo_data: Uint8Array): boolean;
  * # Returns
  * AudioInfo struct with file details
  */
-export function info(data: Uint8Array): AudioInfo;
+export function info(data: Uint8Array | number[]): AudioInfo;
 
 /**
  * Seek to a specific time in milliseconds
@@ -498,7 +498,7 @@ export function info(data: Uint8Array): AudioInfo;
  * # Returns
  * Seek result object containing frame index, byte offset, timestamp, sample offset, and next timestamp.
  */
-export function seek_to_time(flo_data: Uint8Array, time_ms: number): any;
+export function seek_to_time(flo_data: Uint8Array | number[], time_ms: number): any;
 
 /**
  * Replace just the metadata in a flo file (convenience function)
@@ -512,7 +512,7 @@ export function seek_to_time(flo_data: Uint8Array, time_ms: number): any;
  * # Returns
  * New flo file with updated metadata
  */
-export function set_metadata(flo_data: Uint8Array, metadata: any): Uint8Array;
+export function set_metadata(flo_data: Uint8Array | number[], metadata: any): Uint8Array;
 
 /**
  * Set a single field in existing metadata bytes
@@ -528,7 +528,7 @@ export function set_metadata(flo_data: Uint8Array, metadata: any): Uint8Array;
  * # Returns
  * Updated MessagePack metadata bytes
  */
-export function set_metadata_field(metadata: Uint8Array | null | undefined, field: string, value: any): Uint8Array;
+export function set_metadata_field(metadata: Uint8Array | number[] | null | undefined, field: string, value: any): Uint8Array;
 
 /**
  * Compute spectral similarity between two fingerprints
@@ -544,7 +544,7 @@ export function set_metadata_field(metadata: Uint8Array | null | undefined, fiel
  * # Returns
  * Similarity score between 0.0 (completely different) and 1.0 (identical)
  */
-export function spectral_similarity(samples1: Float32Array, samples2: Float32Array, sample_rate: number, channels: number, fft_size?: number | null, hop_size?: number | null): any;
+export function spectral_similarity(samples1: Float32Array | number[], samples2: Float32Array | number[], sample_rate: number, channels: number, fft_size?: number | null, hop_size?: number | null): any;
 
 /**
  * Remove all metadata from a flo file
@@ -555,7 +555,7 @@ export function spectral_similarity(samples1: Float32Array, samples2: Float32Arr
  * # Returns
  * New flo file with no metadata
  */
-export function strip_metadata(flo_data: Uint8Array): Uint8Array;
+export function strip_metadata(flo_data: Uint8Array | number[]): Uint8Array;
 
 /**
  * update metadata without re-encoding audio
@@ -567,7 +567,7 @@ export function strip_metadata(flo_data: Uint8Array): Uint8Array;
  * # Returns
  * New flo file with updated metadata
  */
-export function update_metadata(flo_data: Uint8Array, new_metadata: Uint8Array): Uint8Array;
+export function update_metadata(flo_data: Uint8Array | number[], new_metadata: Uint8Array | number[]): Uint8Array;
 
 /**
  * Validate flo file integrity
@@ -578,7 +578,7 @@ export function update_metadata(flo_data: Uint8Array, new_metadata: Uint8Array):
  * # Returns
  * true if file is valid and CRC matches
  */
-export function validate(data: Uint8Array): boolean;
+export function validate(data: Uint8Array | number[]): boolean;
 
 /**
  * get lib version
@@ -668,10 +668,10 @@ export interface InitOutput {
     readonly wasmstreamingencoder_with_compression: (a: number, b: number) => number;
     readonly __wbindgen_malloc: (a: number, b: number) => number;
     readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
+    readonly __wbindgen_free: (a: number, b: number, c: number) => void;
     readonly __wbindgen_exn_store: (a: number) => void;
     readonly __externref_table_alloc: () => number;
     readonly __wbindgen_externrefs: WebAssembly.Table;
-    readonly __wbindgen_free: (a: number, b: number, c: number) => void;
     readonly __externref_table_dealloc: (a: number) => void;
     readonly __externref_drop_slice: (a: number, b: number) => void;
     readonly __wbindgen_start: () => void;
