@@ -1,7 +1,7 @@
 # Todo
 
 - [ ] Add streaming encode to web demo
-
+- [ ] Rice settings in sections within a frame (Rather than Rice parameter per channel per frame, make each frame have sections that each get their own parameter)
 - [ ] Add bulk converter to reflo + web demo (possibly separate page)
 - [ ] More reflo tests
 - [ ] Add file comparison view (compare original vs encoded)
