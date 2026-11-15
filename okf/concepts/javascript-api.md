@@ -3,10 +3,10 @@ type: concept
 title: "JavaScript API"
 source: "https://audiflo.github.io/flo/javascript-api/"
 path: /javascript-api/
-updated: 2026-11-02
+updated: 2026-11-15
 okf:
   generated_by: "@docmd/plugin-okf"
-  generated_at: "2026-11-02T18:32:58.872Z"
+  generated_at: "2026-11-15T21:34:16.731Z"
 ---
 # JavaScript API
 
