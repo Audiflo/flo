@@ -3,10 +3,10 @@ type: concept
 title: "Metadata Guide"
 source: "https://audiflo.github.io/flo/metadata-guide/"
 path: /metadata-guide/
-updated: 2026-11-15
+updated: 2026-11-25
 okf:
   generated_by: "@docmd/plugin-okf"
-  generated_at: "2026-11-15T21:34:16.732Z"
+  generated_at: "2026-11-25T09:14:02.389Z"
 ---
 # Metadata Guide
 

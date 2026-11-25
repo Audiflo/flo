@@ -3,10 +3,10 @@ type: concept
 title: Architecture
 source: "https://audiflo.github.io/flo/architecture/"
 path: /architecture/
-updated: 2026-11-15
+updated: 2026-11-25
 okf:
   generated_by: "@docmd/plugin-okf"
-  generated_at: "2026-11-15T21:34:16.730Z"
+  generated_at: "2026-11-25T09:14:02.387Z"
 ---
 # Architecture
 
